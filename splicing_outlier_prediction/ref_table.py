@@ -3,10 +3,26 @@ import pandas as pd
 
 class SplicingRefTable:
 
-    def __init__(self, ref_table):
-        self.ref_table = pd.read_csv(ref_table)
-        self.method = self._infer_method(ref_table)
+    def __init__(self, df_ref):
+        self.ref_table = df_ref
+        self.method = self._infer_method(self.ref_table)
 
+    @staticmethod
+    def read_csv(path, **kwargs):
+        return pd.read_csv(path, **kwargs)
+    
+    @staticmethod
+    def valid():
+        raise NotImplementedError()
+    
+    @staticmethod
+    def download(tissue_name):
+        raise NotImplementedError()
+
+    @staticmethod
+    def fetch(tissue_name):
+        raise NotImplementedError()
+        
     @staticmethod
     def _infer_method(ref_table):
         return 'kn'  # 'bb'
