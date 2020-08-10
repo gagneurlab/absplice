@@ -10,7 +10,7 @@ with open('HISTORY.rst') as history_file:
 requirements = [
     'setuptools',
     'kipoiseq>=0.3.0',
-    'mmsplice>=2.0.0'
+    'mmsplice>=2.1.0'
 ]
 
 setup_requirements = ['pytest-runner', ]

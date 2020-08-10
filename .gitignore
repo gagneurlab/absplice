@@ -96,3 +96,4 @@ old-mmsplice/
 
 slurm-*
 logs/
+*~
