@@ -169,11 +169,14 @@ class SplicingOutlierResult:
                 self.junction, index, 'delta_psi')
         return self._gene
 
-    @staticmethod
+    def add_maf(self, population):
+        self.df['maf'] = self.df['variant'].map(lambda x: population.get(x, 0))
+
     def filter_maf(self, max_num_sample=2, population=None, maf_cutoff=0.001):
-        df = self[self.df.str.split(';').map(len) <= max_num_sample]
+        df = self.df[self.df.str.split(';').map(len) <= max_num_sample]
 
         if population:
-            df = df['variant'].map(lambda x: population[x] <= maf_cutoff)
+            df = df['variant'].map(
+                lambda x: population.get(x, 0) <= maf_cutoff)
 
         return SplicingOutlierResult(df)
