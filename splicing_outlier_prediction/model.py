@@ -9,6 +9,7 @@ from mmsplice.utils import encodeDNA, df_batch_writer, \
     delta_logit_PSI_to_delta_PSI
 from splicing_outlier_prediction import SplicingRefTable
 from splicing_outlier_prediction.utils import get_abs_max_rows
+from count_table import CountTable
 
 
 class SpliceOutlierDataloader(SampleIterator):
@@ -27,16 +28,36 @@ class SpliceOutlierDataloader(SampleIterator):
             self.ref_table5 = self._read_ref_table(ref_table5)
             self.dl5 = JunctionPSI5VCFDataloader(
                 ref_table5, fasta_file, vcf_file, encode=False, **kwargs)
+            if count_cat:
+                ct = CountTable.read_csv(count_cat)
+                import pdb
+                pdb.set_trace()
+                self.count_cat5 = ct.filter_event5(self.ref_table5.df.index)  
+#                 Pdb) ct.event5.loc['17:41215968-41234420:-']
+#                 *** KeyError: '17:41215968-41234420:-'
+
+            else:
+                self.count_cat5 = None
             self._generator = itertools.chain(
                 self._generator,
-                self._iter_dl(self.dl5, self.ref_table5, event_type='psi5'))
+                self._iter_dl(self.dl5, self.ref_table5, self.count_cat5, event_type='psi5'))
+              
         if ref_table3:
             self.ref_table3 = self._read_ref_table(ref_table3)
             self.dl3 = JunctionPSI3VCFDataloader(
                 ref_table3, fasta_file, vcf_file, encode=False, **kwargs)
+            if count_cat:
+                ct = CountTable.read_csv(count_cat)
+                import pdb
+                pdb.set_trace()
+                self.count_cat3 = ct.filter_event3(self.ref_table3.df.index)
+            else:
+                self.count_cat3 = None
             self._generator = itertools.chain(
                 self._generator,
-                self._iter_dl(self.dl3, self.ref_table3, event_type='psi3'))
+                self._iter_dl(self.dl3, self.ref_table3, self.count_cat3, event_type='psi3'))       
+        
+
 
     @staticmethod
     def _read_ref_table(path):
@@ -49,14 +70,28 @@ class SpliceOutlierDataloader(SampleIterator):
                 'ref_table should be path to ref_table file'
                 ' or `SplicingRefTable` object')
 
-    def _iter_dl(self, dl, ref_table, event_type):
+    def _iter_dl(self, dl, ref_table, count_cat, event_type):
         for row in dl:
+            
             junction_id = row['metadata']['exon']['junction']
             ref_row = ref_table.df.loc[junction_id]
             row['metadata']['junction'] = dict()
             row['metadata']['junction']['junction'] = ref_row.name
             row['metadata']['junction']['event_type'] = event_type
             row['metadata']['junction'].update(ref_row.to_dict())
+            
+            if event_type=='psi5':
+                df_ref = self.count_cat5.ref_psi5()
+                psi = self.count_cat5.psi5
+                counts = self.count_cat5.counts
+            else:
+                df_ref = self.count_cat3.ref_psi3()
+                psi = self.count_cat3.psi3
+                counts = self.count_cat3.counts
+            
+            import pdb
+            pdb.set_trace()
+            
             yield row
 
     def __next__(self):
