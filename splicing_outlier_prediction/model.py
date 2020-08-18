@@ -228,17 +228,6 @@ class SpliceOutlier:
         df_batch_writer(self._predict_on_dataloader(dataloader), output_csv)
         
         
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
-        
 class CatSpliceOutlier:
 
     def __init__(self, clip_threshold=None):
