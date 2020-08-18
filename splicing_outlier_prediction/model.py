@@ -30,17 +30,14 @@ class SpliceOutlierDataloader(SampleIterator):
                 ref_table5, fasta_file, vcf_file, encode=False, **kwargs)
             if count_cat:
                 ct = CountTable.read_csv(count_cat)
-                import pdb
-                pdb.set_trace()
-                self.count_cat5 = ct.filter_event5(self.ref_table5.df.index)  
-#                 Pdb) ct.event5.loc['17:41215968-41234420:-']
-#                 *** KeyError: '17:41215968-41234420:-'
-
+                common_junctions = set(self.ref_table5.df.index).intersection(set(ct.event5.index))
+                self.count_cat5 = ct.filter_event5(common_junctions)
+                self.ref_psi5_cat = self.count_cat5.ref_psi5()
             else:
                 self.count_cat5 = None
             self._generator = itertools.chain(
                 self._generator,
-                self._iter_dl(self.dl5, self.ref_table5, self.count_cat5, event_type='psi5'))
+                self._iter_dl(self.dl5, self.ref_table5, self.count_cat5, self.ref_psi5_cat, event_type='psi5'))
               
         if ref_table3:
             self.ref_table3 = self._read_ref_table(ref_table3)
@@ -48,14 +45,14 @@ class SpliceOutlierDataloader(SampleIterator):
                 ref_table3, fasta_file, vcf_file, encode=False, **kwargs)
             if count_cat:
                 ct = CountTable.read_csv(count_cat)
-                import pdb
-                pdb.set_trace()
-                self.count_cat3 = ct.filter_event3(self.ref_table3.df.index)
+                common_junctions = set(self.ref_table3.df.index).intersection(set(ct.event3.index))
+                self.count_cat3 = ct.filter_event3(common_junctions)
+                self.ref_psi3_cat = self.count_cat3.ref_psi3()
             else:
                 self.count_cat3 = None
             self._generator = itertools.chain(
                 self._generator,
-                self._iter_dl(self.dl3, self.ref_table3, self.count_cat3, event_type='psi3'))       
+                self._iter_dl(self.dl3, self.ref_table3, self.count_cat3, self.ref_psi3_cat, event_type='psi3'))       
         
 
 
@@ -70,7 +67,7 @@ class SpliceOutlierDataloader(SampleIterator):
                 'ref_table should be path to ref_table file'
                 ' or `SplicingRefTable` object')
 
-    def _iter_dl(self, dl, ref_table, count_cat, event_type):
+    def _iter_dl(self, dl, ref_table, count_cat, ref_psi_cat, event_type):
         for row in dl:
             
             junction_id = row['metadata']['exon']['junction']
@@ -79,19 +76,29 @@ class SpliceOutlierDataloader(SampleIterator):
             row['metadata']['junction']['junction'] = ref_row.name
             row['metadata']['junction']['event_type'] = event_type
             row['metadata']['junction'].update(ref_row.to_dict())
-            
-            if event_type=='psi5':
-                df_ref = self.count_cat5.ref_psi5()
-                psi = self.count_cat5.psi5
-                counts = self.count_cat5.counts
-            else:
-                df_ref = self.count_cat3.ref_psi3()
-                psi = self.count_cat3.psi3
-                counts = self.count_cat3.counts
-            
-            import pdb
-            pdb.set_trace()
-            
+      
+            #count_cat contains RNA seq of cat for each sample. If samples not provided ignore count_cat
+            if 'samples' in row['metadata']['variant'] and count_cat!=None: 
+                samples = row['metadata']['variant']['samples'].split(';')
+                
+                if junction_id in count_cat.junctions:
+                    if event_type=='psi5':
+                        psi_cat = count_cat.psi5
+                    else:
+                        psi_cat = count_cat.psi3
+
+                    row['metadata']['junction']['cat'] = {
+                        'samples': samples,
+                        'counts': count_cat.df.loc[junction_id, samples].tolist(), #count_cat.counts.loc[junction_id, samples].tolist()
+                        'psi': psi_cat.loc[junction_id, samples].tolist(),
+                        'psi_ref': ref_psi_cat.loc[junction_id]['ref_psi'],
+                        'k': ref_psi_cat.loc[junction_id]['k'],
+                        'n': ref_psi_cat.loc[junction_id]['n'],
+                    }
+                    
+            elif count_cat:
+                logging.warning('count_table will be ignored because samples=False')
+
             yield row
 
     def __next__(self):
