@@ -1,7 +1,7 @@
 import itertools
 from tqdm import tqdm
 import pandas as pd
-from kipoi.data import SampleIterator
+from kipoi.data import SampleIterator, Dataset
 from mmsplice import MMSplice
 from mmsplice.junction_dataloader import JunctionPSI5VCFDataloader, \
     JunctionPSI3VCFDataloader
@@ -15,7 +15,7 @@ from count_table import CountTable
 class SpliceOutlierDataloader(SampleIterator):
 
     def __init__(self, fasta_file, vcf_file, ref_table5=None, ref_table3=None,
-                 count_cat=None, spliceAI_vcf=None, **kwargs):
+                 **kwargs):
         if ref_table5 is None and ref_table3 is None:
             raise ValueError(
                 '`ref_table5` and `ref_table3` cannot be both None')
@@ -28,34 +28,18 @@ class SpliceOutlierDataloader(SampleIterator):
             self.ref_table5 = self._read_ref_table(ref_table5)
             self.dl5 = JunctionPSI5VCFDataloader(
                 ref_table5, fasta_file, vcf_file, encode=False, **kwargs)
-            if count_cat:
-                ct = CountTable.read_csv(count_cat)
-                common_junctions = set(self.ref_table5.df.index).intersection(set(ct.event5.index))
-                self.count_cat5 = ct.filter_event5(common_junctions)
-                self.ref_psi5_cat = self.count_cat5.ref_psi5()
-            else:
-                self.count_cat5 = None
             self._generator = itertools.chain(
                 self._generator,
-                self._iter_dl(self.dl5, self.ref_table5, self.count_cat5, self.ref_psi5_cat, event_type='psi5'))
+                self._iter_dl(self.dl5, self.ref_table5, event_type='psi5'))
               
         if ref_table3:
             self.ref_table3 = self._read_ref_table(ref_table3)
             self.dl3 = JunctionPSI3VCFDataloader(
                 ref_table3, fasta_file, vcf_file, encode=False, **kwargs)
-            if count_cat:
-                ct = CountTable.read_csv(count_cat)
-                common_junctions = set(self.ref_table3.df.index).intersection(set(ct.event3.index))
-                self.count_cat3 = ct.filter_event3(common_junctions)
-                self.ref_psi3_cat = self.count_cat3.ref_psi3()
-            else:
-                self.count_cat3 = None
             self._generator = itertools.chain(
                 self._generator,
-                self._iter_dl(self.dl3, self.ref_table3, self.count_cat3, self.ref_psi3_cat, event_type='psi3'))       
+                self._iter_dl(self.dl3, self.ref_table3, event_type='psi3'))       
         
-
-
     @staticmethod
     def _read_ref_table(path):
         if type(path) == str:
@@ -67,7 +51,7 @@ class SpliceOutlierDataloader(SampleIterator):
                 'ref_table should be path to ref_table file'
                 ' or `SplicingRefTable` object')
 
-    def _iter_dl(self, dl, ref_table, count_cat, ref_psi_cat, event_type):
+    def _iter_dl(self, dl, ref_table, event_type):
         for row in dl:
             
             junction_id = row['metadata']['exon']['junction']
@@ -76,28 +60,6 @@ class SpliceOutlierDataloader(SampleIterator):
             row['metadata']['junction']['junction'] = ref_row.name
             row['metadata']['junction']['event_type'] = event_type
             row['metadata']['junction'].update(ref_row.to_dict())
-      
-            #count_cat contains RNA seq of cat for each sample. If samples not provided ignore count_cat
-            if 'samples' in row['metadata']['variant'] and count_cat!=None: 
-                samples = row['metadata']['variant']['samples'].split(';')
-                
-                if junction_id in count_cat.junctions:
-                    if event_type=='psi5':
-                        psi_cat = count_cat.psi5
-                    else:
-                        psi_cat = count_cat.psi3
-
-                    row['metadata']['junction']['cat'] = {
-                        'samples': samples,
-                        'counts': count_cat.df.loc[junction_id, samples].tolist(), #count_cat.counts.loc[junction_id, samples].tolist()
-                        'psi': psi_cat.loc[junction_id, samples].tolist(),
-                        'psi_ref': ref_psi_cat.loc[junction_id]['ref_psi'],
-                        'k': ref_psi_cat.loc[junction_id]['k'],
-                        'n': ref_psi_cat.loc[junction_id]['n'],
-                    }
-                    
-            elif count_cat:
-                logging.warning('count_table will be ignored because samples=False')
 
             yield row
 
@@ -118,7 +80,110 @@ class SpliceOutlierDataloader(SampleIterator):
     def _encode_batch_seq(self, batch):
         return {k: encodeDNA(v.tolist()) for k, v in batch.items()}
 
+    
+class CatDataloader(Dataset):
 
+    def __init__(self, ref_table5=None, ref_table3=None,
+                 count_cat=None, **kwargs):
+        if ref_table5 is None and ref_table3 is None:
+            raise ValueError(
+                '`ref_table5` and `ref_table3` cannot be both None')
+     
+        self.common_junctions5 = None
+        self.common_junctions3 = None
+        
+        if count_cat:
+            ct = CountTable.read_csv(count_cat)
+            self.samples = ct.samples
+            if ref_table5:
+                self.ref_table5 = self._read_ref_table(ref_table5)
+                self.common_junctions5 = list(set(self.ref_table5.df.index).intersection(set(ct.event5.index)))
+                self.count_cat5 = ct.filter_event5(self.common_junctions5)
+                self.ref_psi5_cat = self.count_cat5.ref_psi5()
+            if ref_table3:
+                self.ref_table3 = self._read_ref_table(ref_table3)
+                self.common_junctions3 = list(set(self.ref_table3.df.index).intersection(set(ct.event3.index)))
+                self.count_cat3 = ct.filter_event3(self.common_junctions3)
+                self.ref_psi3_cat = self.count_cat3.ref_psi3()
+        else:
+            raise ValueError(
+            '`You need to provide a count table for the cat tissue')
+
+    def __len__(self):
+        if self.common_junctions5 == None:
+            return len(self.common_junctions3)
+        elif self.common_junctions3 == None:
+            return len(self.common_junctions5)
+        else:
+            return len(self.common_junctions5 + self.common_junctions3)
+    
+    def __getitem__(self, idx):
+
+        if self.common_junctions5 == None:
+            event_type = 'psi3'
+            junction_id = self.common_junctions3[idx]
+            count_cat = self.count_cat3
+            psi_cat = count_cat.psi3
+            ref_psi_cat = self.ref_psi3_cat
+            ref_table = self.ref_table3
+        elif self.common_junctions3 == None:
+            event_type = 'psi5'
+            junction_id = self.common_junctions5[idx]
+            count_cat = self.count_cat5
+            psi_cat = count_cat.psi5
+            ref_psi_cat = self.ref_psi5_cat
+            ref_table = self.ref_table5
+        else:
+            if idx < len(self.common_junctions5):
+                event_type = 'psi5'
+                junction_id = self.common_junctions5[idx]
+                count_cat = self.count_cat5
+                psi_cat = count_cat.psi5
+                ref_psi_cat = self.ref_psi5_cat
+                ref_table = self.ref_table5
+            else:
+                idx = idx - len(self.common_junctions5)
+                event_type = 'psi3'
+                junction_id = self.common_junctions3[idx]
+                count_cat = self.count_cat3
+                psi_cat = count_cat.psi3
+                ref_psi_cat = self.ref_psi3_cat
+                ref_table = self.ref_table3
+
+        ref_row = ref_table.df.loc[junction_id]
+        row = {
+            "inputs": None,
+            "metadata": {
+                "target_tissue": {
+                    "junction": junction_id,
+                    "event_type": event_type,    
+                },
+                'cat_tissue': {
+                    'junction': junction_id,
+                    'samples': self.samples,
+                    'counts': count_cat.df.loc[junction_id, self.samples].tolist(), #count_cat.counts.loc[junction_id, samples].tolist()
+                    'psi': psi_cat.loc[junction_id, self.samples].tolist(),
+                    'psi_ref': ref_psi_cat.loc[junction_id]['ref_psi'],
+                    'k': ref_psi_cat.loc[junction_id]['k'],
+                    'n': ref_psi_cat.loc[junction_id]['n'],
+                }
+            }
+        }
+        row['metadata']['target_tissue'].update(ref_row.to_dict())
+        return row
+    
+    @staticmethod
+    def _read_ref_table(path):
+        if type(path) == str:
+            return SplicingRefTable.read_csv(path)
+        elif type(path) == SplicingRefTable:
+            return path
+        else:
+            raise ValueError(
+                'ref_table should be path to ref_table file'
+                ' or `SplicingRefTable` object')
+
+    
 class SpliceOutlier:
 
     def __init__(self, clip_threshold=None):

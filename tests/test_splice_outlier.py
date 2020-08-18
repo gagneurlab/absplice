@@ -84,15 +84,15 @@ def test_outlier_results_multi_vcf(outlier_model):
     ]
 
     
-def test_outlier_results_multi_vcf_cat(outlier_model):
-    dl = SpliceOutlierDataloader(
-        fasta_file, multi_vcf_file,
-        ref_table5=ref_table5_kn_file, ref_table3=ref_table3_kn_file, count_cat=count_cat_file,
-        samples=True)
+# def test_outlier_results_multi_vcf_cat(outlier_model):
+#     dl = SpliceOutlierDataloader(
+#         fasta_file, multi_vcf_file,
+#         ref_table5=ref_table5_kn_file, ref_table3=ref_table3_kn_file, count_cat=count_cat_file,
+#         samples=True)
 
-    results = outlier_model.predict_on_dataloader(dl)
-    assert results.gene.index.names == ['gene_id', 'sample']
-    assert results.gene.index.tolist() == [
-        ('ENSG00000012048.22_5', 'NA00002'),
-        ('ENSG00000012048.22_5', 'NA00003')
-    ]
+#     results = outlier_model.predict_on_dataloader(dl)
+#     assert results.gene.index.names == ['gene_id', 'sample']
+#     assert results.gene.index.tolist() == [
+#         ('ENSG00000012048.22_5', 'NA00002'),
+#         ('ENSG00000012048.22_5', 'NA00003')
+#     ]

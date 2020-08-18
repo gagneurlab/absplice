@@ -1,5 +1,5 @@
 import pytest
-from splicing_outlier_prediction import SpliceOutlierDataloader
+from splicing_outlier_prediction import SpliceOutlierDataloader, CatDataloader
 
 
 vcf_file = 'tests/data/test.vcf.gz'
@@ -14,5 +14,11 @@ count_cat_file = 'tests/data/test_count_table_cat_chrom17.csv'
 def outlier_dl():
     return SpliceOutlierDataloader(
         fasta_file, vcf_file,
+        ref_table5=ref_table5_kn_file, ref_table3=ref_table3_kn_file)
+
+
+@pytest.fixture
+def cat_dl():
+    return CatDataloader(
         ref_table5=ref_table5_kn_file, ref_table3=ref_table3_kn_file,
         count_cat=count_cat_file)
