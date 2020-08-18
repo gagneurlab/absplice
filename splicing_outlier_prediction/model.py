@@ -10,6 +10,7 @@ from mmsplice.utils import encodeDNA, df_batch_writer, \
 from splicing_outlier_prediction import SplicingRefTable
 from splicing_outlier_prediction.utils import get_abs_max_rows
 from count_table import CountTable
+from scipy.special import logit
 
 
 class SpliceOutlierDataloader(SampleIterator):
@@ -91,7 +92,7 @@ class CatDataloader(Dataset):
      
         self.common_junctions5 = None
         self.common_junctions3 = None
-        
+
         if count_cat:
             ct = CountTable.read_csv(count_cat)
             self.samples = ct.samples
@@ -160,7 +161,6 @@ class CatDataloader(Dataset):
                 },
                 'cat_tissue': {
                     'junction': junction_id,
-                    'samples': self.samples,
                     'counts': count_cat.df.loc[junction_id, self.samples].tolist(), #count_cat.counts.loc[junction_id, samples].tolist()
                     'psi': psi_cat.loc[junction_id, self.samples].tolist(),
                     'psi_ref': ref_psi_cat.loc[junction_id]['ref_psi'],
@@ -188,7 +188,7 @@ class SpliceOutlier:
 
     def __init__(self, clip_threshold=None):
         self.mmsplice = MMSplice()
-        self.clip_threshold = clip_threshold
+        self.clip_threshold = clip_threshold    
 
     def predict_on_batch(self, batch):
         columns = [
@@ -226,8 +226,83 @@ class SpliceOutlier:
     def predict_save(self, dataloader, output_csv,
                      batch_size=512, progress=True):
         df_batch_writer(self._predict_on_dataloader(dataloader), output_csv)
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+        
+class CatSpliceOutlier:
 
+    def __init__(self, clip_threshold=None):
+        self.clip_threshold = clip_threshold
+#         __import__("pdb").set_trace()
+          
+    def _predict_batch(self, batch, dataloader, optional_metadata=None):
+        optional_metadata = optional_metadata or []
 
+        df = pd.DataFrame({
+            'target_psi_ref': batch['metadata']['target_tissue']['psi'],
+            'cat_psi_ref': batch['metadata']['cat_tissue']['psi_ref'],
+        })
+        
+        for i, sample in enumerate(dataloader.samples):
+            df[sample + '_cat_psi'] = batch['metadata']['cat_tissue']['psi'][i]
+            df[sample + '_cat_delta_logit_psi'] = logit(df[sample + '_cat_psi']) - logit(df['cat_psi_ref'])
+            
+        
+        for key in optional_metadata:
+            for k, v in batch['metadata']['cat_tissue'].items():
+                if key in v:
+                    df[key] = v[key]
+   
+        return df
+
+    def predict_on_batch(self, batch, dataloader):
+        columns = [
+            *batch['metadata']['cat_tissue'].keys()
+        ]
+#         df = self._predict_batch(batch, dataloader, columns)
+        df = self._predict_batch(batch, dataloader)
+    
+        for i, sample in enumerate(dataloader.samples):
+            delta_psi = delta_logit_PSI_to_delta_PSI(
+                df[sample + '_cat_delta_logit_psi'],
+                df['target_psi_ref'],
+                clip_threshold=self.clip_threshold or 0.01
+            )
+            df[sample + '_target_delta_psi'] = delta_psi
+        return df
+
+    def _predict_on_dataloader(self, dataloader,
+                               batch_size=512, progress=True):
+        dt_iter = dataloader.batch_iter(batch_size=batch_size)
+        if progress:
+            dt_iter = tqdm(dt_iter)
+
+        for batch in dt_iter:
+            yield self.predict_on_batch(batch, dataloader)
+
+    def predict_on_dataloader(self, dataloader, batch_size=512, progress=True):
+        return SplicingOutlierResult(pd.concat(
+            self._predict_on_dataloader(
+                dataloader,
+                batch_size=batch_size,
+                progress=progress)
+        ))
+
+    def predict_save(self, dataloader, output_csv,
+                     batch_size=512, progress=True):
+        df_batch_writer(self._predict_on_dataloader(dataloader), output_csv)
+   
+        
 class SplicingOutlierResult:
 
     def __init__(self, df):

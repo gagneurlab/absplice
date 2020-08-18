@@ -51,6 +51,7 @@ def test_cat_dataloader_len5(cat_dl5):
 def test_cat_dataloader_getitem(cat_dl):
     rows = list(cat_dl) 
     rows = sorted(rows, key= lambda x: x['metadata']['target_tissue']['junction'])
+    assert sorted(cat_dl.samples) == ['NA00001', 'NA00002', 'NA00003']
 #     # OR
 #     rows = [
 #         i
@@ -64,7 +65,6 @@ def test_cat_dataloader_getitem(cat_dl):
     assert rows[0]['metadata']['target_tissue']['junction'] == '17:41197819-41199659:-' #first common junction, dataloader iterates over junctions
     assert rows[0]['metadata']['target_tissue']['event_type'] == 'psi5'
     assert rows[0]['metadata']['target_tissue']['psi'] == 1.0
-    assert rows[0]['metadata']['cat_tissue']['samples'] == ['NA00001', 'NA00002', 'NA00003']
     assert rows[0]['metadata']['cat_tissue']['counts'] == [25, 12, 28]
     assert rows[0]['metadata']['cat_tissue']['psi'] == [1.0, 1.0, 1.0]
     assert rows[0]['metadata']['cat_tissue']['psi_ref'] == 1.0
@@ -75,7 +75,6 @@ def test_cat_dataloader_getitem(cat_dl):
     assert rows[-1]['metadata']['target_tissue']['junction'] == '17:41251897-41256138:-' #first common junction, dataloader iterates over junctions
     assert rows[-1]['metadata']['target_tissue']['event_type'] == 'psi5'
     assert rows[-1]['metadata']['target_tissue']['psi'] == 0.7454834226722256
-    assert rows[-1]['metadata']['cat_tissue']['samples'] == ['NA00001', 'NA00002', 'NA00003']
     assert rows[-1]['metadata']['cat_tissue']['counts'] == [9, 6, 15]
     assert rows[-1]['metadata']['cat_tissue']['psi'] == [0.6, 0.6, 0.6521739130434783]
     assert rows[-1]['metadata']['cat_tissue']['psi_ref'] == 0.625
