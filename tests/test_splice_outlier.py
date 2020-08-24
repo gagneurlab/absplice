@@ -60,6 +60,14 @@ def outlier_results(outlier_model, outlier_dl):
     return outlier_model.predict_on_dataloader(outlier_dl)
 
 
+def test_splicing_outlier_result_psi(outlier_results):
+    results = outlier_results.psi5
+    assert all(results.psi5.df['event_type'] == 'psi5')
+
+    results = outlier_results.psi3
+    assert all(results.psi3.df['event_type'] == 'psi3')
+
+
 def test_splicing_outlier_result_splice_site(outlier_results):
     assert sorted(outlier_results.splice_site.index) == sorted(
         set(outlier_results.df['splice_site']))
@@ -67,7 +75,7 @@ def test_splicing_outlier_result_splice_site(outlier_results):
 
 def test_splicing_outlier_result_gene(outlier_results):
     assert sorted(outlier_results.gene.index) == sorted(
-        set(outlier_results.df['gene_id']))
+        set(outlier_results.df['gene_name']))
 
 
 def test_outlier_results_multi_vcf(outlier_model):
@@ -77,8 +85,8 @@ def test_outlier_results_multi_vcf(outlier_model):
         samples=True)
 
     results = outlier_model.predict_on_dataloader(dl)
-    assert results.gene.index.names == ['gene_id', 'sample']
+    assert results.gene.index.names == ['gene_name', 'sample']
     assert results.gene.index.tolist() == [
-        ('ENSG00000012048.22_5', 'NA00002'),
-        ('ENSG00000012048.22_5', 'NA00003')
+        ('BRCA1', 'NA00002'),
+        ('BRCA1', 'NA00003')
     ]

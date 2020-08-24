@@ -140,31 +140,44 @@ class SplicingOutlierResult:
         return df.rename(columns={'samples': 'sample'}).explode('sample')
 
     @property
+    def psi5(self):
+        return SplicingOutlierResult(self.df[self.df['event_type'] == 'psi5'])
+
+    @property
+    def psi3(self):
+        return SplicingOutlierResult(self.df[self.df['event_type'] == 'psi3'])
+
+    @property
     def junction(self):
         if self._junction is None:
             df = self.df
             if 'samples' in self.df:
                 df = self._explode_samples(df)
-                index = ['junction', 'sample']
+                index = ['junction', 'sample', 'event_type']
             else:
-                index = 'junction'
-            self._junction = df.set_index(index)
+                index = ['junction', 'event_type']
+            self._junction = get_abs_max_rows(
+                df.set_index('junction'), index, 'delta_psi') \
+                .reset_index('event_type')
         return self._junction
 
     @property
     def splice_site(self):
         if self._splice_site is None:
-            index = ['splice_site', 'sample'] \
-                if 'samples' in self.df else 'splice_site'
+            index = ['splice_site', 'event_type']
+            if 'samples' in self.df:
+                index.append('sample')
             self._splice_site = get_abs_max_rows(
-                self.junction, index, 'delta_psi')
+                self.junction, index, 'delta_psi') \
+                .reset_index('event_type')
         return self._splice_site
 
     @property
     def gene(self):
         if self._gene is None:
-            index = ['gene_name', 'sample'] \
-                if 'samples' in self.df else 'gene_id'
+            index = ['gene_name']
+            if 'samples' in self.df:
+                index.append('sample')
             self._gene = get_abs_max_rows(
                 self.junction, index, 'delta_psi')
         return self._gene
