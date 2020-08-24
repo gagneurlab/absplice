@@ -85,7 +85,7 @@ class SpliceOutlier:
 
     def predict_on_batch(self, batch):
         columns = [
-            'samples', 'maf',
+            'samples', 'maf', 'genotype', 'GQ', 'DP_ALT',
             *batch['metadata']['junction'].keys()
         ]
         df = self.mmsplice._predict_batch(batch, columns)
@@ -163,20 +163,22 @@ class SplicingOutlierResult:
     @property
     def gene(self):
         if self._gene is None:
-            index = ['gene_id', 'sample'] \
+            index = ['gene_name', 'sample'] \
                 if 'samples' in self.df else 'gene_id'
             self._gene = get_abs_max_rows(
                 self.junction, index, 'delta_psi')
         return self._gene
 
-    def add_maf(self, population):
-        self.df['maf'] = self.df['variant'].map(lambda x: population.get(x, 0))
+    def add_maf(self, population, default=0):
+        self.df['maf'] = self.df['variant'].map(
+            lambda x: population.get(x, default))
 
     def filter_maf(self, max_num_sample=2, population=None, maf_cutoff=0.001):
-        df = self.df[self.df.str.split(';').map(len) <= max_num_sample]
+        df = self.df[self.df['samples'].str.split(
+            ';').map(len) <= max_num_sample]
 
         if population:
-            df = df['variant'].map(
-                lambda x: population.get(x, 0) <= maf_cutoff)
+            df = df[df['variant'].map(
+                lambda x: population.get(x, 0) <= maf_cutoff)]
 
         return SplicingOutlierResult(df)
