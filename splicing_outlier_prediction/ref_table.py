@@ -18,6 +18,10 @@ class SplicingRefTable:
         elif 'alpha' in df.columns and 'beta' in df.columns:
             return 'bb'
 
+    @property
+    def junctions(self):
+        return self.df.index
+
     @staticmethod
     def valid():
         raise NotImplementedError()

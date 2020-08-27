@@ -10,8 +10,13 @@ def cat_outlier_model():
 
 
 def test_cat_splicing_outlier_on_batch(cat_outlier_model, cat_dl):
+
     batch = next(cat_dl.batch_iter())
+
     df = cat_outlier_model.predict_on_batch(batch, cat_dl)
+
+    __import__("pdb").set_trace()
+
     assert df.columns.tolist() == [
         'target_psi_ref', 'cat_psi_ref', 'NA00001_cat_psi',
         'NA00001_cat_delta_logit_psi', 'NA00002_cat_psi',
@@ -19,7 +24,6 @@ def test_cat_splicing_outlier_on_batch(cat_outlier_model, cat_dl):
         'NA00003_cat_delta_logit_psi', 'NA00001_target_delta_psi',
         'NA00002_target_delta_psi', 'NA00003_target_delta_psi']
     assert df.shape[0] == 32
-
 
 # def test_cat_splicing_outlier_predict_on_dataloader(outlier_model, outlier_dl):
 #     results = outlier_model.predict_on_dataloader(outlier_dl)
