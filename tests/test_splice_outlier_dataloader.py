@@ -43,6 +43,7 @@ def test_splicing_outlier_dataloader_next(outlier_dl):
     assert junction['junction'] == '17:41197819-41199659:-'
     assert variant['annotation'] == '17:41197805:ACATCTGCC>A'
     assert junction['event_type'] == 'psi5'
+    assert junction['splice_site'] == '17:41199659:-'
     assert junction['psi'] == 1
 
     junction = rows[-1]['metadata']['junction']
@@ -50,4 +51,5 @@ def test_splicing_outlier_dataloader_next(outlier_dl):
     assert junction['junction'] == '17:41246877-41251791:-'
     assert variant['annotation'] == '17:41251886:A>G'
     assert junction['event_type'] == 'psi3'
+    assert junction['splice_site'] == '17:41246877:-'
     assert junction['psi'] == 0.20666666666666667

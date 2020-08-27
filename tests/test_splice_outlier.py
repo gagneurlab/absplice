@@ -38,6 +38,8 @@ def test_splicing_outlier_predict_on_dataloader(outlier_model, outlier_dl):
         'ref_donorIntron', 'alt_acceptorIntron', 'alt_acceptor',
         'alt_exon', 'alt_donor', 'alt_donorIntron']
 
+    __import__("pdb").set_trace()
+
 
 def test_splicing_outlier_predict_save(outlier_model, outlier_dl, tmp_path):
     output_csv = tmp_path / 'pred.csv'
