@@ -6,11 +6,10 @@ from mmsplice import MMSplice
 from mmsplice.junction_dataloader import JunctionPSI5VCFDataloader, \
     JunctionPSI3VCFDataloader
 from mmsplice.utils import encodeDNA, df_batch_writer, \
-    delta_logit_PSI_to_delta_PSI
+    delta_logit_PSI_to_delta_PSI, logit, expit
 from splicing_outlier_prediction import SplicingRefTable
 from splicing_outlier_prediction.utils import get_abs_max_rows
 from count_table import CountTable
-from scipy.special import logit
 from splicing_outlier_prediction.dataloader import RefTableMixin
 
 
@@ -24,14 +23,14 @@ class SpliceOutlierDataloader(RefTableMixin, SampleIterator):
 
         if self.ref_table5:
             self.dl5 = JunctionPSI5VCFDataloader(
-                self.ref_table5, fasta_file, vcf_file, encode=False, **kwargs)
+                ref_table5, fasta_file, vcf_file, encode=False, **kwargs)
             self._generator = itertools.chain(
                 self._generator,
                 self._iter_dl(self.dl5, self.ref_table5, event_type='psi5'))
 
         if self.ref_table3:
             self.dl3 = JunctionPSI3VCFDataloader(
-                self.ref_table3, fasta_file, vcf_file, encode=False, **kwargs)
+                ref_table3, fasta_file, vcf_file, encode=False, **kwargs)
             self._generator = itertools.chain(
                 self._generator,
                 self._iter_dl(self.dl3, self.ref_table3, event_type='psi3'))
@@ -114,50 +113,39 @@ class CatSpliceOutlier:
         self.clip_threshold = clip_threshold
 #         __import__("pdb").set_trace()
 
-    def _predict_batch(self, batch, dataloader, optional_metadata=None):
+    def predict_on_batch(self, batch, dataloader, optional_metadata=None):
         optional_metadata = optional_metadata or []
 
         cat_psi_columns = [f'{s}_cat_psi' for s in dataloader.samples]
         delta_logit_columns = [
             f'{s}_delta_logit_psi' for s in dataloader.samples]
 
-        df = pd.DataFrame(batch['inputs']['psi'], columns=cat_psi_columns)
-
-        df_delta_logit = pd.DataFrame(logit(df.values) - logit())
-
         df = pd.DataFrame({
-            'target_psi_ref': batch['metadata']['target_tissue']['psi'],
-            'cat_psi_ref': batch['metadata']['cat_tissue']['psi_ref'],
+            'junction': batch['metadata']['junction'],
         })
 
-        __import__("pdb").set_trace()
+        for i in batch['metadata']['target_tissue'].keys():
+            df[i] = batch['metadata']['target_tissue'][i]
+        df = df.rename(columns={'psi': 'psi_ref'})
+
+        for i in batch['metadata']['cat_tissue'].keys():
+            df[f'cat_{i}'] = batch['metadata']['cat_tissue'][i]
 
         for i, sample in enumerate(dataloader.samples):
-            df[sample + '_cat_psi'] = batch['inputs']['psi'][i]
+            df[sample + '_cat_psi'] = batch['inputs']['psi'][:, i]
             df[sample + '_cat_delta_logit_psi'] = logit(
                 df[sample + '_cat_psi']) - logit(df['cat_psi_ref'])
+            delta_psi = delta_logit_PSI_to_delta_PSI(
+                df[sample + '_cat_delta_logit_psi'],
+                df['psi_ref'],
+                clip_threshold=self.clip_threshold or 0.01
+            )
+            df[sample + '_target_delta_psi'] = delta_psi
 
         for key in optional_metadata:
             for k, v in batch['metadata']['cat_tissue'].items():
                 if key in v:
                     df[key] = v[key]
-
-        return df
-
-    def predict_on_batch(self, batch, dataloader):
-        columns = [
-            *batch['metadata']['cat_tissue'].keys()
-        ]
-#         df = self._predict_batch(batch, dataloader, columns)
-        df = self._predict_batch(batch, dataloader)
-
-        for i, sample in enumerate(dataloader.samples):
-            delta_psi = delta_logit_PSI_to_delta_PSI(
-                df[sample + '_cat_delta_logit_psi'],
-                df['target_psi_ref'],
-                clip_threshold=self.clip_threshold or 0.01
-            )
-            df[sample + '_target_delta_psi'] = delta_psi
         return df
 
     def _predict_on_dataloader(self, dataloader,

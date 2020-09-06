@@ -8,6 +8,8 @@ class CatDataloader(RefTableMixin, Dataset):
 
     def __init__(self, count_cat, ref_table5=None, ref_table3=None, **kwargs):
         super().__init__(ref_table5, ref_table3, **kwargs)
+
+        # TODO: bug in count table because columns[:4] is wrong is index in columns
         self.ct = CountTable.read_csv(count_cat, **kwargs)
         self.samples = self.ct.samples
 
