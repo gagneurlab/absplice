@@ -68,7 +68,7 @@ def test_cat_dataloader_getitem(cat_dl):
         'junction': '17:41197819-41199659:-',
         'event_type': 'psi5',
         'cat_tissue': {
-            'psi_ref': 1.0,
+            'ref_psi': 1.0,
             'k': 65,
             'n': 65
         },
@@ -79,7 +79,7 @@ def test_cat_dataloader_getitem(cat_dl):
             'Strand': '-',
             'events': '17:41197819-41199659:-',
             'splice_site': '17:41199659:-',
-            'psi': 1.0, 'k': 6337, 'n': 6337,
+            'ref_psi': 1.0, 'k': 6337, 'n': 6337,
             'gene_id': 'ENSG00000012048.22_5', 'gene_name': 'BRCA1',
             'weak': False,
             'transcript_id': 'ENST00000586385.5_1;ENST00000591534.5_1;'
@@ -102,7 +102,7 @@ def test_cat_dataloader_getitem(cat_dl):
         'junction': '17:41251897-41256138:-',
         'event_type': 'psi5',
         'cat_tissue': {
-            'psi_ref': 0.625,
+            'ref_psi': 0.625,
             'k': 30,
             'n': 48
         },
@@ -113,7 +113,7 @@ def test_cat_dataloader_getitem(cat_dl):
             'Strand': '-',
             'events': '17:41251894-41256138:-;17:41251897-41256138:-',
             'splice_site': '17:41256138:-',
-            'psi': 0.7454834226722256, 'k': 3755, 'n': 5037,
+            'ref_psi': 0.7454834226722256, 'k': 3755, 'n': 5037,
             'gene_id': 'ENSG00000012048.22_5', 'gene_name': 'BRCA1',
             'weak': False,
             'transcript_id': 'ENST00000470026.5_1;ENST00000493919.5_1;'

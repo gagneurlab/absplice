@@ -8,8 +8,6 @@ class CatDataloader(RefTableMixin, Dataset):
 
     def __init__(self, count_cat, ref_table5=None, ref_table3=None, **kwargs):
         super().__init__(ref_table5, ref_table3, **kwargs)
-
-        # TODO: bug in count table because columns[:4] is wrong is index in columns
         self.ct = CountTable.read_csv(count_cat, **kwargs)
         self.samples = self.ct.samples
 
@@ -58,7 +56,7 @@ class CatDataloader(RefTableMixin, Dataset):
                 "junction": junction_id,
                 "event_type": event_type,
                 'cat_tissue': {
-                    'psi_ref': ref_psi_cat.loc[junction_id]['ref_psi'],
+                    'ref_psi': ref_psi_cat.loc[junction_id]['ref_psi'],
                     'k': ref_psi_cat.loc[junction_id]['k'],
                     'n': ref_psi_cat.loc[junction_id]['n'],
                 },

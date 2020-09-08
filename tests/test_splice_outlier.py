@@ -83,7 +83,7 @@ def test_outlier_results_multi_vcf(outlier_model):
         ('ENSG00000012048.22_5', 'NA00003')
     ]
 
-    
+
 # def test_outlier_results_multi_vcf_cat(outlier_model):
 #     dl = SpliceOutlierDataloader(
 #         fasta_file, multi_vcf_file,

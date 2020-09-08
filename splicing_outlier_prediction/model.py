@@ -76,7 +76,7 @@ class SpliceOutlier:
         ]
         df = self.mmsplice._predict_batch(batch, columns)
         del df['exons']
-        df = df.rename(columns={'ID': 'variant', 'psi': 'ref_psi'})
+        df = df.rename(columns={'ID': 'variant'})
         delta_psi = delta_logit_PSI_to_delta_PSI(
             df['delta_logit_psi'],
             df['ref_psi'],
@@ -126,7 +126,6 @@ class CatSpliceOutlier:
 
         for i in batch['metadata']['target_tissue'].keys():
             df[i] = batch['metadata']['target_tissue'][i]
-        df = df.rename(columns={'psi': 'psi_ref'})
 
         for i in batch['metadata']['cat_tissue'].keys():
             df[f'cat_{i}'] = batch['metadata']['cat_tissue'][i]
@@ -134,10 +133,10 @@ class CatSpliceOutlier:
         for i, sample in enumerate(dataloader.samples):
             df[sample + '_cat_psi'] = batch['inputs']['psi'][:, i]
             df[sample + '_cat_delta_logit_psi'] = logit(
-                df[sample + '_cat_psi']) - logit(df['cat_psi_ref'])
+                df[sample + '_cat_psi']) - logit(df['cat_ref_psi'])
             delta_psi = delta_logit_PSI_to_delta_PSI(
                 df[sample + '_cat_delta_logit_psi'],
-                df['psi_ref'],
+                df['ref_psi'],
                 clip_threshold=self.clip_threshold or 0.01
             )
             df[sample + '_target_delta_psi'] = delta_psi
