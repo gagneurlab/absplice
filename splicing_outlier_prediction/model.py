@@ -153,12 +153,17 @@ class SplicingOutlierResult:
                 self.junction, index, 'delta_psi')
         return self._gene
 
-    def infer_cat(self, cat_inference):
+    def infer_cat(self, cat_inference, progress=False):
         if 'samples' not in self.df.columns:
             raise ValueError('"samples" column is missing.')
+
+        rows = self.junction.iterrows()
+        if progress:
+            rows = tqdm(rows, total=self.junction.shape[0])
+
         df = pd.DataFrame([
             cat_inference.infer(junction, sample, row['event_type'])
-            for (junction, sample), row in self.junction.iterrows()
+            for (junction, sample), row in rows
             if cat_inference.contains(junction, sample, row['event_type'])
         ]).set_index(['junction', 'sample'])
         self._junction = self.junction.join(df)
