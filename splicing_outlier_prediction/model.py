@@ -178,7 +178,7 @@ class SplicingOutlierResult:
                      .map(len) <= max_num_sample]
 
         if population:
-            df = df['variant'].map(
+            df['maf'] = df['variant'].map(
                 lambda x: population.get(x, 0) <= maf_cutoff)
 
-        return SplicingOutlierResult(df)
+        return SplicingOutlierResult(df[df['maf'] <= maf_cutoff])
