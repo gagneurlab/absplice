@@ -8,6 +8,7 @@ class CatInference(RefTableMixin):
     def __init__(self, count_cat, ref_table5=None, ref_table3=None, **kwargs):
         super().__init__(ref_table5, ref_table3, **kwargs)
         self.ct = CountTable.read_csv(count_cat)
+        self.samples = self.ct.samples
         self.common_junctions5 = list()
         self.common_junctions3 = list()
 
@@ -23,6 +24,19 @@ class CatInference(RefTableMixin):
             self.ref_psi3_cat = self.ct_cat3.ref_psi3(annotation=False)
 
     def infer(self, junction_id, sample, event_type, clip_threshold=0.01):
+        if sample not in self.samples:
+            return {
+                'junction': junction_id,
+                'sample': sample,
+                'count_cat': None,
+                'psi_cat': None,
+                'ref_psi_cat': None,
+                'k_cat': None,
+                'n_cat': None,
+                'delta_logit_psi_cat': None,
+                'delta_psi_cat': None
+            }
+
         if event_type == 'psi5':
             ct_cat = self.ct_cat5
             psi_cat = ct_cat.psi5

@@ -94,6 +94,7 @@ def test_outlier_results_infer_cat(outlier_results, cat_dl, outlier_model):
         samples=True)
 
     results = outlier_model.predict_on_dataloader(dl)
+    results.df.loc[0, 'samples'] = 'NA00002;NA00003;NA00004'
     results.infer_cat(cat_dl)
 
     assert results.junction.columns.tolist() == [
@@ -104,3 +105,6 @@ def test_outlier_results_infer_cat(outlier_results, cat_dl, outlier_model):
         'ref_donorIntron', 'alt_acceptorIntron', 'alt_acceptor', 'alt_exon',
         'alt_donor', 'alt_donorIntron', 'count_cat', 'psi_cat', 'ref_psi_cat',
         'k_cat', 'n_cat', 'delta_logit_psi_cat', 'delta_psi_cat']
+
+    assert results.junction.loc[(
+        '17:41201211-41203079:-', 'NA00004')] is not None
