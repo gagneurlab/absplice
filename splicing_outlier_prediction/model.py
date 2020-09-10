@@ -159,8 +159,9 @@ class SplicingOutlierResult:
         df = pd.DataFrame([
             cat_inference.infer(junction, sample, row['event_type'])
             for (junction, sample), row in self.junction.iterrows()
+            if cat_inference.contains(junction, sample, row['event_type'])
         ]).set_index(['junction', 'sample'])
-        self._junction = pd.concat([self.junction, df], axis=1)
+        self._junction = self.junction.join(df)
         del self._splice_site
         del self._gene
 

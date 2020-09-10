@@ -23,6 +23,17 @@ class CatInference(RefTableMixin):
             self.ct_cat3 = self.ct.filter_event3(self.common_junctions3)
             self.ref_psi3_cat = self.ct_cat3.ref_psi3(annotation=False)
 
+    def contains(self, junction_id, sample, event_type):
+        if sample not in self.samples:
+            return False
+        else:
+            if event_type == 'psi5':
+                return junction_id in self.common_junctions5
+            elif event_type == 'psi3':
+                return junction_id in self.common_junctions3
+            else:
+                raise ValueError('"event_type" should be "psi5" or "psi3"')
+
     def infer(self, junction_id, sample, event_type, clip_threshold=0.01):
         if sample not in self.samples:
             return {
