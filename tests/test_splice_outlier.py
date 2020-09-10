@@ -84,15 +84,23 @@ def test_outlier_results_multi_vcf(outlier_model):
     ]
 
 
-# def test_outlier_results_multi_vcf_cat(outlier_model):
-#     dl = SpliceOutlierDataloader(
-#         fasta_file, multi_vcf_file,
-#         ref_table5=ref_table5_kn_file, ref_table3=ref_table3_kn_file, count_cat=count_cat_file,
-#         samples=True)
+def test_outlier_results_infer_cat(outlier_results, cat_dl, outlier_model):
+    with pytest.raises(ValueError):
+        outlier_results.infer_cat(cat_dl)
 
-#     results = outlier_model.predict_on_dataloader(dl)
-#     assert results.gene.index.names == ['gene_id', 'sample']
-#     assert results.gene.index.tolist() == [
-#         ('ENSG00000012048.22_5', 'NA00002'),
-#         ('ENSG00000012048.22_5', 'NA00003')
-#     ]
+    dl = SpliceOutlierDataloader(
+        fasta_file, multi_vcf_file,
+        ref_table5=ref_table5_kn_file, ref_table3=ref_table3_kn_file,
+        samples=True)
+
+    results = outlier_model.predict_on_dataloader(dl)
+    results.infer_cat(cat_dl)
+
+    assert results.junction.columns.tolist() == [
+        'variant', 'event_type', 'Chromosome', 'Start', 'End', 'Strand',
+        'events', 'splice_site', 'ref_psi', 'k', 'n', 'gene_id', 'gene_name',
+        'weak', 'transcript_id', 'gene_type', 'delta_psi', 'delta_logit_psi',
+        'ref_acceptorIntron', 'ref_acceptor', 'ref_exon', 'ref_donor',
+        'ref_donorIntron', 'alt_acceptorIntron', 'alt_acceptor', 'alt_exon',
+        'alt_donor', 'alt_donorIntron', 'count_cat', 'psi_cat', 'ref_psi_cat',
+        'k_cat', 'n_cat', 'delta_logit_psi_cat', 'delta_psi_cat']

@@ -1,15 +1,13 @@
 import itertools
 from tqdm import tqdm
 import pandas as pd
-from kipoi.data import SampleIterator, Dataset
+from kipoi.data import SampleIterator
 from mmsplice import MMSplice
 from mmsplice.junction_dataloader import JunctionPSI5VCFDataloader, \
     JunctionPSI3VCFDataloader
 from mmsplice.utils import encodeDNA, df_batch_writer, \
-    delta_logit_PSI_to_delta_PSI, logit, expit
-from splicing_outlier_prediction import SplicingRefTable
+    delta_logit_PSI_to_delta_PSI
 from splicing_outlier_prediction.utils import get_abs_max_rows
-from count_table import CountTable
 from splicing_outlier_prediction.dataloader import RefTableMixin
 
 
@@ -107,68 +105,6 @@ class SpliceOutlier:
         df_batch_writer(self._predict_on_dataloader(dataloader), output_csv)
 
 
-class CatSpliceOutlier:
-
-    def __init__(self, clip_threshold=None):
-        self.clip_threshold = clip_threshold
-#         __import__("pdb").set_trace()
-
-    def predict_on_batch(self, batch, dataloader, optional_metadata=None):
-        optional_metadata = optional_metadata or []
-
-        cat_psi_columns = [f'{s}_cat_psi' for s in dataloader.samples]
-        delta_logit_columns = [
-            f'{s}_delta_logit_psi' for s in dataloader.samples]
-
-        df = pd.DataFrame({
-            'junction': batch['metadata']['junction'],
-        })
-
-        for i in batch['metadata']['target_tissue'].keys():
-            df[i] = batch['metadata']['target_tissue'][i]
-
-        for i in batch['metadata']['cat_tissue'].keys():
-            df[f'cat_{i}'] = batch['metadata']['cat_tissue'][i]
-
-        for i, sample in enumerate(dataloader.samples):
-            df[sample + '_cat_psi'] = batch['inputs']['psi'][:, i]
-            df[sample + '_cat_delta_logit_psi'] = logit(
-                df[sample + '_cat_psi']) - logit(df['cat_ref_psi'])
-            delta_psi = delta_logit_PSI_to_delta_PSI(
-                df[sample + '_cat_delta_logit_psi'],
-                df['ref_psi'],
-                clip_threshold=self.clip_threshold or 0.01
-            )
-            df[sample + '_target_delta_psi'] = delta_psi
-
-        for key in optional_metadata:
-            for k, v in batch['metadata']['cat_tissue'].items():
-                if key in v:
-                    df[key] = v[key]
-        return df
-
-    def _predict_on_dataloader(self, dataloader,
-                               batch_size=512, progress=True):
-        dt_iter = dataloader.batch_iter(batch_size=batch_size)
-        if progress:
-            dt_iter = tqdm(dt_iter)
-
-        for batch in dt_iter:
-            yield self.predict_on_batch(batch, dataloader)
-
-    def predict_on_dataloader(self, dataloader, batch_size=512, progress=True):
-        return SplicingOutlierResult(pd.concat(
-            self._predict_on_dataloader(
-                dataloader,
-                batch_size=batch_size,
-                progress=progress)
-        ))
-
-    def predict_save(self, dataloader, output_csv, batch_size=512, progress=True):
-        df_batch_writer(self._predict_on_dataloader(
-            dataloader, batch_size, progress), output_csv)
-
-
 class SplicingOutlierResult:
 
     def __init__(self, df):
@@ -216,6 +152,17 @@ class SplicingOutlierResult:
             self._gene = get_abs_max_rows(
                 self.junction, index, 'delta_psi')
         return self._gene
+
+    def infer_cat(self, cat_inference):
+        if 'samples' not in self.df.columns:
+            raise ValueError('"samples" column is missing.')
+        df = pd.DataFrame([
+            cat_inference.infer(junction, sample, row['event_type'])
+            for (junction, sample), row in self.junction.iterrows()
+        ]).set_index(['junction', 'sample'])
+        self._junction = pd.concat([self.junction, df], axis=1)
+        del self._splice_site
+        del self._gene
 
     def add_maf(self, population):
         self.df['maf'] = self.df['variant'].map(lambda x: population.get(x, 0))
