@@ -8,18 +8,18 @@ class CatInference(RefTableMixin):
     def __init__(self, count_cat, ref_table5=None, ref_table3=None, **kwargs):
         super().__init__(ref_table5, ref_table3, **kwargs)
         self.ct = CountTable.read_csv(count_cat)
-        self.samples = self.ct.samples
+        self.samples = set(self.ct.samples)
         self.common_junctions5 = list()
         self.common_junctions3 = list()
 
         if self.ref_table5:
-            self.common_junctions5 = list(
-                set(self.ref_table5.junctions).intersection(self.ct.junctions))
+            self.common_junctions5 = set(self.ref_table5.junctions) \
+                .intersection(self.ct.junctions)
             self.ct_cat5 = self.ct.filter_event5(self.common_junctions5)
             self.ref_psi5_cat = self.ct_cat5.ref_psi5(annotation=False)
         if self.ref_table3:
-            self.common_junctions3 = list(
-                set(self.ref_table3.junctions).intersection(self.ct.junctions))
+            self.common_junctions3 = set(self.ref_table3.junctions) \
+                .intersection(self.ct.junctions)
             self.ct_cat3 = self.ct.filter_event3(self.common_junctions3)
             self.ref_psi3_cat = self.ct_cat3.ref_psi3(annotation=False)
 
