@@ -167,8 +167,8 @@ class SplicingOutlierResult:
             if cat_inference.contains(junction, sample, row['event_type'])
         ]).set_index(['junction', 'sample'])
         self._junction = self.junction.join(df)
-        del self._splice_site
-        del self._gene
+        self._splice_site = None
+        self._gene = None
 
     def add_maf(self, population):
         self.df['maf'] = self.df['variant'].map(lambda x: population.get(x, 0))
