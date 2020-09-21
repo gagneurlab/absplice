@@ -8,6 +8,7 @@ fasta_file = 'tests/data/hg19.nochr.chr17.fa'
 ref_table5_kn_file = 'tests/data/test_lymphocytes_ref_table5_kn.csv'
 ref_table3_kn_file = 'tests/data/test_lymphocytes_ref_table3_kn.csv'
 count_cat_file = 'tests/data/test_count_table_cat_chrom17.csv'
+spliceai_db_path = 'tests/data/spliceAI.db'
 
 
 @pytest.fixture
