@@ -49,27 +49,31 @@ def test_SpliceAI_predict_df(spliceai):
         'acceptor_loss_positiin': [29.0, 3.0],
         'donor_gain_position': [11.0, 30.0],
         'donor_loss_position': [33.0, 3.0]
-    })).set_index('variant'))
+    })).set_index('variant')
 
 
 @pytest.fixture
 def spliceai_db():
-    return SpliceAI(fasta_file, 'grch37', db_path = spliceai_db_path)
+    return SpliceAI(fasta_file, 'grch37', db_path=spliceai_db_path)
 
 
 def test_SpliceAI_predict_with_db(spliceai_db, mocker):
-    scores=spliceai_db.predict('17:34149615:A>T')
+    scores = spliceai_db.predict('17:34149615:A>T')
     assert scores[0] == spliceai_db.Score(
-        gene_name = 'TAF15', delta_score = 0.25,
-        acceptor_gain = 0.25, acceptor_loss = 0.0,
-        donor_gain = 0.0, donor_loss = 0.0,
-        acceptor_gain_position = 11.0, acceptor_loss_positiin = 29.0,
-        donor_gain_position = 11.0, donor_loss_position = 33.0)
+        gene_name='TAF15', delta_score=0.25,
+        acceptor_gain=0.25, acceptor_loss=0.0,
+        donor_gain=0.0, donor_loss=0.0,
+        acceptor_gain_position=11.0, acceptor_loss_positiin=29.0,
+        donor_gain_position=11.0, donor_loss_position=33.0)
 
 
 def test_SpliceAI_predict_on_vcf(spliceai_db, tmp_path):
-    spliceai_db.samples=True
-    output_csv=tmp_path / 'output.csv'
+    spliceai_db.samples = True
+    output_csv = tmp_path / 'output.csv'
     spliceai_db.predict_save(multi_vcf_file, output_csv)
-    df=pd.read_csv(output_csv)
-    assert df is not None
+    df = pd.read_csv(output_csv)
+    assert df.columns.tolist() == [
+        'variant', 'gene_name', 'delta_score', 'acceptor_gain',
+        'acceptor_loss', 'donor_gain', 'donor_loss', 'acceptor_gain_position',
+        'acceptor_loss_positiin', 'donor_gain_position', 'donor_loss_position'
+    ]

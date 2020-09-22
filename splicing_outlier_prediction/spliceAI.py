@@ -138,9 +138,9 @@ class SpliceAI:
     def _predict_on_vcf(self, vcf_file, batch_size=100, samples=False):
         vcf = MultiSampleVCF(vcf_file)
         for variants in vcf.batch_iter(batch_size):
-            yield self.predict_df(variants, vcf)
+            yield self.predict_df(variants, vcf).reset_index('variant')
 
-    def predict_save(self, vcf_file, output_csv, batch_size=100, samples=False):
-        vcf = MultiSampleVCF(vcf_file)
+    def predict_save(self, vcf_file, output_csv,
+                     batch_size=100, samples=False):
         batches = self._predict_on_vcf(vcf_file, batch_size=batch_size)
         df_batch_writer(batches, output_csv)
