@@ -2,6 +2,7 @@
 This file provides python interface for spliceAI
 """
 from collections import namedtuple
+from tqdm import tqdm
 import numpy as np
 import pandas as pd
 from kipoiseq import Variant
@@ -141,6 +142,8 @@ class SpliceAI:
             yield self.predict_df(variants, vcf).reset_index('variant')
 
     def predict_save(self, vcf_file, output_csv,
-                     batch_size=100, samples=False):
+                     batch_size=100, samples=False, progress=True):
         batches = self._predict_on_vcf(vcf_file, batch_size=batch_size)
+        if progress:
+            batches = iter(tqdm(batches))
         df_batch_writer(batches, output_csv)
