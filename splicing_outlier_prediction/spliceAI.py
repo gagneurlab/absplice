@@ -115,8 +115,16 @@ class SpliceAI:
         ]
 
     def predict_df(self, variants, vcf=None):
-        return pd.DataFrame(self._predict_df(variants, vcf)
-                            ).set_index('variant')
+        rows = self._predict_df(variants, vcf)
+        return pd.DataFrame(rows, columns=[
+            'variant', 'gene_name', 'delta_score',
+            'acceptor_gain', 'acceptor_loss',
+            'donor_gain', 'donor_loss',
+            'acceptor_gain_position',
+            'acceptor_loss_positiin',
+            'donor_gain_position',
+            'donor_loss_position'
+        ]).set_index('variant')
 
     def _predict_df(self, variants, vcf=None):
         for variant in variants:
@@ -130,8 +138,9 @@ class SpliceAI:
     def _predict_on_vcf(self, vcf_file, batch_size=100, samples=False):
         vcf = MultiSampleVCF(vcf_file)
         for variants in vcf.batch_iter(batch_size):
-            yield self.predict_df(variants, vcf).reset_index()
+            yield self.predict_df(variants, vcf)
 
     def predict_save(self, vcf_file, output_csv, batch_size=100, samples=False):
+        vcf = MultiSampleVCF(vcf_file)
         batches = self._predict_on_vcf(vcf_file, batch_size=batch_size)
         df_batch_writer(batches, output_csv)
