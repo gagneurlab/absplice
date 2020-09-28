@@ -49,7 +49,7 @@ def test_SpliceAI_predict_df(spliceai):
         'acceptor_loss_positiin': [29.0, 3.0],
         'donor_gain_position': [11.0, 30.0],
         'donor_loss_position': [33.0, 3.0]
-    })).set_index('variant')
+    }).set_index('variant'))
 
 
 @pytest.fixture
@@ -77,3 +77,9 @@ def test_SpliceAI_predict_on_vcf(spliceai_db, tmp_path):
         'acceptor_loss', 'donor_gain', 'donor_loss', 'acceptor_gain_position',
         'acceptor_loss_positiin', 'donor_gain_position', 'donor_loss_position'
     ]
+
+
+def test_SpliceAI_predict_db_only():
+    spliceai = SpliceAI(db_path=spliceai_db_path)
+    df = spliceai.predict_df(['17:34149615:A>T', '17:34149617:A>T'])
+    assert df.shape == (1, 10)

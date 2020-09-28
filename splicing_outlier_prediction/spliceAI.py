@@ -72,7 +72,8 @@ class SpliceAI:
                                  'donor_loss_position'])
     Record = namedtuple('Record', ['chrom', 'pos', 'ref', 'alts'])
 
-    def __init__(self, fasta, annotation, db_path=None, dist=50, mask=1, samples=False):
+    def __init__(self, fasta=None, annotation=None, db_path=None,
+                 dist=50, mask=1, samples=False):
         """
         Args:
           fasta: fasta file path
@@ -80,7 +81,11 @@ class SpliceAI:
           dist: area of interest based on distance to variant
           mask: mask for 'N'
         """
-        self.ann = Annotator(fasta, annotation)
+        assert ((fasta is not None) and (annotation is not None)) \
+            or (db_path is not None)
+        self.db_only = fasta is None
+        if not self.db_only:
+            self.ann = Annotator(fasta, annotation)
         self.dist = dist
         self.mask = mask
         self.db = SpliceAIDB(db_path) if db_path else None
@@ -108,7 +113,8 @@ class SpliceAI:
             try:
                 return self.db[str(variant)]
             except KeyError:
-                pass
+                if self.db_only:
+                    return []
         return [
             self.parse(i)
             for i in get_delta_scores(record, self.ann,
