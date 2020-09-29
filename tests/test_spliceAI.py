@@ -83,3 +83,7 @@ def test_SpliceAI_predict_db_only():
     spliceai = SpliceAI(db_path=spliceai_db_path)
     df = spliceai.predict_df(['17:34149615:A>T', '17:34149617:A>T'])
     assert df.shape == (1, 10)
+
+    spliceai = SpliceAI(db_path=spliceai_db_path)
+    df = spliceai.predict_df(['chr17:34149615:A>T', 'chr17:34149617:A>T'])
+    assert df.shape == (1, 10)

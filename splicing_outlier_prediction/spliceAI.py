@@ -26,8 +26,8 @@ class VariantDB:
         raise NotImplementedError()
 
     def _get(self, variant):
-        if not variant.startswith('chr'):
-            variant = 'chr%s' % variant
+        if variant.startswith('chr'):
+            variant = variant[3:]
         return self.db.get(self._variant_to_byte(variant))
 
     def __getitem__(self, variant):
