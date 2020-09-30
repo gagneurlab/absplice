@@ -47,6 +47,12 @@ class VariantDB:
         except KeyError:
             return default
 
+    def items(self):
+        it = self.db.iteritems()
+        it.seek_to_first()
+        for variant, value in it:
+            yield variant.decode('utf-8'), self._type(value)
+
 
 class SpliceAIDB(VariantDB):
 

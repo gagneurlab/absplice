@@ -61,7 +61,7 @@ def test_SpliceAI_predict_with_db(spliceai_db, mocker):
     scores = spliceai_db.predict('17:34149615:A>T')
     assert scores[0] == spliceai_db.Score(
         gene_name='TAF15', delta_score=0.25,
-        acceptor_gain=0.25, acceptor_loss=0.0,
+        acceptor_gain=0.25, acceptor_loss=0.25,
         donor_gain=0.0, donor_loss=0.0,
         acceptor_gain_position=11.0, acceptor_loss_positiin=29.0,
         donor_gain_position=11.0, donor_loss_position=33.0)
