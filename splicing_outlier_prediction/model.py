@@ -7,47 +7,31 @@ from mmsplice.junction_dataloader import JunctionPSI5VCFDataloader, \
     JunctionPSI3VCFDataloader
 from mmsplice.utils import encodeDNA, df_batch_writer, \
     delta_logit_PSI_to_delta_PSI
-from splicing_outlier_prediction import SplicingRefTable
 from splicing_outlier_prediction.utils import get_abs_max_rows
+from splicing_outlier_prediction.dataloader import RefTableMixin
 
 
-class SpliceOutlierDataloader(SampleIterator):
+class SpliceOutlierDataloader(RefTableMixin, SampleIterator):
 
-    def __init__(self, fasta_file, vcf_file, ref_table5=None, ref_table3=None,
-                 count_cat=None, spliceAI_vcf=None, **kwargs):
-        if ref_table5 is None and ref_table3 is None:
-            raise ValueError(
-                '`ref_table5` and `ref_table3` cannot be both None')
+    def __init__(self, fasta_file, vcf_file, ref_table5=None, ref_table3=None, **kwargs):
+        super().__init__(ref_table5, ref_table3, **kwargs)
         self.fasta_file = fasta_file
         self.vcf_file = vcf_file
-
         self._generator = iter([])
 
-        if ref_table5:
-            self.ref_table5 = self._read_ref_table(ref_table5)
+        if self.ref_table5:
             self.dl5 = JunctionPSI5VCFDataloader(
                 ref_table5, fasta_file, vcf_file, encode=False, **kwargs)
             self._generator = itertools.chain(
                 self._generator,
                 self._iter_dl(self.dl5, self.ref_table5, event_type='psi5'))
-        if ref_table3:
-            self.ref_table3 = self._read_ref_table(ref_table3)
+
+        if self.ref_table3:
             self.dl3 = JunctionPSI3VCFDataloader(
                 ref_table3, fasta_file, vcf_file, encode=False, **kwargs)
             self._generator = itertools.chain(
                 self._generator,
                 self._iter_dl(self.dl3, self.ref_table3, event_type='psi3'))
-
-    @staticmethod
-    def _read_ref_table(path):
-        if type(path) == str:
-            return SplicingRefTable.read_csv(path)
-        elif type(path) == SplicingRefTable:
-            return path
-        else:
-            raise ValueError(
-                'ref_table should be path to ref_table file'
-                ' or `SplicingRefTable` object')
 
     def _iter_dl(self, dl, ref_table, event_type):
         for row in dl:
@@ -90,7 +74,7 @@ class SpliceOutlier:
         ]
         df = self.mmsplice._predict_batch(batch, columns)
         del df['exons']
-        df = df.rename(columns={'ID': 'variant', 'psi': 'ref_psi'})
+        df = df.rename(columns={'ID': 'variant'})
         delta_psi = delta_logit_PSI_to_delta_PSI(
             df['delta_logit_psi'],
             df['ref_psi'],
@@ -182,16 +166,31 @@ class SplicingOutlierResult:
                 self.junction, index, 'delta_psi')
         return self._gene
 
-    def add_maf(self, population, default=0):
-        self.df['maf'] = self.df['variant'].map(
-            lambda x: population.get(x, default))
+    def infer_cat(self, cat_inference, progress=False):
+        if 'samples' not in self.df.columns:
+            raise ValueError('"samples" column is missing.')
+
+        rows = self.junction.iterrows()
+        if progress:
+            rows = tqdm(rows, total=self.junction.shape[0])
+
+        df = pd.DataFrame([
+            cat_inference.infer(junction, sample, row['event_type'])
+            for (junction, sample), row in rows
+            if cat_inference.contains(junction, sample, row['event_type'])
+        ]).set_index(['junction', 'sample'])
+        self._junction = self.junction.join(df)
+        self._splice_site = None
+        self._gene = None
+
+    def add_maf(self, population):
+        self.df['maf'] = self.df['variant'].map(lambda x: population.get(x, 0))
 
     def filter_maf(self, max_num_sample=2, population=None, maf_cutoff=0.001):
-        df = self.df[self.df['samples'].str.split(
-            ';').map(len) <= max_num_sample]
+        df = self.df[self.df['samples'].str.split(';')
+                     .map(len) <= max_num_sample]
 
         if population:
-            df = df[df['variant'].map(
-                lambda x: population.get(x, 0) <= maf_cutoff)]
+            df['maf'] = df['variant'].map(lambda x: population.get(x, -1))
 
-        return SplicingOutlierResult(df)
+        return SplicingOutlierResult(df[df['maf'] <= maf_cutoff])
