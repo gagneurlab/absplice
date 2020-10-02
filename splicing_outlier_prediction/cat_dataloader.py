@@ -1,6 +1,6 @@
-from mmsplice.utils import delta_logit_PSI_to_delta_PSI, logit
 from count_table import CountTable
 from splicing_outlier_prediction.dataloader import RefTableMixin
+from splicing_outlier_prediction.utils import delta_logit_PSI_to_delta_PSI, logit
 
 
 class CatInference(RefTableMixin):
