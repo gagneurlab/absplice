@@ -9,9 +9,13 @@ with open('HISTORY.rst') as history_file:
 
 requirements = [
     'setuptools',
-    'kipoiseq>=0.3.0',
-    'mmsplice>=2.1.0'
 ]
+extras_requirements = {
+    "predict": [
+        'kipoiseq>=0.3.0',
+        'mmsplice>=2.1.0'
+    ]
+}
 
 setup_requirements = ['pytest-runner', ]
 
@@ -40,6 +44,7 @@ setup(
     name='splicing_outlier_prediction',
     packages=find_packages(include=['splicing_outlier_prediction']),
     setup_requires=setup_requirements,
+    extras_require=extras_requirements,
     test_suite='tests',
     tests_require=test_requirements,
     url='https://github.com/gagneurlab/splicing_outlier_prediction',
