@@ -91,5 +91,6 @@ class SplicingOutlierResult:
 
         if population:
             df['maf'] = df['variant'].map(lambda x: population.get(x, -1))
+            df = df[df['maf'] <= maf_cutoff]
 
-        return SplicingOutlierResult(df[df['maf'] <= maf_cutoff])
+        return SplicingOutlierResult(df)
