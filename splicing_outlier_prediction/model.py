@@ -11,6 +11,7 @@ try:
 except ImportError:
     pass
 from splicing_outlier_prediction.dataloader import RefTableMixin
+from splicing_outlier_prediction.result import SplicingOutlierResult
 
 
 class SpliceOutlierDataloader(RefTableMixin, SampleIterator):
