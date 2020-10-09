@@ -2,12 +2,14 @@ import itertools
 from tqdm import tqdm
 import pandas as pd
 from kipoi.data import SampleIterator
-from mmsplice import MMSplice
-from mmsplice.junction_dataloader import JunctionPSI5VCFDataloader, \
-    JunctionPSI3VCFDataloader
-from mmsplice.utils import encodeDNA, df_batch_writer, \
-    delta_logit_PSI_to_delta_PSI
-from splicing_outlier_prediction.utils import get_abs_max_rows
+try:
+    from mmsplice import MMSplice
+    from mmsplice.junction_dataloader import JunctionPSI5VCFDataloader, \
+        JunctionPSI3VCFDataloader
+    from mmsplice.utils import encodeDNA, df_batch_writer, \
+        delta_logit_PSI_to_delta_PSI
+except ImportError:
+    pass
 from splicing_outlier_prediction.dataloader import RefTableMixin
 
 
@@ -15,6 +17,7 @@ class SpliceOutlierDataloader(RefTableMixin, SampleIterator):
 
     def __init__(self, fasta_file, vcf_file, ref_table5=None, ref_table3=None, **kwargs):
         super().__init__(ref_table5, ref_table3, **kwargs)
+        import mmsplice
         self.fasta_file = fasta_file
         self.vcf_file = vcf_file
         self._generator = iter([])
@@ -64,6 +67,7 @@ class SpliceOutlierDataloader(RefTableMixin, SampleIterator):
 class SpliceOutlier:
 
     def __init__(self, clip_threshold=None):
+        import mmsplice
         self.mmsplice = MMSplice()
         self.clip_threshold = clip_threshold
 

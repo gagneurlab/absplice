@@ -1,4 +1,3 @@
-import itertools
 from tqdm import tqdm
 import pandas as pd
 from splicing_outlier_prediction.utils import get_abs_max_rows
