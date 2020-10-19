@@ -81,17 +81,23 @@ class SplicingOutlierResult:
         self._splice_site = None
         self._gene = None
 
-    def add_maf(self, population, default=-1):
-        self.df['maf'] = self.df['variant'].map(
+    @staticmethod
+    def _add_maf(df, population, default=-1):
+        df['maf'] = df['variant'].map(
             lambda x: population.get(x, default))
+        return df
+
+    def add_maf(self, population, default=-1):
+        self.df = self._add_maf(self.df, population, default)
 
     def filter_maf(self, max_num_sample=2, population=None,
                    maf_cutoff=0.001, default=-1):
-        df = self.df[self.df['samples'].str.split(';')
-                     .map(len) <= max_num_sample]
+        if max_num_sample:
+            df = self.df[self.df['samples'].str.split(';')
+                         .map(len) <= max_num_sample]
 
         if population:
-            self.add_maf(population, default)
+            df = self._add_maf(df, population, default)
             df = df[df['maf'] <= maf_cutoff]
 
         return SplicingOutlierResult(df)

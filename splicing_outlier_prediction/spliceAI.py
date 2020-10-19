@@ -79,7 +79,7 @@ class SpliceAI:
     Record = namedtuple('Record', ['chrom', 'pos', 'ref', 'alts'])
 
     def __init__(self, fasta=None, annotation=None, db_path=None,
-                 dist=50, mask=1, samples=False):
+                 dist=50, mask=1, samples=False, quality=False):
         """
         Args:
           fasta: fasta file path
@@ -96,6 +96,7 @@ class SpliceAI:
         self.mask = mask
         self.db = SpliceAIDB(db_path) if db_path else None
         self.samples = samples
+        self.quality = quality
 
     @staticmethod
     def _to_record(variant):
@@ -129,7 +130,7 @@ class SpliceAI:
 
     def predict_df(self, variants, vcf=None):
         rows = self._predict_df(variants, vcf)
-        return pd.DataFrame(rows, columns=[
+        columns = [
             'variant', 'gene_name', 'delta_score',
             'acceptor_gain', 'acceptor_loss',
             'donor_gain', 'donor_loss',
@@ -137,24 +138,46 @@ class SpliceAI:
             'acceptor_loss_positiin',
             'donor_gain_position',
             'donor_loss_position'
-        ]).set_index('variant')
+        ]
+        if self.samples:
+            columns.append('samples')
+            if self.quality:
+                columns.append('GQ')
+                columns.append('DP_ALT')
+
+        return pd.DataFrame(rows, columns=columns).set_index('variant')
 
     def _predict_df(self, variants, vcf=None):
-        for variant in variants:
-            for score in self.predict(variant):
+        for v in variants:
+            for score in self.predict(v):
                 row = score._asdict()
-                row['variant'] = str(variant)
+                row['variant'] = str(v)
+
                 if self.samples:
-                    row['samples'] = ';'.join(vcf.get_samples(variant))
+                    samples = vcf.get_samples(v)
+                    row['samples'] = ';'.join(samples)
+
+                    if self.quality:
+                        GQ = (
+                            v.source.gt_quals[vcf.sample_mapping[sample]]
+                            for sample in samples
+                        )
+                        row['GQ'] = ';'.join(map(str, GQ))
+                        dp_alt = (
+                            v.source.gt_alt_depths[vcf.sample_mapping[sample]]
+                            for sample in samples
+                        )
+                        row['DP_ALT'] = ';'.join(map(str, dp_alt))
+
                 yield row
 
-    def _predict_on_vcf(self, vcf_file, batch_size=100, samples=False):
+    def _predict_on_vcf(self, vcf_file, batch_size=100):
         vcf = MultiSampleVCF(vcf_file)
         for variants in vcf.batch_iter(batch_size):
             yield self.predict_df(variants, vcf).reset_index('variant')
 
     def predict_save(self, vcf_file, output_csv,
-                     batch_size=100, samples=False, progress=True):
+                     batch_size=100, progress=True):
         batches = self._predict_on_vcf(vcf_file, batch_size=batch_size)
         if progress:
             batches = iter(tqdm(batches))

@@ -69,13 +69,16 @@ def test_SpliceAI_predict_with_db(spliceai_db, mocker):
 
 def test_SpliceAI_predict_on_vcf(spliceai_db, tmp_path):
     spliceai_db.samples = True
+    spliceai_db.quality = True
     output_csv = tmp_path / 'output.csv'
     spliceai_db.predict_save(multi_vcf_file, output_csv)
     df = pd.read_csv(output_csv)
+
     assert df.columns.tolist() == [
         'variant', 'gene_name', 'delta_score', 'acceptor_gain',
         'acceptor_loss', 'donor_gain', 'donor_loss', 'acceptor_gain_position',
-        'acceptor_loss_positiin', 'donor_gain_position', 'donor_loss_position'
+        'acceptor_loss_positiin', 'donor_gain_position', 'donor_loss_position',
+        'samples', 'GQ', 'DP_ALT'
     ]
 
 
