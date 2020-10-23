@@ -5,8 +5,9 @@ from splicing_outlier_prediction.utils import get_abs_max_rows
 
 class SplicingOutlierResult:
 
-    def __init__(self, df):
+    def __init__(self, df, df_spliceAI=None):
         self.df = df
+        self.df_spliceAI = df_spliceAI
         self._junction = None
         self._splice_site = None
         self._gene = None
@@ -14,6 +15,18 @@ class SplicingOutlierResult:
     @classmethod
     def read_csv(cls, path, **kwargs):
         return cls(pd.read_csv(path, **kwargs))
+
+    def add_spliceAI(self, df):
+        """
+        Includes spliceAI predictions into results.
+
+        Args:
+          df: path to csv or dataframe of spliceAI predictions
+        """
+        self._gene = None
+        if type(df) == str:
+            df = pd.read_csv(df)
+        self.df_spliceAI = df
 
     @staticmethod
     def _explode_samples(df):
@@ -62,6 +75,18 @@ class SplicingOutlierResult:
                 index.append('sample')
             self._gene = get_abs_max_rows(
                 self.junction, index, 'delta_psi')
+
+            if self.df_spliceAI is not None:
+                df_spliceAI = self.df_spliceAI
+                if 'samples' in self.df:
+                    df_spliceAI = self._explode_samples(df_spliceAI)
+
+                    df_spliceAI = get_abs_max_rows(
+                        df_spliceAI, index, 'delta_score')
+
+                self._gene = self._gene.join(df_spliceAI, how='outer',
+                                             rsuffix='_spliceAI')
+
         return self._gene
 
     def infer_cat(self, cat_inference, progress=False):

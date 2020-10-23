@@ -1,7 +1,9 @@
 import pytest
 import pandas as pd
 from splicing_outlier_prediction import SpliceOutlier, SpliceOutlierDataloader
-from conftest import ref_table5_kn_file, ref_table3_kn_file, fasta_file, multi_vcf_file, count_cat_file
+from splicing_outlier_prediction.spliceAI import SpliceAI
+from conftest import ref_table5_kn_file, ref_table3_kn_file, fasta_file, \
+    multi_vcf_file, spliceai_db_path
 
 
 @pytest.fixture
@@ -37,8 +39,6 @@ def test_splicing_outlier_predict_on_dataloader(outlier_model, outlier_dl):
         'ref_acceptorIntron', 'ref_acceptor', 'ref_exon', 'ref_donor',
         'ref_donorIntron', 'alt_acceptorIntron', 'alt_acceptor',
         'alt_exon', 'alt_donor', 'alt_donorIntron']
-
-    __import__("pdb").set_trace()
 
 
 def test_splicing_outlier_predict_save(outlier_model, outlier_dl, tmp_path):
@@ -94,7 +94,7 @@ def test_outlier_results_multi_vcf(outlier_model):
     ]
 
 
-def test_outlier_results_infer_cat(outlier_results, cat_dl, outlier_model):
+def test_outlier_results_infer_cat_add_spliceAI(outlier_results, cat_dl, outlier_model):
     with pytest.raises(ValueError):
         outlier_results.infer_cat(cat_dl)
 
@@ -104,17 +104,35 @@ def test_outlier_results_infer_cat(outlier_results, cat_dl, outlier_model):
         samples=True)
 
     results = outlier_model.predict_on_dataloader(dl)
+
+    spliceai = SpliceAI(db_path=spliceai_db_path)
+    df_spliceAI = spliceai.predict_df(
+        ['17:34149615:A>T', '17:34149617:A>T']).reset_index()
+    df_spliceAI.loc[0, 'samples'] = 'NA00001;NA00002;NA00003'
+    results.add_spliceAI(df_spliceAI)
     results.df.loc[0, 'samples'] = 'NA00002;NA00003;NA00004'
     results.infer_cat(cat_dl)
 
-    assert results.junction.columns.tolist() == [
-        'variant', 'event_type', 'Chromosome', 'Start', 'End', 'Strand',
+    assert sorted(results.junction.columns.tolist()) == sorted([
+        'event_type', 'variant', 'genotype', 'Chromosome', 'Start', 'End', 'Strand',
         'events', 'splice_site', 'ref_psi', 'k', 'n', 'gene_id', 'gene_name',
         'weak', 'transcript_id', 'gene_type', 'delta_psi', 'delta_logit_psi',
         'ref_acceptorIntron', 'ref_acceptor', 'ref_exon', 'ref_donor',
         'ref_donorIntron', 'alt_acceptorIntron', 'alt_acceptor', 'alt_exon',
         'alt_donor', 'alt_donorIntron', 'count_cat', 'psi_cat', 'ref_psi_cat',
-        'k_cat', 'n_cat', 'delta_logit_psi_cat', 'delta_psi_cat']
+        'k_cat', 'n_cat', 'delta_logit_psi_cat', 'delta_psi_cat'])
+
+    assert sorted(results.gene.columns.tolist()) == sorted([
+        'junction', 'event_type', 'variant', 'genotype', 'Chromosome', 'Start',
+        'End', 'Strand', 'events', 'splice_site', 'ref_psi', 'k', 'n',
+        'gene_id', 'weak', 'transcript_id', 'delta_psi', 'gene_type',
+        'delta_logit_psi', 'ref_acceptorIntron', 'ref_acceptor', 'ref_exon',
+        'ref_donor', 'ref_donorIntron', 'alt_acceptorIntron', 'alt_acceptor',
+        'alt_exon', 'alt_donor', 'alt_donorIntron', 'count_cat', 'psi_cat',
+        'ref_psi_cat', 'k_cat', 'n_cat', 'delta_logit_psi_cat', 'delta_psi_cat',
+        'index', 'variant_spliceAI', 'delta_score', 'acceptor_gain',
+        'acceptor_loss', 'donor_gain', 'donor_loss', 'acceptor_gain_position',
+        'acceptor_loss_positiin', 'donor_gain_position', 'donor_loss_position'])
 
     assert results.junction.loc[(
         '17:41201211-41203079:-', 'NA00004')] is not None
