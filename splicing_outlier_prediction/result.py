@@ -90,6 +90,7 @@ class SplicingOutlierResult:
         return self._gene
 
     def infer_cat(self, cat_inference, progress=False):
+
         if 'samples' not in self.df.columns:
             raise ValueError('"samples" column is missing.')
 
@@ -115,14 +116,29 @@ class SplicingOutlierResult:
     def add_maf(self, population, default=-1):
         self.df = self._add_maf(self.df, population, default)
 
+    @staticmethod
+    def _filter_private(df, max_num_sample=2):
+        return df[df['samples'].str.split(';')
+                  .map(len) <= max_num_sample]
+
+    def _add_filter_maf(self, df, population=None,
+                        maf_cutoff=0.001, default=-1):
+        df = self._add_maf(df, population, default)
+        return df[df['maf'] <= maf_cutoff]
+
     def filter_maf(self, max_num_sample=2, population=None,
                    maf_cutoff=0.001, default=-1):
+        df = self.df
+        df_spliceAI = self.df_spliceAI
+
         if max_num_sample:
-            df = self.df[self.df['samples'].str.split(';')
-                         .map(len) <= max_num_sample]
+            df = self._filter_private(df, max_num_sample)
+            if df_spliceAI is not None:
+                df_spliceAI = self._filter_private(df_spliceAI, max_num_sample)
 
         if population:
-            df = self._add_maf(df, population, default)
-            df = df[df['maf'] <= maf_cutoff]
+            df = self._add_filter_maf(df)
+            if df_spliceAI is not None:
+                df_spliceAI = self._add_filter_maf(df_spliceAI)
 
-        return SplicingOutlierResult(df)
+        return SplicingOutlierResult(df, df_spliceAI)
