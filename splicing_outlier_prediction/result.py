@@ -137,8 +137,9 @@ class SplicingOutlierResult:
                 df_spliceAI = self._filter_private(df_spliceAI, max_num_sample)
 
         if population:
-            df = self._add_filter_maf(df)
+            df = self._add_filter_maf(df, population, maf_cutoff, default)
             if df_spliceAI is not None:
-                df_spliceAI = self._add_filter_maf(df_spliceAI)
+                df_spliceAI = self._add_filter_maf(
+                    df_spliceAI, population, maf_cutoff, default)
 
         return SplicingOutlierResult(df, df_spliceAI)
