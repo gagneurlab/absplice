@@ -3,10 +3,10 @@ import numpy as np
 
 
 def get_abs_max_rows(df, groupby, max_col):
-    df = df.copy()
-    df[max_col] = df[max_col].abs()
     df = df.reset_index()
-    max_scores = df.groupby(groupby)[max_col].idxmax()
+    _df = df.copy()
+    _df[max_col] = _df[max_col].abs()
+    max_scores = _df.groupby(groupby)[max_col].idxmax()
     return df.iloc[max_scores.values].set_index(groupby)
 
 
@@ -27,10 +27,10 @@ def delta_logit_PSI_to_delta_PSI(delta_logit_psi, ref_psi,
     return pred_psi - ref_psi
 
 
-def clip(x, clip_threshold=0.00001):
+def clip(x, clip_threshold=0.01):
     return np.clip(x, clip_threshold, 1 - clip_threshold)
 
 
-def logit(x, clip_threshold=0.00001):
+def logit(x, clip_threshold=0.01):
     x = clip(x, clip_threshold=clip_threshold)
     return np.log(x) - np.log(1 - x)

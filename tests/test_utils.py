@@ -14,6 +14,6 @@ def test_get_max_rows():
         pd.DataFrame({
             'junction': ['j1', 'j2', 'j3'],
             'sample': ['s1', 's2', 's2'],
-            'score': [20, 40, 10]
+            'score': [20, -40, 10]
         }).set_index(['junction', 'sample'])
     )
