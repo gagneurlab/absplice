@@ -21,6 +21,7 @@ class RefTableMixin:
         elif type(path) == SplicingRefTable:
             return path
         else:
+            print(type(path))
             raise ValueError(
                 'ref_table should be path to ref_table file'
                 ' or `SplicingRefTable` object')
