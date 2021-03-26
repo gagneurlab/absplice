@@ -6,13 +6,13 @@ from conftest import ref_table5_kn_file, ref_table3_kn_file, fasta_file, vcf_fil
 @pytest.fixture
 def outlier_dl5():
     return SpliceOutlierDataloader(
-        fasta_file, vcf_file, ref_table5=ref_table5_kn_file)
+        fasta_file, vcf_file, ref_table5=[ref_table5_kn_file])
 
 
 @pytest.fixture
 def outlier_dl3():
     return SpliceOutlierDataloader(
-        fasta_file, vcf_file, ref_table3=ref_table3_kn_file)
+        fasta_file, vcf_file, ref_table3=[ref_table3_kn_file])
 
 
 def test_splicing_outlier_dataloader_init(outlier_dl):

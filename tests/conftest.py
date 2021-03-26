@@ -15,7 +15,7 @@ spliceai_db_path = 'tests/data/spliceAI.db'
 def outlier_dl():
     return SpliceOutlierDataloader(
         fasta_file, vcf_file,
-        ref_table5=ref_table5_kn_file, ref_table3=ref_table3_kn_file)
+        ref_table5=[ref_table5_kn_file], ref_table3=[ref_table3_kn_file])
 
 
 @pytest.fixture
