@@ -13,7 +13,7 @@ def outlier_model():
 
 def test_splicing_outlier_on_batch(outlier_model, outlier_dl):
     batch = next(outlier_dl.batch_iter())
-    df = outlier_model.predict_on_batch(batch)
+    df = outlier_model.predict_on_batch(batch, outlier_dl)
     assert df.columns.tolist() == [
         'variant', 'junction', 'event_type',
         'Chromosome', 'Start', 'End', 'Strand',
@@ -83,7 +83,7 @@ def test_splicing_outlier_result_gene(outlier_results):
 def test_outlier_results_multi_vcf(outlier_model):
     dl = SpliceOutlierDataloader(
         fasta_file, multi_vcf_file,
-        ref_table5=ref_table5_kn_file, ref_table3=ref_table3_kn_file,
+        ref_tables5=[ref_table5_kn_file], ref_tables3=[ref_table3_kn_file],
         samples=True)
 
     results = outlier_model.predict_on_dataloader(dl)

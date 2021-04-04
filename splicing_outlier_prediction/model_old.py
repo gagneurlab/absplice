@@ -10,37 +10,37 @@ try:
         delta_logit_PSI_to_delta_PSI
 except ImportError:
     pass
-from splicing_outlier_prediction.dataloader_updated import RefTableMixin
+from splicing_outlier_prediction.dataloader_old import RefTableMixin
 from splicing_outlier_prediction.result import SplicingOutlierResult
 
 
 class SpliceOutlierDataloader(RefTableMixin, SampleIterator):
 
-    def __init__(self, fasta_file, vcf_file, ref_tables5=list(), ref_tables3=list(), **kwargs):
-        super().__init__(ref_tables5, ref_tables3, **kwargs)
+    def __init__(self, fasta_file, vcf_file, ref_table5=None, ref_table3=None, **kwargs):
+        super().__init__(ref_table5, ref_table3, **kwargs)
         import mmsplice
         self.fasta_file = fasta_file
         self.vcf_file = vcf_file
         self._generator = iter([])
 
-        if self.intron_annotation5:
+        if self.ref_table5:
             self.dl5 = JunctionPSI5VCFDataloader(
-                self.intron_annotation5, fasta_file, vcf_file, encode=False, **kwargs)
+                ref_table5, fasta_file, vcf_file, encode=False, **kwargs)
             self._generator = itertools.chain(
                 self._generator,
-                self._iter_dl(self.dl5, self.intron_annotation5, event_type='psi5'))
+                self._iter_dl(self.dl5, self.ref_table5, event_type='psi5'))
 
-        if self.ref_tables3:
+        if self.ref_table3:
             self.dl3 = JunctionPSI3VCFDataloader(
-                self.intron_annotation3, fasta_file, vcf_file, encode=False, **kwargs)
+                ref_table3, fasta_file, vcf_file, encode=False, **kwargs)
             self._generator = itertools.chain(
                 self._generator,
-                self._iter_dl(self.dl3, self.intron_annotation3, event_type='psi3'))
+                self._iter_dl(self.dl3, self.ref_table3, event_type='psi3'))
 
-    def _iter_dl(self, dl, intron_annotations, event_type):
+    def _iter_dl(self, dl, ref_table, event_type):
         for row in dl:
             junction_id = row['metadata']['exon']['junction']
-            ref_row = intron_annotations.df.loc[junction_id]
+            ref_row = ref_table.df.loc[junction_id]
             row['metadata']['junction'] = dict()
             row['metadata']['junction']['junction'] = ref_row.name
             row['metadata']['junction']['event_type'] = event_type
@@ -72,24 +72,6 @@ class SpliceOutlier:
         self.mmsplice = MMSplice()
         self.clip_threshold = clip_threshold
 
-    def _add_delta_psi(self, df):
-        df_list = list()
-        columns = ['junctions', 'Chromosome', 'Start', 'End', 'Strand']
-        # Go through all ref_tables and add delta_psi
-        for ref_table in self.ref_tables:
-            # TODO: get tissue information and store into column
-            col = [c for c in set(ref_table.columns).difference(set(columns))]
-            df_joined = ref_table.set_index('junctions')[col].join(df.set_index('junctions'))
-            delta_psi = delta_logit_PSI_to_delta_PSI(
-                df_joined['delta_logit_psi'],
-                df_joined['ref_psi'],
-                clip_threshold=self.clip_threshold or 0.01
-            )
-            df_joined.insert(18, 'delta_psi', delta_psi)
-            df_list.append(df_joined)
-        df_with_delta_psi = pd.concat(df_list)
-        return df_with_delta_psi
-
     def predict_on_batch(self, batch):
         columns = [
             'samples', 'maf', 'genotype', 'GQ', 'DP_ALT',
@@ -98,12 +80,16 @@ class SpliceOutlier:
         df = self.mmsplice._predict_batch(batch, columns)
         del df['exons']
         df = df.rename(columns={'ID': 'variant'})
-        df_with_delta_psi = self._add_delta_psi(df)
-        return df_with_delta_psi
+        delta_psi = delta_logit_PSI_to_delta_PSI(
+            df['delta_logit_psi'],
+            df['ref_psi'],
+            clip_threshold=self.clip_threshold or 0.01
+        )
+        df.insert(18, 'delta_psi', delta_psi)
+        return df
 
     def _predict_on_dataloader(self, dataloader,
                                batch_size=512, progress=True):
-        # TODO: QUESTION: how does it know that this dataloader comes from class above?
         dt_iter = dataloader.batch_iter(batch_size=batch_size)
         if progress:
             dt_iter = tqdm(dt_iter)
