@@ -18,10 +18,10 @@ def outlier_dl3():
 
 def test_splicing_outlier_dataloader_init(outlier_dl):
     assert outlier_dl.intron_annotation5.method == 'kn'
-    assert outlier_dl.intron_annotation5.df.shape[0] == 26
+    assert outlier_dl.intron_annotation5.df.shape[0] == 50
 
     assert outlier_dl.intron_annotation3.method == 'kn'
-    assert outlier_dl.intron_annotation3.df.shape[0] == 28
+    assert outlier_dl.intron_annotation3.df.shape[0] == 51
 
 
 def test_splicing_outlier_dataloader_iter(outlier_dl):

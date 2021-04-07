@@ -19,7 +19,7 @@ spliceai_db_path = 'tests/data/spliceAI.db'
 def outlier_dl():
     return SpliceOutlierDataloader(
         fasta_file, vcf_file,
-        ref_tables5=[ref_table5_kn_file], ref_tables3=[ref_table3_kn_file],
+        ref_tables5=[ref_table5_kn_file, ref_table5_kn_file2], ref_tables3=[ref_table3_kn_file, ref_table3_kn_file2],
         intron_annotation5=intron_annotation5_file, 
         intron_annotation3=intron_annotation3_file)
 
