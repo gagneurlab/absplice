@@ -43,5 +43,5 @@ class RefTableMixin:
         else:
             print(type(path))
             raise ValueError(
-                'ref_tables should be path to ref_tables file'
+                'ref_tables should be list of path to ref_table files'
                 ' or `SplicingRefTable` object')

@@ -5,20 +5,20 @@ from splicing_outlier_prediction.utils import delta_logit_PSI_to_delta_PSI, logi
 
 class CatInference(RefTableMixin):
 
-    def __init__(self, count_cat, ref_table5=None, ref_table3=None, **kwargs):
-        super().__init__(ref_table5, ref_table3, **kwargs)
+    def __init__(self, count_cat, ref_tables5=None, ref_tables3=None, **kwargs):
+        super().__init__(ref_tables5, ref_tables3, **kwargs)
         self.ct = CountTable.read_csv(count_cat)
         self.samples = set(self.ct.samples)
         self.common_junctions5 = list()
         self.common_junctions3 = list()
 
-        if self.ref_table5:
-            self.common_junctions5 = set(self.ref_table5.junctions) \
+        if self.intron_annotation5 is not None:
+            self.common_junctions5 = set(self.intron_annotation5.junctions) \
                 .intersection(self.ct.junctions)
             self.ct_cat5 = self.ct.filter_event5(self.common_junctions5)
             self.ref_psi5_cat = self.ct_cat5.ref_psi5(annotation=False)
-        if self.ref_table3:
-            self.common_junctions3 = set(self.ref_table3.junctions) \
+        if self.intron_annotation3 is not None:
+            self.common_junctions3 = set(self.intron_annotation3.junctions) \
                 .intersection(self.ct.junctions)
             self.ct_cat3 = self.ct.filter_event3(self.common_junctions3)
             self.ref_psi3_cat = self.ct_cat3.ref_psi3(annotation=False)
@@ -52,18 +52,18 @@ class CatInference(RefTableMixin):
             ct_cat = self.ct_cat5
             psi_cat = ct_cat.psi5
             ref_psi_cat = self.ref_psi5_cat
-            ref_table = self.ref_table5.df
+            ref_tables = self.intron_annotation5.df
         elif event_type == 'psi3':
             ct_cat = self.ct_cat3
             psi_cat = ct_cat.psi3
             ref_psi_cat = self.ref_psi3_cat
-            ref_table = self.ref_table3.df
+            ref_tables = self.intron_annotation3.df
         else:
             raise ValueError('Site should be "psi5" or "psi3"')
 
         psi = psi_cat.loc[junction_id, sample]
         ref_psi = ref_psi_cat.loc[junction_id]['ref_psi']
-        ref_psi_target = ref_table.loc[junction_id]['ref_psi']
+        ref_psi_target = ref_tables.loc[junction_id]['ref_psi']
         delta_logit_psi = logit(psi, clip_threshold) - \
             logit(ref_psi, clip_threshold)
 

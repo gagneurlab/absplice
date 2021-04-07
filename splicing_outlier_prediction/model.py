@@ -122,6 +122,8 @@ class SpliceOutlier:
                         'ref_donorIntron', 'alt_acceptorIntron', 'alt_acceptor',
                         'alt_exon', 'alt_donor', 'alt_donorIntron'
                         ]
+        if 'samples' in df_with_delta_psi.columns:
+            column_order.insert(1, 'samples')
         df_with_delta_psi = df_with_delta_psi.reindex(column_order, axis=1)
         return df_with_delta_psi
 

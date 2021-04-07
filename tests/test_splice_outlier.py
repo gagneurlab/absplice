@@ -100,7 +100,7 @@ def test_outlier_results_infer_cat_add_spliceAI(outlier_results, cat_dl, outlier
 
     dl = SpliceOutlierDataloader(
         fasta_file, multi_vcf_file,
-        ref_table5=ref_table5_kn_file, ref_table3=ref_table3_kn_file,
+        ref_tables5=[ref_table5_kn_file], ref_tables3=[ref_table3_kn_file],
         samples=True)
 
     results = outlier_model.predict_on_dataloader(dl)

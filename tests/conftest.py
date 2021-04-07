@@ -23,15 +23,9 @@ def outlier_dl():
         intron_annotation5=intron_annotation5_file, 
         intron_annotation3=intron_annotation3_file)
 
-@pytest.fixture
-def outlier_dl_old():
-    return SpliceOutlierDataloader(
-        fasta_file, vcf_file,
-        ref_table5=ref_table5_kn_file, ref_table3=ref_table3_kn_file)
-
 
 @pytest.fixture
 def cat_dl():
-    return CatInference(ref_table5=ref_table5_kn_file,
-                        ref_table3=ref_table3_kn_file,
+    return CatInference(ref_tables5=[ref_table5_kn_file],
+                        ref_tables3=[ref_table3_kn_file],
                         count_cat=count_cat_file)
