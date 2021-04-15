@@ -1,13 +1,13 @@
 import pytest
 from splicing_outlier_prediction import SpliceOutlierDataloader
-from conftest import ref_table5_kn_file, ref_table3_kn_file, ref_table5_kn_file2, ref_table3_kn_file2, fasta_file, vcf_file, multi_vcf_file, count_cat_file, intron_annotation5_file, intron_annotation3_file
+from conftest import ref_table5_kn_file, ref_table3_kn_file, ref_table5_kn_file2, ref_table3_kn_file2, fasta_file, vcf_file, multi_vcf_file, count_cat_file, combined_ref_tables5_file, combined_ref_tables3_file
 
 
 @pytest.fixture
 def outlier_dl5():
     return SpliceOutlierDataloader(
         fasta_file, vcf_file, ref_tables5=[ref_table5_kn_file, ref_table5_kn_file2],
-        intron_annotation5=intron_annotation5_file)
+        combined_ref_tables5=combined_ref_tables5_file)
 
 
 @pytest.fixture
@@ -17,11 +17,11 @@ def outlier_dl3():
 
 
 def test_splicing_outlier_dataloader_init(outlier_dl):
-    assert outlier_dl.intron_annotation5.method == 'kn'
-    assert outlier_dl.intron_annotation5.df.shape[0] == 50
+    assert outlier_dl.combined_ref_tables5.method == 'kn'
+    assert outlier_dl.combined_ref_tables5.df.shape[0] == 50
 
-    assert outlier_dl.intron_annotation3.method == 'kn'
-    assert outlier_dl.intron_annotation3.df.shape[0] == 51
+    assert outlier_dl.combined_ref_tables3.method == 'kn'
+    assert outlier_dl.combined_ref_tables3.df.shape[0] == 51
 
 
 def test_splicing_outlier_dataloader_iter(outlier_dl):

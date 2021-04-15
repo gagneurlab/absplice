@@ -12,13 +12,13 @@ class CatInference(RefTableMixin):
         self.common_junctions5 = list()
         self.common_junctions3 = list()
 
-        if self.intron_annotation5 is not None:
-            self.common_junctions5 = set(self.intron_annotation5.junctions) \
+        if self.combined_ref_tables5 is not None:
+            self.common_junctions5 = set(self.combined_ref_tables5.junctions) \
                 .intersection(self.ct.junctions)
             self.ct_cat5 = self.ct.filter_event5(self.common_junctions5)
             self.ref_psi5_cat = self.ct_cat5.ref_psi5(annotation=False)
-        if self.intron_annotation3 is not None:
-            self.common_junctions3 = set(self.intron_annotation3.junctions) \
+        if self.combined_ref_tables3 is not None:
+            self.common_junctions3 = set(self.combined_ref_tables3.junctions) \
                 .intersection(self.ct.junctions)
             self.ct_cat3 = self.ct.filter_event3(self.common_junctions3)
             self.ref_psi3_cat = self.ct_cat3.ref_psi3(annotation=False)
@@ -52,12 +52,12 @@ class CatInference(RefTableMixin):
             ct_cat = self.ct_cat5
             psi_cat = ct_cat.psi5
             ref_psi_cat = self.ref_psi5_cat
-            ref_tables = self.intron_annotation5.df
+            ref_tables = self.combined_ref_tables5.df
         elif event_type == 'psi3':
             ct_cat = self.ct_cat3
             psi_cat = ct_cat.psi3
             ref_psi_cat = self.ref_psi3_cat
-            ref_tables = self.intron_annotation3.df
+            ref_tables = self.combined_ref_tables3.df
         else:
             raise ValueError('Site should be "psi5" or "psi3"')
 
@@ -75,6 +75,7 @@ class CatInference(RefTableMixin):
             'ref_psi_cat': ref_psi,
             'k_cat': ref_psi_cat.loc[junction_id]['k'],
             'n_cat': ref_psi_cat.loc[junction_id]['n'],
+            'median_n_cat': ref_psi_cat.loc[junction_id]['median_n'],
             'delta_logit_psi_cat': delta_logit_psi,
             'delta_psi_cat': delta_logit_PSI_to_delta_PSI(
                 delta_logit_psi, ref_psi_target, clip_threshold=clip_threshold)

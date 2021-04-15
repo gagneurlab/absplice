@@ -120,7 +120,7 @@ def test_outlier_results_infer_cat_add_spliceAI(outlier_results, cat_dl, outlier
         'ref_acceptorIntron', 'ref_acceptor', 'ref_exon', 'ref_donor',
         'ref_donorIntron', 'alt_acceptorIntron', 'alt_acceptor', 'alt_exon',
         'alt_donor', 'alt_donorIntron', 'count_cat', 'psi_cat', 'ref_psi_cat',
-        'k_cat', 'n_cat', 'delta_logit_psi_cat', 'delta_psi_cat'])
+        'k_cat', 'n_cat', 'median_n_cat', 'delta_logit_psi_cat', 'delta_psi_cat'])
 
     assert sorted(results.gene.columns.tolist()) == sorted([
         'junction', 'event_type', 'variant', 'genotype', 'Chromosome', 'Start',
@@ -129,7 +129,7 @@ def test_outlier_results_infer_cat_add_spliceAI(outlier_results, cat_dl, outlier
         'delta_logit_psi', 'ref_acceptorIntron', 'ref_acceptor', 'ref_exon',
         'ref_donor', 'ref_donorIntron', 'alt_acceptorIntron', 'alt_acceptor',
         'alt_exon', 'alt_donor', 'alt_donorIntron', 'count_cat', 'psi_cat',
-        'ref_psi_cat', 'k_cat', 'n_cat', 'delta_logit_psi_cat', 'delta_psi_cat',
+        'ref_psi_cat', 'k_cat', 'n_cat', 'median_n_cat', 'delta_logit_psi_cat', 'delta_psi_cat',
         'index', 'variant_spliceAI', 'delta_score', 'acceptor_gain',
         'acceptor_loss', 'donor_gain', 'donor_loss', 'acceptor_gain_position',
         'acceptor_loss_positiin', 'donor_gain_position', 'donor_loss_position'])

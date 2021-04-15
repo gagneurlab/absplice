@@ -18,27 +18,27 @@ class SpliceOutlierDataloader(RefTableMixin, SampleIterator):
 
     def __init__(self, fasta_file, vcf_file, 
                 ref_tables5=list(), ref_tables3=list(), 
-                intron_annotation5=None, intron_annotation3=None, **kwargs):
-        RefTableMixin.__init__(self, ref_tables5, ref_tables3, intron_annotation5, intron_annotation3, **kwargs)
-        # super().__init__(ref_tables5, ref_tables3, intron_annotation5, intron_annotation3, **kwargs)
+                combined_ref_tables5=None, combined_ref_tables3=None, **kwargs):
+        RefTableMixin.__init__(self, ref_tables5, ref_tables3, combined_ref_tables5, combined_ref_tables3, **kwargs)
+        # super().__init__(ref_tables5, ref_tables3, combined_ref_tables5, combined_ref_tables3, **kwargs)
         import mmsplice
         self.fasta_file = fasta_file
         self.vcf_file = vcf_file
         self._generator = iter([])
 
-        if self.intron_annotation5 is not None:
+        if self.combined_ref_tables5 is not None:
             self.dl5 = JunctionPSI5VCFDataloader(
-                self.intron_annotation5_path, fasta_file, vcf_file, encode=False, **kwargs)
+                self.combined_ref_tables5_path, fasta_file, vcf_file, encode=False, **kwargs)
             self._generator = itertools.chain(
                 self._generator,
-                self._iter_dl(self.dl5, self.intron_annotation5, event_type='psi5'))
+                self._iter_dl(self.dl5, self.combined_ref_tables5, event_type='psi5'))
 
-        if self.intron_annotation3 is not None:
+        if self.combined_ref_tables3 is not None:
             self.dl3 = JunctionPSI3VCFDataloader(
-                self.intron_annotation3_path, fasta_file, vcf_file, encode=False, **kwargs)
+                self.combined_ref_tables3_path, fasta_file, vcf_file, encode=False, **kwargs)
             self._generator = itertools.chain(
                 self._generator,
-                self._iter_dl(self.dl3, self.intron_annotation3, event_type='psi3'))
+                self._iter_dl(self.dl3, self.combined_ref_tables3, event_type='psi3'))
 
     def _iter_dl(self, dl, intron_annotations, event_type):
         for row in dl:
@@ -92,7 +92,7 @@ class SpliceOutlier:
     def _add_delta_psi5(self, df, dataloader):
         df5_list = list()
         df5 = df[df['event_type'] == 'psi5']
-        for ref_table5 in dataloader.intron_annotation5.ref_tables:
+        for ref_table5 in dataloader.combined_ref_tables5.ref_tables:
             df5_joined = self._add_delta_psi_single_ref(df5, ref_table5)
             df5_list.append(df5_joined)
         df5_with_delta_psi = pd.concat(df5_list)
@@ -101,7 +101,7 @@ class SpliceOutlier:
     def _add_delta_psi3(self, df, dataloader):
         df3_list = list()
         df3 = df[df['event_type'] == 'psi3']
-        for ref_table3 in dataloader.intron_annotation3.ref_tables:
+        for ref_table3 in dataloader.combined_ref_tables3.ref_tables:
             df3_joined = self._add_delta_psi_single_ref(df3, ref_table3)
             df3_list.append(df3_joined)
         df3_with_delta_psi = pd.concat(df3_list)
