@@ -20,7 +20,6 @@ class SpliceOutlierDataloader(RefTableMixin, SampleIterator):
                 ref_tables5=list(), ref_tables3=list(), 
                 combined_ref_tables5=None, combined_ref_tables3=None, **kwargs):
         RefTableMixin.__init__(self, ref_tables5, ref_tables3, combined_ref_tables5, combined_ref_tables3, **kwargs)
-        # super().__init__(ref_tables5, ref_tables3, combined_ref_tables5, combined_ref_tables3, **kwargs)
         import mmsplice
         self.fasta_file = fasta_file
         self.vcf_file = vcf_file
@@ -140,7 +139,6 @@ class SpliceOutlier:
 
     def _predict_on_dataloader(self, dataloader,
                                batch_size=512, progress=True):
-        # TODO: QUESTION: how does it know that this dataloader comes from class above?
         dt_iter = dataloader.batch_iter(batch_size=batch_size)
         if progress:
             dt_iter = tqdm(dt_iter)
