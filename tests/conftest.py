@@ -21,7 +21,9 @@ def outlier_dl():
         fasta_file, vcf_file,
         ref_tables5=[ref_table5_kn_file, ref_table5_kn_file2], ref_tables3=[ref_table3_kn_file, ref_table3_kn_file2],
         combined_ref_tables5=combined_ref_tables5_file, 
-        combined_ref_tables3=combined_ref_tables3_file)
+        combined_ref_tables3=combined_ref_tables3_file,
+        regex_pattern='test_(.*)_ref'
+        )
 
 
 @pytest.fixture

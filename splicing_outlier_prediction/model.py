@@ -17,9 +17,12 @@ from splicing_outlier_prediction.result import SplicingOutlierResult
 class SpliceOutlierDataloader(RefTableMixin, SampleIterator):
 
     def __init__(self, fasta_file, vcf_file, 
-                ref_tables5=list(), ref_tables3=list(), 
-                combined_ref_tables5=None, combined_ref_tables3=None, **kwargs):
-        RefTableMixin.__init__(self, ref_tables5, ref_tables3, combined_ref_tables5, combined_ref_tables3, **kwargs)
+                ref_tables5=list(), 
+                ref_tables3=list(), 
+                combined_ref_tables5=None, 
+                combined_ref_tables3=None, 
+                regex_pattern=None, **kwargs):
+        RefTableMixin.__init__(self, ref_tables5, ref_tables3, combined_ref_tables5, combined_ref_tables3, regex_pattern, **kwargs)
         import mmsplice
         self.fasta_file = fasta_file
         self.vcf_file = vcf_file
@@ -75,7 +78,6 @@ class SpliceOutlier:
         self.clip_threshold = clip_threshold
 
     def _add_delta_psi_single_ref(self, df, ref_table):
-        # TODO: get tissue information and store into column
         cols_ref_table = list(set(ref_table.columns).difference(set(['junctions', 'Chromosome', 'Start', 'End', 'Strand'])))
         ref_table = ref_table.rename(columns={'junctions':'junction'})
         cols_df = [c for c in df.columns if (c not in cols_ref_table)]
@@ -110,20 +112,6 @@ class SpliceOutlier:
         df5_with_delta_psi = self._add_delta_psi5(df, dataloader)
         df3_with_delta_psi = self._add_delta_psi3(df, dataloader)
         df_with_delta_psi = pd.concat([df5_with_delta_psi, df3_with_delta_psi])
-        column_order = [
-                        'variant', 'junction', 'event_type',
-                        'Chromosome', 'Start', 'End', 'Strand',
-                        'events', 'splice_site', 'ref_psi', 'k', 'n',
-                        'gene_id', 'gene_name', 'weak',
-                        'transcript_id', 'gene_type',
-                        'delta_logit_psi', 'delta_psi',
-                        'ref_acceptorIntron', 'ref_acceptor', 'ref_exon', 'ref_donor',
-                        'ref_donorIntron', 'alt_acceptorIntron', 'alt_acceptor',
-                        'alt_exon', 'alt_donor', 'alt_donorIntron'
-                        ]
-        if 'samples' in df_with_delta_psi.columns:
-            column_order.insert(1, 'samples')
-        df_with_delta_psi = df_with_delta_psi.reindex(column_order, axis=1)
         return df_with_delta_psi
 
     def predict_on_batch(self, batch, dataloader):

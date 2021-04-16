@@ -51,6 +51,8 @@ class SplicingOutlierResult:
                 index = ['junction', 'sample', 'event_type']
             else:
                 index = ['junction', 'event_type']
+            if 'tissue' in self.df:
+                index.append('tissue')
             self._junction = get_abs_max_rows(
                 df.set_index('junction'), index, 'delta_psi') \
                 .reset_index('event_type')
@@ -62,6 +64,8 @@ class SplicingOutlierResult:
             index = ['splice_site', 'event_type']
             if 'samples' in self.df:
                 index.append('sample')
+            if 'tissue' in self.df:
+                index.append('tissue')
             self._splice_site = get_abs_max_rows(
                 self.junction, index, 'delta_psi') \
                 .reset_index('event_type')
@@ -73,6 +77,8 @@ class SplicingOutlierResult:
             index = ['gene_name']
             if 'samples' in self.df:
                 index.append('sample')
+            if 'tissue' in self.df:
+                index.append('tissue')
             self._gene = get_abs_max_rows(
                 self.junction, index, 'delta_psi')
 

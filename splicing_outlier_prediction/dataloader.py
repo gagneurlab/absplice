@@ -7,6 +7,7 @@ class RefTableMixin:
     def __init__(self, ref_tables5=list(), ref_tables3=list(), 
                 combined_ref_tables5=None, 
                 combined_ref_tables3=None, 
+                regex_pattern=None,
                 **kwargs):
         if not ref_tables5 and not ref_tables3:
             raise ValueError(
@@ -15,29 +16,29 @@ class RefTableMixin:
         self.combined_ref_tables5 = None
         self.combined_ref_tables3 = None
         if ref_tables5:
-            srf5 = self._read_ref_tables(ref_tables5)
+            srf5 = self._read_ref_tables(ref_tables5, regex_pattern)
             self.ref_tables5 = srf5.ref_tables
             self.combined_ref_tables5 = srf5
             if len(ref_tables5) > 1:
                 self.combined_ref_tables5_path = combined_ref_tables5
-                srf5.save_concat_ref_tables(save_path=combined_ref_tables5)
+                srf5.save_combined_ref_tables(save_path=combined_ref_tables5)
             else:
                 self.combined_ref_tables5_path = ref_tables5[0]
             
         if ref_tables3:
-            srf3 = self._read_ref_tables(ref_tables3)
+            srf3 = self._read_ref_tables(ref_tables3, regex_pattern)
             self.ref_tables3 = srf3.ref_tables
             self.combined_ref_tables3 = srf3
             if len(ref_tables3) > 1:
                 self.combined_ref_tables3_path = combined_ref_tables3
-                srf3.save_concat_ref_tables(save_path=combined_ref_tables3)
+                srf3.save_combined_ref_tables(save_path=combined_ref_tables3)
             else:
                 self.combined_ref_tables3_path = ref_tables3[0]
             
     @staticmethod
-    def _read_ref_tables(path):
+    def _read_ref_tables(path, regex_pattern):
         if type(path) is list:
-            return SplicingRefTable.read_csv(path)
+            return SplicingRefTable.read_csv(path, regex_pattern)
         elif type(path) == SplicingRefTable:
             return path
         else:
