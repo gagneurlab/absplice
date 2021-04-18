@@ -1,14 +1,17 @@
 import pytest
 import pandas as pd
-from splicing_outlier_prediction import SpliceOutlier, SpliceOutlierDataloader
-from splicing_outlier_prediction.spliceAI import SpliceAI
+from splicing_outlier_prediction import SpliceOutlier, SpliceOutlierDataloader, CatInference
 from conftest import ref_table5_kn_file, ref_table3_kn_file, fasta_file, \
-    multi_vcf_file, spliceai_db_path
+    multi_vcf_file, spliceai_db_path,count_cat_file, ref_table5_kn_file2, \
+    ref_table3_kn_file2, combined_ref_tables5_file, combined_ref_tables3_file, \
+    ref_table5_kn_file_fake1, ref_table5_kn_file_fake2, \
+    ref_table3_kn_file_fake1, ref_table3_kn_file_fake2, \
+    combined_ref_tables5_file_fake, combined_ref_tables3_file_fake
 
 
-@pytest.fixture
-def outlier_model():
-    return SpliceOutlier()
+# @pytest.fixture
+# def outlier_model():
+#     return SpliceOutlier()
 
 
 def test_splicing_outlier_on_batch(outlier_model, outlier_dl):
@@ -60,9 +63,9 @@ def test_splicing_outlier_predict_save(outlier_model, outlier_dl, tmp_path):
         'alt_exon', 'alt_donor', 'alt_donorIntron'])
 
 
-@pytest.fixture
-def outlier_results(outlier_model, outlier_dl):
-    return outlier_model.predict_on_dataloader(outlier_dl)
+# @pytest.fixture
+# def outlier_results(outlier_model, outlier_dl):
+#     return outlier_model.predict_on_dataloader(outlier_dl)
 
 
 def test_tissues(outlier_results):
@@ -104,23 +107,34 @@ def test_outlier_results_multi_vcf(outlier_model):
     ]
 
 
-def test_outlier_results_infer_cat_add_spliceAI(outlier_results, cat_dl, outlier_model):
-    with pytest.raises(ValueError):
-        outlier_results.infer_cat(cat_dl)
+def test_outlier_results_infer_cat(outlier_results, cat_dl, outlier_model):
+# def test_outlier_results_infer_cat(outlier_model):
+
+    # with pytest.raises(ValueError):
+    #     outlier_results.infer_cat(cat_dl)
+
+    # cat_dl1 = CatInference(
+    #    # ref_tables5=[ref_table5_kn_file, ref_table5_kn_file2], 
+    #    # ref_tables3=[ref_table3_kn_file, ref_table3_kn_file2],
+    #     ref_tables5=[ref_table5_kn_file_fake1, ref_table5_kn_file_fake2], 
+    #     ref_tables3=[ref_table3_kn_file_fake1, ref_table3_kn_file_fake2],
+    #     regex_pattern='test_(.*)_ref',
+    #     count_cat=count_cat_file)
 
     dl = SpliceOutlierDataloader(
         fasta_file, multi_vcf_file,
-        ref_tables5=[ref_table5_kn_file], ref_tables3=[ref_table3_kn_file],
+        ref_tables5=[ref_table5_kn_file, ref_table5_kn_file2], 
+        ref_tables3=[ref_table3_kn_file, ref_table3_kn_file2],
+        combined_ref_tables5=combined_ref_tables5_file, 
+        combined_ref_tables3=combined_ref_tables3_file,
+        # ref_tables5=[ref_table5_kn_file_fake1, ref_table5_kn_file_fake2], 
+        # ref_tables3=[ref_table3_kn_file_fake1, ref_table3_kn_file_fake2],
+        # combined_ref_tables5=combined_ref_tables5_file_fake, 
+        # combined_ref_tables3=combined_ref_tables3_file_fake,
+        regex_pattern='test_(.*)_ref',
         samples=True)
 
     results = outlier_model.predict_on_dataloader(dl)
-
-    spliceai = SpliceAI(db_path=spliceai_db_path)
-    df_spliceAI = spliceai.predict_df(
-        ['17:34149615:A>T', '17:34149617:A>T']).reset_index()
-    df_spliceAI.loc[0, 'samples'] = 'NA00001;NA00002;NA00003'
-    results.add_spliceAI(df_spliceAI)
-    results.df.loc[0, 'samples'] = 'NA00002;NA00003;NA00004'
     results.infer_cat(cat_dl)
 
     assert sorted(results.junction.columns.tolist()) == sorted([

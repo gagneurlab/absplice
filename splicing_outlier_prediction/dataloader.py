@@ -15,6 +15,9 @@ class RefTableMixin:
 
         self.combined_ref_tables5 = None
         self.combined_ref_tables3 = None
+        self.ref_tables5 = None
+        self.ref_tables3 = None
+
         if ref_tables5:
             srf5 = self._read_ref_tables(ref_tables5, regex_pattern)
             self.ref_tables5 = srf5.ref_tables

@@ -8,28 +8,32 @@ from conftest import ref_table5_kn_file, ref_table3_kn_file, fasta_file, \
 @pytest.fixture
 def cat_dl5():
     return CatInference(
-        ref_table5=ref_table5_kn_file,
+        ref_tables5=[ref_table5_kn_file],
         count_cat=count_cat_file)
 
 
 @pytest.fixture
 def cat_dl3():
     return CatInference(
-        ref_table3=ref_table3_kn_file,
+        ref_tables3=[ref_table3_kn_file],
         count_cat=count_cat_file)
 
 
 def test_cat_dataloader_init(cat_dl):
-    assert cat_dl.ref_table5.method == 'kn'
-    assert cat_dl.ref_table5.df.shape[0] == 26
+    assert cat_dl.combined_ref_tables5.method == ['kn', 'kn']
+    assert cat_dl.combined_ref_tables5.df_all.shape[0] == 51
+    assert sorted(list(cat_dl.combined_ref_tables5.df_all['tissue'].unique())) \
+        == sorted(['lymphocytes', 'lung'])
 
-    assert cat_dl.ref_table3.method == 'kn'
-    assert cat_dl.ref_table3.df.shape[0] == 28
+    assert cat_dl.combined_ref_tables3.method == ['kn', 'kn']
+    assert cat_dl.combined_ref_tables3.df_all.shape[0] == 51
+    assert sorted(list(cat_dl.combined_ref_tables3.df_all['tissue'].unique())) \
+         == sorted(['lymphocytes', 'lung'])
 
 
 def test_cat_dataloader_common(cat_dl):
-    assert len(cat_dl.common_junctions5) == 25
-    assert len(cat_dl.common_junctions3) == 27
+    assert len(cat_dl.common_junctions5) == 49
+    assert len(cat_dl.common_junctions3) == 50
 
 
 def test_cat_dataloader_common5(cat_dl5):
@@ -50,12 +54,14 @@ def test_cat_dataloader_infer(cat_dl):
         'ref_psi_cat': 1.0,
         'k_cat': 65,
         'n_cat': 65,
-        'delta_logit_psi_cat': 0,
-        'delta_psi_cat': 0
+        'median_n_cat': 25.0,
+        'delta_logit_psi_cat': 0.0,
+        'delta_psi_cat': 0.0,
+        'tissue': 'lymphocytes'
     }
 
     row = cat_dl.infer('17:41251897-41256138:-', 'NA00001', 'psi5')
-    assert row == {
+    assert row == [{
         'junction': '17:41251897-41256138:-',
         'sample': 'NA00001',
         'count_cat': 9,
@@ -63,6 +69,20 @@ def test_cat_dataloader_infer(cat_dl):
         'ref_psi_cat': 0.625,
         'k_cat': 30,
         'n_cat': 48,
+        'median_n_cat': 15.0,
         'delta_logit_psi_cat': -0.10536051565782634,
-        'delta_psi_cat': -0.0205021934541626
-    }
+        'delta_psi_cat': -0.0205021934541626,
+        'tissue': 'lymphocytes'
+        },{
+        'junction': '17:41251897-41256138:-',
+        'sample': 'NA00001',
+        'count_cat': 9,
+        'psi_cat': 0.6,
+        'ref_psi_cat': 0.625,
+        'k_cat': 30,
+        'n_cat': 48,
+        'median_n_cat': 15.0,
+        'delta_logit_psi_cat': -0.10536051565782634,
+        'delta_psi_cat': -0.0205021934541626,
+        'tissue': 'lung'
+    }]

@@ -6,7 +6,8 @@ class SplicingRefTable:
 
     def __init__(self, df_ref_tables):
         self.ref_tables = df_ref_tables
-        self.df = self._concat_ref_tables(self.ref_tables)
+        self.df = self._combine_ref_tables(self.ref_tables)
+        self.df_all = self._concat_ref_tables(self.ref_tables)
         self.method = self._infer_method(self.ref_tables)
         
     @classmethod
@@ -21,11 +22,18 @@ class SplicingRefTable:
         return cls(l)
 
     @staticmethod
-    def _concat_ref_tables(ref_tables):
+    def _combine_ref_tables(ref_tables):
         columns = ['junctions', 'Chromosome', 'Start', 'End', 'Strand', ]
         df = pd.concat(
             [ref_table[columns] for ref_table in ref_tables]
             ).drop_duplicates(subset='junctions').set_index('junctions')
+        return df
+    
+    @staticmethod
+    def _concat_ref_tables(ref_tables):
+        df = pd.concat(
+            [ref_table for ref_table in ref_tables]
+            ).set_index('junctions')
         return df
 
     def save_combined_ref_tables(self, save_path):
