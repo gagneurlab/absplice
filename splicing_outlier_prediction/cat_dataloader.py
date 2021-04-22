@@ -93,7 +93,7 @@ class CatInference(RefTableMixin):
                     'tissue': tissue_target.iloc[i]
                 })
         else:
-            cat_infer_results = {
+            cat_infer_results = [{
                 'junction': junction_id,
                 'sample': sample,
                 'count_cat': ct_cat.df.loc[junction_id, sample],
@@ -105,6 +105,6 @@ class CatInference(RefTableMixin):
                 'delta_logit_psi_cat': delta_logit_psi,
                 'delta_psi_cat': delta_psi_cat_infer,
                 'tissue': tissue_target
-            }
+            }]
 
         return cat_infer_results

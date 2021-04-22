@@ -21,7 +21,7 @@ def cat_dl3():
 
 def test_cat_dataloader_init(cat_dl):
     assert cat_dl.combined_ref_tables5.method == ['kn', 'kn']
-    assert cat_dl.combined_ref_tables5.df_all.shape[0] == 51
+    assert cat_dl.combined_ref_tables5.df_all.shape[0] == 52
     assert sorted(list(cat_dl.combined_ref_tables5.df_all['tissue'].unique())) \
         == sorted(['lymphocytes', 'lung'])
 
@@ -46,7 +46,7 @@ def test_cat_dataloader_common3(cat_dl3):
 
 def test_cat_dataloader_infer(cat_dl):
     row = cat_dl.infer('17:41197819-41199659:-', 'NA00002', 'psi5')
-    assert row == {
+    assert row == [{
         'junction': '17:41197819-41199659:-',
         'sample': 'NA00002',
         'count_cat': 12,
@@ -58,7 +58,7 @@ def test_cat_dataloader_infer(cat_dl):
         'delta_logit_psi_cat': 0.0,
         'delta_psi_cat': 0.0,
         'tissue': 'lymphocytes'
-    }
+    }]
 
     row = cat_dl.infer('17:41251897-41256138:-', 'NA00001', 'psi5')
     assert row == [{

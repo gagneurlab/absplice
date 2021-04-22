@@ -33,6 +33,13 @@ def outlier_dl():
         )
 
 @pytest.fixture
+def cat_dl():
+    return CatInference(ref_tables5=[ref_table5_kn_file, ref_table5_kn_file2], 
+                        ref_tables3=[ref_table3_kn_file, ref_table3_kn_file2],
+                        regex_pattern='test_(.*)_ref',
+                        count_cat=count_cat_file)
+
+@pytest.fixture
 def outlier_model():
     return SpliceOutlier()
 
@@ -40,9 +47,35 @@ def outlier_model():
 def outlier_results(outlier_model, outlier_dl):
     return outlier_model.predict_on_dataloader(outlier_dl)
 
+
 @pytest.fixture
-def cat_dl():
-    return CatInference(ref_tables5=[ref_table5_kn_file, ref_table5_kn_file2], 
-                        ref_tables3=[ref_table3_kn_file, ref_table3_kn_file2],
+def outlier_dl_multi():
+    return SpliceOutlierDataloader(
+        fasta_file, multi_vcf_file,
+        ref_tables5=[ref_table5_kn_file, ref_table5_kn_file2], 
+        ref_tables3=[ref_table3_kn_file, ref_table3_kn_file2],
+        combined_ref_tables5=combined_ref_tables5_file, 
+        combined_ref_tables3=combined_ref_tables3_file,
+        regex_pattern='test_(.*)_ref',
+        samples=True
+        )
+
+
+@pytest.fixture
+def outlier_dl_fake():
+    return SpliceOutlierDataloader(
+        fasta_file, multi_vcf_file,
+        ref_tables5=[ref_table5_kn_file_fake1, ref_table5_kn_file_fake2], 
+        ref_tables3=[ref_table3_kn_file_fake1, ref_table3_kn_file_fake2],
+        combined_ref_tables5=combined_ref_tables5_file_fake, 
+        combined_ref_tables3=combined_ref_tables3_file_fake,
+        regex_pattern='test_(.*)_ref',
+        samples=True
+        )
+
+@pytest.fixture
+def cat_dl_fake():
+    return CatInference(ref_tables5=[ref_table5_kn_file_fake1, ref_table5_kn_file_fake2], 
+                        ref_tables3=[ref_table3_kn_file_fake1, ref_table3_kn_file_fake2],
                         regex_pattern='test_(.*)_ref',
                         count_cat=count_cat_file)

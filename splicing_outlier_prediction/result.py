@@ -77,7 +77,7 @@ class SplicingOutlierResult:
             index = ['gene_name']
             if 'samples' in self.df:
                 index.append('sample')
-            if 'tissue' in self.df:
+            if 'tissue' in self.df and 'tissue' not in index:
                 index.append('tissue')
             self._gene = get_abs_max_rows(
                 self.junction, index, 'delta_psi')
@@ -105,10 +105,11 @@ class SplicingOutlierResult:
             rows = tqdm(rows, total=self.junction.shape[0])
 
         df = pd.DataFrame([
-            cat_inference.infer(junction, sample, row['event_type'])
-            for (junction, sample), row in rows
+            j
+            for (junction, sample, tissue), row in rows
+            for j in cat_inference.infer(junction, sample, row['event_type'])
             if cat_inference.contains(junction, sample, row['event_type'])
-        ]).set_index(['junction', 'sample'])
+        ]).set_index(['junction', 'sample', 'tissue'])
         self._junction = self.junction.join(df)
         self._splice_site = None
         self._gene = None
