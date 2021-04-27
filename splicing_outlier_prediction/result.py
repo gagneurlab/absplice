@@ -1,5 +1,6 @@
 from tqdm import tqdm
 import pandas as pd
+import pickle
 from splicing_outlier_prediction.utils import get_abs_max_rows
 
 
@@ -11,22 +12,16 @@ class SplicingOutlierResult:
         self._junction = None
         self._splice_site = None
         self._gene = None
+        self._junction_cat_concat = None
+        self._splice_site_cat_concat = None
+        self._gene_cat_concat = None
+        self._junction_cat_features = None
+        self._splice_site_cat_features = None
+        self._gene_cat_features = None
 
     @classmethod
     def read_csv(cls, path, **kwargs):
         return cls(pd.read_csv(path, **kwargs))
-
-    def add_spliceAI(self, df):
-        """
-        Includes spliceAI predictions into results.
-
-        Args:
-          df: path to csv or dataframe of spliceAI predictions
-        """
-        self._gene = None
-        if type(df) == str:
-            df = pd.read_csv(df)
-        self.df_spliceAI = df
 
     @staticmethod
     def _explode_samples(df):
@@ -66,9 +61,14 @@ class SplicingOutlierResult:
                 index.append('sample')
             if 'tissue' in self.df:
                 index.append('tissue')
+            if 'tissue_cat' in self.junction:
+                index.append('tissue_cat')
+
             self._splice_site = get_abs_max_rows(
                 self.junction, index, 'delta_psi') \
                 .reset_index('event_type')
+            if 'tissue_cat' in index:
+                self._splice_site = self._splice_site.reset_index('tissue_cat')
         return self._splice_site
 
     @property
@@ -79,21 +79,64 @@ class SplicingOutlierResult:
                 index.append('sample')
             if 'tissue' in self.df and 'tissue' not in index:
                 index.append('tissue')
+            if 'tissue_cat' in self.junction:
+                index.append('tissue_cat')
             self._gene = get_abs_max_rows(
                 self.junction, index, 'delta_psi')
-
-            if self.df_spliceAI is not None:
-                df_spliceAI = self.df_spliceAI
-                if 'samples' in self.df:
-                    df_spliceAI = self._explode_samples(df_spliceAI)
-
-                    df_spliceAI = get_abs_max_rows(
-                        df_spliceAI, index, 'delta_score')
-
-                self._gene = self._gene.join(df_spliceAI, how='outer',
-                                             rsuffix='_spliceAI')
+            if 'tissue_cat' in index:
+                self._gene = self._gene.reset_index('tissue_cat')
 
         return self._gene
+
+
+    def _join_spliceAI(self, df):
+        index_spliceAI = self.df_spliceAI.index.names
+        index = df.index.names
+        df = df[df.columns.difference(
+            ['index', 'variant_spliceAI','delta_score', 'acceptor_gain', 'acceptor_loss', 'donor_gain',
+            'donor_loss', 'acceptor_gain_position', 'acceptor_loss_positiin',
+            'donor_gain_position', 'donor_loss_position', 'GQ', 'DP_ALT']
+            )]
+        df = df.reset_index().set_index(index_spliceAI)\
+            .join(self.df_spliceAI, how='outer', rsuffix='_spliceAI')\
+                .reset_index().set_index(index)
+        if 'tissue_cat' in index:
+            df = df.reset_index('tissue_cat')
+        return df
+
+    def add_spliceAI(self, df):
+        """
+        Includes spliceAI predictions into results.
+
+        Args:
+          df: path to csv or dataframe of spliceAI predictions
+        """
+        self._gene = None
+        if type(df) == str:
+            df = pd.read_csv(df)
+        self.df_spliceAI = df
+
+        df_spliceAI = self.df_spliceAI
+        index_spliceAI = ['gene_name']
+        if 'samples' in self.df:
+            index_spliceAI.append('sample')
+            df_spliceAI = self._explode_samples(df_spliceAI) #TODO: add samples to index_spliceAI?
+        self.df_spliceAI = get_abs_max_rows(
+            df_spliceAI, index_spliceAI, 'delta_score') #TODO: double check that, before it was only for 'samples' in self.df
+
+        if self._gene is None:
+            self.gene
+        self._gene = self._join_spliceAI(self._gene)
+
+        if 'tissue_cat' in self.junction:
+            if self._gene_cat_concat is None:
+                self.gene_cat_concat
+            self._gene_cat_concat = self._join_spliceAI(self._gene_cat_concat)
+
+            if self._gene_cat_features is None:
+                self.gene_cat_features
+            self._gene_cat_features = self._join_spliceAI(self._gene_cat_features)
+
 
     def infer_cat(self, cat_inference, progress=False):
 
@@ -113,6 +156,125 @@ class SplicingOutlierResult:
         self._junction = self.junction.join(df)
         self._splice_site = None
         self._gene = None
+
+    @property
+    def junction_cat_concat(self):
+        if self._junction_cat_concat is None:
+            if self._junction is None:
+                self.junction
+            if 'tissue_cat' not in self._junction:
+                raise IndexError('"tissue_cat not in columns. You have to run infer_cat first"')
+
+            index = ['junction', 'event_type']
+            if 'samples' in self.df:
+                index.append('sample')
+            if 'tissue' in self.df and 'tissue' not in index:
+                index.append('tissue')
+
+            self._junction_cat_concat = get_abs_max_rows(
+                self._junction, index, 'delta_psi_cat') \
+                .reset_index('event_type')
+
+        return self._junction_cat_concat
+
+    @property
+    def splice_site_cat_concat(self):
+        if self._splice_site_cat_concat is None:
+            if self._splice_site is None:
+                self.splice_site
+            if 'tissue_cat' not in self._splice_site:
+                raise IndexError('"tissue_cat not in columns. You have to run infer_cat first"')
+
+            index = ['splice_site', 'event_type']
+            if 'samples' in self.df:
+                index.append('sample')
+            if 'tissue' in self.df and 'tissue' not in index:
+                index.append('tissue')
+
+            self._splice_site_cat_concat = get_abs_max_rows(
+                self._splice_site, index, 'delta_psi_cat') \
+                .reset_index('event_type')
+
+        return self._splice_site_cat_concat
+
+    @property
+    def gene_cat_concat(self):
+        if self._gene_cat_concat is None:
+            if self._gene is None:
+                self.gene
+            if 'tissue_cat' not in self._gene:
+                raise IndexError('"tissue_cat not in columns. You have to run infer_cat first"')
+
+            index = ['gene_name']
+            if 'samples' in self.df:
+                index.append('sample')
+            if 'tissue' in self.df and 'tissue' not in index:
+                index.append('tissue')
+
+            self._gene_cat_concat = get_abs_max_rows(
+                self._gene, index, 'delta_psi_cat')
+
+        return self._gene_cat_concat
+
+    @property
+    def junction_cat_features(self):
+        if self._junction_cat_features is None:
+            if self._junction is None:
+                self.junction
+            if 'tissue_cat' not in self._junction:
+                raise IndexError('"tissue_cat not in columns. You have to run infer_cat first"')
+
+            cols_cat = [x for x in self._junction.columns if 'cat' in x]
+            df_cat = self._junction[cols_cat]
+            df_cat = df_cat.pivot(columns='tissue_cat')
+            df_cat.columns = [f'{col[0]}'.replace('cat', f'{col[1]}')  for col in df_cat.columns]
+
+            df_target = self._junction[self._junction.columns.difference(cols_cat)]
+            index = df_target.index.names
+            df_target = df_target.reset_index().drop_duplicates().set_index(index) #TODO: refactor this
+            self._junction_cat_features = df_target.join(df_cat)
+
+        return self._junction_cat_features
+
+    @property
+    def splice_site_cat_features(self):
+        if self._splice_site_cat_features is None:
+            if self._splice_site is None:
+                self.splice_site
+            if 'tissue_cat' not in self._splice_site:
+                raise IndexError('"tissue_cat not in columns. You have to run infer_cat first"')
+
+            cols_cat = [x for x in self._splice_site.columns if 'cat' in x]
+            df_cat = self._splice_site[cols_cat]
+            df_cat = df_cat.pivot(columns='tissue_cat')
+            df_cat.columns = [f'{col[0]}'.replace('cat', f'{col[1]}')  for col in df_cat.columns]
+
+            df_target = self._splice_site[self._splice_site.columns.difference(cols_cat)]
+            index = df_target.index.names
+            df_target = df_target.reset_index().drop_duplicates().set_index(index) #TODO: refactor this
+            self._splice_site_cat_features = df_target.join(df_cat)
+
+        return self._splice_site_cat_features
+
+    @property
+    def gene_cat_features(self):
+        if self._gene_cat_features is None:
+            if self._gene is None:
+                self.gene
+            if 'tissue_cat' not in self._gene:
+                raise IndexError('"tissue_cat not in columns. You have to run infer_cat first"')
+
+            cols_cat = [x for x in self._gene.columns if 'cat' in x]
+            df_cat = self._gene[cols_cat]
+            df_cat = df_cat.pivot(columns='tissue_cat')
+            df_cat.columns = [f'{col[0]}'.replace('cat', f'{col[1]}')  for col in df_cat.columns]
+
+            df_target = self._gene[self._gene.columns.difference(cols_cat)]
+            index = df_target.index.names
+            df_target = df_target.reset_index().drop_duplicates().set_index(index) #TODO: refactor this
+            self._gene_cat_features = df_target.join(df_cat)
+
+        return self._gene_cat_features
 
     @staticmethod
     def _add_maf(df, population, default=-1):
@@ -150,3 +312,11 @@ class SplicingOutlierResult:
                     df_spliceAI, population, maf_cutoff, default)
 
         return SplicingOutlierResult(df, df_spliceAI)
+
+    
+    def predict_ensemble(self, pickle_file, df, features):
+        self._ensemble = df.copy()
+        model = pickle.load(open(pickle_file, 'rb'))
+        X_test = self._ensemble[features].fillna(0)
+        self._ensemble['ensemble_pred'] = model.predict_proba(X_test)[:,1]
+        return self._ensemble

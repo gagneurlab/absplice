@@ -12,6 +12,9 @@ combined_ref_tables5_testis_lung = 'tests/data/test_combined_ref_tables5_testis_
 combined_ref_tables3_testis_lung = 'tests/data/test_combined_ref_tables3_testis_lung_kn.csv'
 count_cat_file_lymphocytes = 'tests/data/test_count_table_cat_chrom17_lymphocytes.csv'
 count_cat_file_blood = 'tests/data/test_count_table_cat_chrom17_blood.csv'
+spliceAI = 'tests/data/test_spliceAI.csv'
+pickle_DNA = 'tests/data/model_DNA_trained_on_all_GTEx.pkl'
+pickle_DNA_CAT = 'tests/data/model_CAT_concat.pkl'
 
 
 @pytest.fixture

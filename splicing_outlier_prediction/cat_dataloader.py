@@ -114,16 +114,6 @@ class CatInference(RefTableMixin):
                 self._median_n_cat = ref_psi_cat.loc[junction_id]['median_n']
                 self._delta_logit_psi_cat = delta_logit_psi
                 self._tissue_cat = tissue_cat
-            # else: #if current CAT does not have sample, set all cat info to None
-            #     self._count_cat = None
-            #     self._psi_cat = None
-            #     self._ref_psi_cat = None
-            #     self._k_cat = None
-            #     self._n_cat = None
-            #     self._median_n_cat = None
-            #     self._delta_logit_psi_cat = None
-            #     self._delta_psi_cat = None
-            #     self._tissue_cat = None
 
                 tissue_target = ref_tables.loc[junction_id]['tissue']
                 if type(ref_tables.loc[junction_id]['tissue']) == pd.core.series.Series: #loop through all non-CAT that contain junction_id
