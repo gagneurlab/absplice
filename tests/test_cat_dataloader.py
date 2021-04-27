@@ -1,88 +1,133 @@
 import pytest
 import numpy as np
 from splicing_outlier_prediction import CatInference
-from conftest import ref_table5_kn_file, ref_table3_kn_file, fasta_file, \
-    vcf_file, multi_vcf_file, count_cat_file
+from conftest import ref_table5_kn_testis, ref_table3_kn_testis, fasta_file, \
+    vcf_file, multi_vcf_file, count_cat_file_lymphocytes
 
 
 @pytest.fixture
 def cat_dl5():
     return CatInference(
-        ref_tables5=[ref_table5_kn_file],
-        count_cat=count_cat_file)
+        ref_tables5=[ref_table5_kn_testis],
+        regex_pattern='test_(.*)_ref',
+        count_cat=[count_cat_file_lymphocytes],
+        regex_pattern_cat='chrom17_(.*).csv'
+        )
 
 
 @pytest.fixture
 def cat_dl3():
     return CatInference(
-        ref_tables3=[ref_table3_kn_file],
-        count_cat=count_cat_file)
+        ref_tables3=[ref_table3_kn_testis],
+        regex_pattern='test_(.*)_ref',
+        count_cat=[count_cat_file_lymphocytes],
+        regex_pattern_cat='chrom17_(.*).csv'
+        )
 
 
 def test_cat_dataloader_init(cat_dl):
     assert cat_dl.combined_ref_tables5.method == ['kn', 'kn']
-    assert cat_dl.combined_ref_tables5.df_all.shape[0] == 52
+    assert cat_dl.combined_ref_tables5.df_all.shape[0] == 48
     assert sorted(list(cat_dl.combined_ref_tables5.df_all['tissue'].unique())) \
-        == sorted(['lymphocytes', 'lung'])
+        == sorted(['testis', 'lung'])
 
     assert cat_dl.combined_ref_tables3.method == ['kn', 'kn']
-    assert cat_dl.combined_ref_tables3.df_all.shape[0] == 51
+    assert cat_dl.combined_ref_tables3.df_all.shape[0] == 71
     assert sorted(list(cat_dl.combined_ref_tables3.df_all['tissue'].unique())) \
-         == sorted(['lymphocytes', 'lung'])
+         == sorted(['testis', 'lung'])
 
 
 def test_cat_dataloader_common(cat_dl):
-    assert len(cat_dl.common_junctions5) == 49
-    assert len(cat_dl.common_junctions3) == 50
+    assert len(cat_dl.common_junctions5[0]) == 35
+    assert len(cat_dl.common_junctions3[0]) == 41
 
 
 def test_cat_dataloader_common5(cat_dl5):
-    assert len(cat_dl5.common_junctions5) == 25
+    assert len(cat_dl5.common_junctions5[0]) == 22
 
 
 def test_cat_dataloader_common3(cat_dl3):
-    assert len(cat_dl3.common_junctions3) == 27
+    assert len(cat_dl3.common_junctions3[0]) == 29
 
 
 def test_cat_dataloader_infer(cat_dl):
-    row = cat_dl.infer('17:41197819-41199659:-', 'NA00002', 'psi5')
-    assert row == [{
-        'junction': '17:41197819-41199659:-',
-        'sample': 'NA00002',
-        'count_cat': 12,
-        'psi_cat': 1,
-        'ref_psi_cat': 1.0,
-        'k_cat': 65,
-        'n_cat': 65,
-        'median_n_cat': 25.0,
-        'delta_logit_psi_cat': 0.0,
-        'delta_psi_cat': 0.0,
-        'tissue': 'lymphocytes'
-    }]
-
-    row = cat_dl.infer('17:41251897-41256138:-', 'NA00001', 'psi5')
-    assert row == [{
-        'junction': '17:41251897-41256138:-',
-        'sample': 'NA00001',
-        'count_cat': 9,
-        'psi_cat': 0.6,
-        'ref_psi_cat': 0.625,
-        'k_cat': 30,
-        'n_cat': 48,
-        'median_n_cat': 15.0,
-        'delta_logit_psi_cat': -0.10536051565782634,
-        'delta_psi_cat': -0.0205021934541626,
-        'tissue': 'lymphocytes'
+    row = cat_dl.infer('17:41154800-41154888:+', 'NA00002', 'psi5')
+    assert row == [
+        {
+            'junction': '17:41154800-41154888:+',
+            'sample': 'NA00002',
+            'tissue': 'testis',
+            'tissue_cat': 'lymphocytes',
+            'count_cat': 3936,
+            'delta_logit_psi_cat': 0.0,
+            'delta_psi_cat': 0.0,
+            'k_cat': 15772,
+            'median_n_cat': 5596.0,
+            'n_cat': 15772,
+            'psi_cat': 1.0,
+            'ref_psi_cat': 1.0
         },{
-        'junction': '17:41251897-41256138:-',
-        'sample': 'NA00001',
-        'count_cat': 9,
-        'psi_cat': 0.6,
-        'ref_psi_cat': 0.625,
-        'k_cat': 30,
-        'n_cat': 48,
-        'median_n_cat': 15.0,
-        'delta_logit_psi_cat': -0.10536051565782634,
-        'delta_psi_cat': -0.0205021934541626,
-        'tissue': 'lung'
-    }]
+            'junction': '17:41154800-41154888:+',
+            'sample': 'NA00002',
+            'tissue': 'lung',
+            'tissue_cat': 'lymphocytes',
+            'count_cat': 3936,
+            'delta_logit_psi_cat': 0.0,
+            'delta_psi_cat': 0.0,
+            'k_cat': 15772,
+            'median_n_cat': 5596.0,
+            'n_cat': 15772,
+            'psi_cat': 1.0,
+            'ref_psi_cat': 1.0,
+        },{
+            'junction': '17:41154800-41154888:+',
+            'sample': 'NA00002',
+            'tissue': 'testis',
+            'tissue_cat': 'blood',
+            'count_cat': 438,
+            'delta_logit_psi_cat': 0.0,
+            'delta_psi_cat': 0.0,
+            'k_cat': 1820,
+            'median_n_cat': 502.0,
+            'n_cat': 1820,
+            'psi_cat': 1.0,
+            'ref_psi_cat': 1.0,
+        },{
+            'junction': '17:41154800-41154888:+',
+            'sample': 'NA00002',
+            'tissue': 'lung',
+            'tissue_cat': 'blood',
+            'count_cat': 438,
+            'delta_logit_psi_cat': 0.0,
+            'delta_psi_cat': 0.0,
+            'k_cat': 1820,
+            'median_n_cat': 502.0,
+            'n_cat': 1820,
+            'psi_cat': 1.0,
+            'ref_psi_cat': 1.0,
+        }]
+    
+
+
+def test_cat_dataloader_contains(cat_dl):
+    assert cat_dl.contains('17:41201917-41203079:-', 'NA00002', 'psi5')
+
+def test_cat_dataloader_contains_not(cat_dl):
+    assert not cat_dl.contains('17:41201917-4120307900000:-', 'NA00002', 'psi5')
+
+def test_cat_dataloader_infer_only_one_cat(cat_dl):
+    row = cat_dl.infer('17:41201917-41203079:-', 'NA00002', 'psi5')
+    assert row == [{
+            'junction': '17:41201917-41203079:-',
+            'sample': 'NA00002',
+            'tissue': 'testis',
+            'tissue_cat': 'lymphocytes',
+            'count_cat': 0,
+            'delta_logit_psi_cat': 0.0,
+            'delta_psi_cat': 1.734723475976807e-18,
+            'k_cat': 0,
+            'median_n_cat': 43.0,
+            'n_cat': 166,
+            'psi_cat': 0.0,
+            'ref_psi_cat': 0.0
+            }]
