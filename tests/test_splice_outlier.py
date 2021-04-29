@@ -2,6 +2,7 @@ import pytest
 import pandas as pd
 import numpy as np
 from splicing_outlier_prediction import SpliceOutlier, SpliceOutlierDataloader, CatInference
+from splicing_outlier_prediction.ensemble import train_model_ebm
 from conftest import fasta_file, multi_vcf_file, \
     ref_table5_kn_testis, ref_table3_kn_testis,  \
     ref_table5_kn_lung, ref_table3_kn_lung, \
@@ -156,8 +157,8 @@ def test_outlier_results_cat_concat(outlier_results, cat_dl, outlier_model):
     assert len(results.gene.loc[list(set(results.gene[['delta_psi', 'delta_psi_cat', 'tissue_cat']].index))[0]]\
         ['delta_psi_cat'].values) > 1
 
-    assert results.gene.loc[list(set(results.gene[['delta_psi', 'delta_psi_cat', 'tissue_cat']].index))[0]]\
-        ['delta_psi_cat'].values.max() == \
+    assert np.abs(results.gene.loc[list(set(results.gene[['delta_psi', 'delta_psi_cat', 'tissue_cat']].index))[0]]\
+        ['delta_psi_cat'].values).max() == \
             results.gene_cat_concat.loc[list(set(results.gene[['delta_psi', 'delta_psi_cat', 'tissue_cat']].index))[0]]\
                 ['delta_psi_cat']
 
@@ -431,3 +432,97 @@ def test_splicing_outlier_result_predict_ensemble_DNA_CAT(outlier_results, cat_d
     ])
 
     assert results._ensemble['ensemble_pred'] is not None
+
+import random
+
+def test_splicing_outlier_result_train_ensemble_DNA(outlier_results, outlier_model):
+    dl = SpliceOutlierDataloader(
+        fasta_file, multi_vcf_file,
+        ref_tables5=[ref_table5_kn_testis, ref_table5_kn_lung], 
+        ref_tables3=[ref_table3_kn_testis, ref_table3_kn_lung],
+        combined_ref_tables5=combined_ref_tables5_testis_lung, 
+        combined_ref_tables3=combined_ref_tables3_testis_lung,
+        regex_pattern='test_(.*)_ref',
+        samples=True)
+
+    results = outlier_model.predict_on_dataloader(dl)
+    results.add_spliceAI(spliceAI)
+
+    features_DNA = ['delta_psi', 'delta_score', 'median_n', 'ref_psi']
+
+    # results._gene = results._gene.fillna(0)
+    results._gene['outlier'] = np.random.randint(0, 2, results._gene.shape[0])
+
+    results_ensemble, models = train_model_ebm(results._gene, features_DNA, feature_to_filter_na=None, nsplits=2)
+
+    assert sorted(results_ensemble.columns.tolist()) == sorted([
+        *results._gene.index.names, *features_DNA, 
+        'fold', 'y_test', 'y_pred'
+    ])
+
+
+def test_splicing_outlier_result_train_ensemble_DNA_CAT(outlier_results, cat_dl, outlier_model):
+    # with pytest.raises(ValueError):
+    #     outlier_results.infer_cat(cat_dl)
+
+    dl = SpliceOutlierDataloader(
+        fasta_file, multi_vcf_file,
+        ref_tables5=[ref_table5_kn_testis, ref_table5_kn_lung], 
+        ref_tables3=[ref_table3_kn_testis, ref_table3_kn_lung],
+        combined_ref_tables5=combined_ref_tables5_testis_lung, 
+        combined_ref_tables3=combined_ref_tables3_testis_lung,
+        regex_pattern='test_(.*)_ref',
+        samples=True)
+
+    results = outlier_model.predict_on_dataloader(dl)
+    results.infer_cat(cat_dl)
+    results.add_spliceAI(spliceAI)
+
+    features_DNA_CAT = ['delta_psi', 'delta_psi_cat', 'delta_score', 'ref_psi', 'median_n', 'psi_cat', 'ref_psi_cat']
+
+    # results._gene = results._gene.fillna(0)
+    results._gene_cat_concat['outlier'] = np.random.randint(0, 2, results._gene_cat_concat.shape[0])
+
+    results_ensemble, models = train_model_ebm(results._gene_cat_concat, features_DNA_CAT, feature_to_filter_na=None, nsplits=2)
+
+    assert sorted(results_ensemble.columns.tolist()) == sorted([
+        *results._gene.index.names, *features_DNA_CAT, 
+        'fold', 'y_test', 'y_pred'
+    ])
+
+
+def test_splicing_outlier_result_train_ensemble_DNA_CAT_cross_apply(outlier_results, cat_dl, outlier_model):
+    # with pytest.raises(ValueError):
+    #     outlier_results.infer_cat(cat_dl)
+
+    dl = SpliceOutlierDataloader(
+        fasta_file, multi_vcf_file,
+        ref_tables5=[ref_table5_kn_testis, ref_table5_kn_lung], 
+        ref_tables3=[ref_table3_kn_testis, ref_table3_kn_lung],
+        combined_ref_tables5=combined_ref_tables5_testis_lung, 
+        combined_ref_tables3=combined_ref_tables3_testis_lung,
+        regex_pattern='test_(.*)_ref',
+        samples=True)
+
+    results = outlier_model.predict_on_dataloader(dl)
+    results.infer_cat(cat_dl)
+    results.add_spliceAI(spliceAI)
+
+    features_DNA = ['delta_psi', 'delta_score', 'ref_psi', 'median_n']
+    features_blood = ['delta_psi_blood', 'k_blood', 'median_n_blood', 'n_blood', 'psi_blood', 'ref_psi_blood']
+    features_lympho = ['delta_psi_lymphocytes', 'k_lymphocytes', 'median_n_lymphocytes', 'n_lymphocytes', 'psi_lymphocytes', 'ref_psi_lymphocytes']
+    features_DNA_CAT = [*features_DNA, *features_blood, *features_lympho]
+    features_DNA_CAT_train = [*features_DNA, *features_blood]
+    features_DNA_CAT_test = [*features_DNA, *features_lympho]
+
+    # results._gene = results._gene.fillna(0)
+    results._gene_cat_features['outlier'] = np.random.randint(0, 2, results._gene_cat_features.shape[0])
+
+    results_ensemble, models = train_model_ebm(results._gene_cat_features, features_DNA_CAT, \
+        feature_to_filter_na=None, nsplits=2,\
+            features_train=features_DNA_CAT_train, features_test=features_DNA_CAT_test)
+
+    assert sorted(results_ensemble.columns.tolist()) == sorted([
+        *results._gene.index.names, *features_DNA_CAT, 
+        'fold', 'y_test', 'y_pred'
+    ])
