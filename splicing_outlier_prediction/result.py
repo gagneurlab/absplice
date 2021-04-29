@@ -37,6 +37,32 @@ class SplicingOutlierResult:
     def psi3(self):
         return SplicingOutlierResult(self.df[self.df['event_type'] == 'psi3'])
 
+
+    def filter_samples_with_RNA_seq(self, samples_for_tissue):
+        if self.df is not None:
+            if 'tissue' in self.df:
+                l = list()
+                for tissue, samples in samples_for_tissue.items():
+                    df = self.df[self.df['tissue'] == tissue]
+                    df['samples'] \
+                        = df['samples'].apply(lambda x: ';'.join(i for i in x.split(';') if i in samples))
+                    df_filtered = df[(df['tissue'] == tissue) & ~(df['samples'] == '')]
+                    l.append(df_filtered)
+                self.df = pd.concat(l)
+            else:
+                raise KeyError('tissue annotation missing')
+
+        if self.df_spliceAI is not None:
+            l = list()
+            for tissue, samples in samples_for_tissue.items():
+                df = self.df_spliceAI.copy()
+                df['tissue'] = tissue
+                df['samples'] \
+                    = df['samples'].apply(lambda x: ';'.join(i for i in x.split(';') if i in samples))
+                df_filtered = df[(df['tissue'] == tissue) & ~(df['samples'] == '')]
+                l.append(df_filtered)
+            self.df_spliceAI = pd.concat(l)
+
     @property
     def junction(self):
         if self._junction is None:
@@ -86,9 +112,44 @@ class SplicingOutlierResult:
             if 'tissue_cat' in index:
                 self._gene = self._gene.reset_index('tissue_cat')
 
+            if self.df_spliceAI is not None:
+                df_spliceAI, index_spliceAI = self._add_tissue_info_to_spliceAI()
+                self.df_spliceAI = get_abs_max_rows(
+                    df_spliceAI, index_spliceAI, 'delta_score') #TODO: double check that, before it was only for 'samples' in self.df
+                self._gene = self._join_spliceAI(self._gene)
+        
         return self._gene
 
+    def add_spliceAI(self, df):
+        """
+        Includes spliceAI predictions into results.
 
+        Args:
+          df: path to csv or dataframe of spliceAI predictions
+        """
+        self._gene = None
+        if type(df) == str:
+            df = pd.read_csv(df)
+        self.df_spliceAI = df
+
+    def _add_tissue_info_to_spliceAI(self):
+        df_spliceAI = self.df_spliceAI
+        index_spliceAI = ['gene_name']
+        if 'tissue' in self.df_spliceAI:
+            index_spliceAI.append('tissue')
+        else:
+            l = list()
+            for tissue in self.df['tissue'].unique():
+                _df = df_spliceAI.copy()
+                _df['tissue'] = tissue
+                l.append(_df)
+            df_spliceAI = pd.concat(l)
+            index_spliceAI.append('tissue')
+        if 'samples' in self.df_spliceAI:
+            index_spliceAI.append('sample')
+            df_spliceAI = self._explode_samples(df_spliceAI)
+        return df_spliceAI, index_spliceAI
+        
     def _join_spliceAI(self, df):
         index_spliceAI = self.df_spliceAI.index.names
         index = df.index.names
@@ -103,39 +164,6 @@ class SplicingOutlierResult:
         if 'tissue_cat' in index:
             df = df.reset_index('tissue_cat')
         return df
-
-    def add_spliceAI(self, df):
-        """
-        Includes spliceAI predictions into results.
-
-        Args:
-          df: path to csv or dataframe of spliceAI predictions
-        """
-        self._gene = None
-        if type(df) == str:
-            df = pd.read_csv(df)
-        self.df_spliceAI = df
-
-        df_spliceAI = self.df_spliceAI
-        index_spliceAI = ['gene_name']
-        if 'samples' in self.df:
-            index_spliceAI.append('sample')
-            df_spliceAI = self._explode_samples(df_spliceAI) #TODO: add samples to index_spliceAI?
-        self.df_spliceAI = get_abs_max_rows(
-            df_spliceAI, index_spliceAI, 'delta_score') #TODO: double check that, before it was only for 'samples' in self.df
-
-        if self._gene is None:
-            self.gene
-        self._gene = self._join_spliceAI(self._gene)
-
-        if 'tissue_cat' in self.junction:
-            if self._gene_cat_concat is None:
-                self.gene_cat_concat
-            self._gene_cat_concat = self._join_spliceAI(self._gene_cat_concat)
-
-            if self._gene_cat_features is None:
-                self.gene_cat_features
-            self._gene_cat_features = self._join_spliceAI(self._gene_cat_features)
 
 
     def infer_cat(self, cat_inference, progress=False):
@@ -152,7 +180,8 @@ class SplicingOutlierResult:
             for (junction, sample, tissue), row in rows
             for j in cat_inference.infer(junction, sample, row['event_type'])
             if cat_inference.contains(junction, sample, row['event_type'])
-        ]).set_index(['junction', 'sample', 'tissue'])
+        ])
+        df = df.drop_duplicates().set_index(['junction', 'sample', 'tissue'])
         self._junction = self.junction.join(df)
         self._splice_site = None
         self._gene = None
@@ -212,9 +241,13 @@ class SplicingOutlierResult:
                 index.append('tissue')
 
             self._gene_cat_concat = get_abs_max_rows(
-                self._gene, index, 'delta_psi_cat')
+                self._gene[~self._gene['delta_psi_cat'].isna()], index, 'delta_psi_cat')
+            
+            if self.df_spliceAI is not None:
+                self._gene_cat_concat = self._join_spliceAI(self._gene_cat_concat)
 
         return self._gene_cat_concat
+
 
     @property
     def junction_cat_features(self):
@@ -273,6 +306,9 @@ class SplicingOutlierResult:
             index = df_target.index.names
             df_target = df_target.reset_index().drop_duplicates().set_index(index) #TODO: refactor this
             self._gene_cat_features = df_target.join(df_cat)
+
+            if self.df_spliceAI is not None:
+                self._gene_cat_features = self._join_spliceAI(self._gene_cat_features)
 
         return self._gene_cat_features
 

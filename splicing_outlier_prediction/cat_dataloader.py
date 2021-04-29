@@ -75,6 +75,7 @@ class CatInference(RefTableMixin):
             }
 
     def infer(self, junction_id, sample, event_type, clip_threshold=0.01):
+        #TODO: if junction in multiple ref tables, creates duplicates...
         self._sample = sample
         self._junction_id = junction_id
         cat_infer_results = list()

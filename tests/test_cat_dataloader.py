@@ -27,7 +27,7 @@ def cat_dl3():
 
 def test_cat_dataloader_init(cat_dl):
     assert cat_dl.combined_ref_tables5.method == ['kn', 'kn']
-    assert cat_dl.combined_ref_tables5.df_all.shape[0] == 48
+    assert cat_dl.combined_ref_tables5.df_all.shape[0] == 49
     assert sorted(list(cat_dl.combined_ref_tables5.df_all['tissue'].unique())) \
         == sorted(['testis', 'lung'])
 
