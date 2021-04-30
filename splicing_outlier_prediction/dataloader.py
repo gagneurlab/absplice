@@ -8,6 +8,7 @@ class RefTableMixin:
                 combined_ref_tables5=None, 
                 combined_ref_tables3=None, 
                 regex_pattern=None,
+                save_combined_ref_tables=True,
                 **kwargs):
         if not ref_tables5 and not ref_tables3:
             raise ValueError(
@@ -24,7 +25,8 @@ class RefTableMixin:
             self.combined_ref_tables5 = srf5
             if len(ref_tables5) > 1:
                 self.combined_ref_tables5_path = combined_ref_tables5
-                srf5.save_combined_ref_tables(save_path=combined_ref_tables5)
+                if save_combined_ref_tables:
+                    srf5.save_combined_ref_tables(save_path=combined_ref_tables5)
             else:
                 self.combined_ref_tables5_path = ref_tables5[0]
             
@@ -34,7 +36,8 @@ class RefTableMixin:
             self.combined_ref_tables3 = srf3
             if len(ref_tables3) > 1:
                 self.combined_ref_tables3_path = combined_ref_tables3
-                srf3.save_combined_ref_tables(save_path=combined_ref_tables3)
+                if save_combined_ref_tables:
+                    srf3.save_combined_ref_tables(save_path=combined_ref_tables3)
             else:
                 self.combined_ref_tables3_path = ref_tables3[0]
             

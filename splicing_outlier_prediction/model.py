@@ -21,8 +21,10 @@ class SpliceOutlierDataloader(RefTableMixin, SampleIterator):
                 ref_tables3=list(), 
                 combined_ref_tables5=None, 
                 combined_ref_tables3=None, 
-                regex_pattern=None, **kwargs):
-        RefTableMixin.__init__(self, ref_tables5, ref_tables3, combined_ref_tables5, combined_ref_tables3, regex_pattern, **kwargs)
+                regex_pattern=None,
+                save_combined_ref_tables=True,
+                **kwargs):
+        RefTableMixin.__init__(self, ref_tables5, ref_tables3, combined_ref_tables5, combined_ref_tables3, regex_pattern, save_combined_ref_tables, **kwargs)
         import mmsplice
         self.fasta_file = fasta_file
         self.vcf_file = vcf_file
