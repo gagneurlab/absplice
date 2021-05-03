@@ -12,8 +12,10 @@ class CatInference(RefTableMixin):
                 ref_tables3=list(), 
                 regex_pattern=None, 
                 regex_pattern_cat=None, 
+                save_combined_ref_tables=False,
                 **kwargs):
-        RefTableMixin.__init__(self, ref_tables5, ref_tables3, regex_pattern=regex_pattern, **kwargs)    
+        RefTableMixin.__init__(self, ref_tables5, ref_tables3, \
+            regex_pattern=regex_pattern, save_combined_ref_tables=save_combined_ref_tables, **kwargs)    
         self.ct = list()
         self.samples = list()
         self.common_junctions5 = list()

@@ -25,7 +25,8 @@ def outlier_dl():
         ref_tables3=[ref_table3_kn_testis, ref_table3_kn_lung],
         combined_ref_tables5=combined_ref_tables5_testis_lung, 
         combined_ref_tables3=combined_ref_tables3_testis_lung,
-        regex_pattern='test_(.*)_ref'
+        regex_pattern='test_(.*)_ref',
+        save_combined_ref_tables=True,
         )
 
 @pytest.fixture

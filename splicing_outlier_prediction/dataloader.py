@@ -8,7 +8,7 @@ class RefTableMixin:
                 combined_ref_tables5=None, 
                 combined_ref_tables3=None, 
                 regex_pattern=None,
-                save_combined_ref_tables=True,
+                save_combined_ref_tables=False,
                 **kwargs):
         if not ref_tables5 and not ref_tables3:
             raise ValueError(
