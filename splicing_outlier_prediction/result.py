@@ -135,6 +135,9 @@ class SplicingOutlierResult:
     def _add_tissue_info_to_spliceAI(self):
         df_spliceAI = self.df_spliceAI
         index_spliceAI = ['gene_name']
+        if 'samples' in self.df_spliceAI:
+            index_spliceAI.append('sample')
+            df_spliceAI = self._explode_samples(df_spliceAI)
         if 'tissue' in self.df_spliceAI:
             index_spliceAI.append('tissue')
         else:
@@ -145,9 +148,7 @@ class SplicingOutlierResult:
                 l.append(_df)
             df_spliceAI = pd.concat(l)
             index_spliceAI.append('tissue')
-        if 'samples' in self.df_spliceAI:
-            index_spliceAI.append('sample')
-            df_spliceAI = self._explode_samples(df_spliceAI)
+        
         return df_spliceAI, index_spliceAI
         
     def _join_spliceAI(self, df):

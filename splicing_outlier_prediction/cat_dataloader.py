@@ -13,6 +13,7 @@ class CatInference(RefTableMixin):
                 regex_pattern=None, 
                 regex_pattern_cat=None, 
                 save_combined_ref_tables=False,
+                sample_mapping=None,
                 **kwargs):
         RefTableMixin.__init__(self, ref_tables5, ref_tables3, \
             regex_pattern=regex_pattern, save_combined_ref_tables=save_combined_ref_tables, **kwargs)    
@@ -29,6 +30,8 @@ class CatInference(RefTableMixin):
         
         for i in range(len(count_cat)):
             self.ct.append(CountTable.read_csv(count_cat[i]))
+            if sample_mapping is not None:
+                self.ct[i].update_samples(sample_mapping)
             self.samples.append(set(self.ct[i].samples))
             if self.ref_tables5 is not None:
                 self.common_junctions5.append(set(self.combined_ref_tables5.df_all.index) \

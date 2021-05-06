@@ -1,8 +1,10 @@
 import pytest
 import numpy as np
 from splicing_outlier_prediction import CatInference
-from conftest import ref_table5_kn_testis, ref_table3_kn_testis, fasta_file, \
-    vcf_file, multi_vcf_file, count_cat_file_lymphocytes
+from conftest import ref_table5_kn_testis, ref_table3_kn_testis, \
+    ref_table5_kn_lung, ref_table3_kn_lung, \
+    count_cat_file_lymphocytes, count_cat_file_blood, \
+    vcf_file, multi_vcf_file, fasta_file
 
 
 @pytest.fixture
@@ -48,6 +50,26 @@ def test_cat_dataloader_common5(cat_dl5):
 
 def test_cat_dataloader_common3(cat_dl3):
     assert len(cat_dl3.common_junctions3[0]) == 29
+
+
+def test_cat_dataloader_sample_mapping():
+    sample_mapping = {
+        'NA00001' : 'new_name1',
+        'NA00002' : 'new_name2',
+        'NA00003' : 'new_name3'
+    }
+
+    cat_dl_map = CatInference(
+        ref_tables5=[ref_table5_kn_testis, ref_table5_kn_lung], 
+        ref_tables3=[ref_table3_kn_testis, ref_table3_kn_lung],
+        regex_pattern='test_(.*)_ref',
+        count_cat=[count_cat_file_lymphocytes, count_cat_file_blood],
+        regex_pattern_cat='chrom17_(.*).csv',
+        sample_mapping=sample_mapping
+    )
+
+    assert sorted(list(cat_dl_map.samples[0])) \
+        == sorted(list({'new_name1', 'new_name2', 'new_name3'}))
 
 
 def test_cat_dataloader_infer(cat_dl):
