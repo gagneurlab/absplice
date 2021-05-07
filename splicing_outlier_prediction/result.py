@@ -39,24 +39,27 @@ class SplicingOutlierResult:
 
 
     def filter_samples_with_RNA_seq(self, samples_for_tissue):
-        if self.df is not None:
-            if 'tissue' in self.df:
-                l = list()
-                for tissue, samples in samples_for_tissue.items():
-                    df = self.df[self.df['tissue'] == tissue]
-                    df['samples'] \
-                        = df['samples'].apply(lambda x: ';'.join(i for i in x.split(';') if i in samples))
-                    df_filtered = df[(df['tissue'] == tissue) & ~(df['samples'] == '')]
-                    l.append(df_filtered)
-                self.df = pd.concat(l)
-            else:
-                raise KeyError('tissue annotation missing')
+        if 'tissue' not in self.df or 'samples' not in self.df:
+            raise KeyError('tissue or sample annotation missing')
 
-        if self.df_spliceAI is not None:
+        if self.df is not None:
             l = list()
             for tissue, samples in samples_for_tissue.items():
-                df = self.df_spliceAI.copy()
-                df['tissue'] = tissue
+                df = self.df[self.df['tissue'] == tissue]
+                df['samples'] \
+                    = df['samples'].apply(lambda x: ';'.join(i for i in x.split(';') if i in samples))
+                df_filtered = df[(df['tissue'] == tissue) & ~(df['samples'] == '')]
+                l.append(df_filtered)
+            self.df = pd.concat(l)
+  
+        if self.df_spliceAI is not None:
+            if 'tissue' not in self.df_spliceAI:
+                df_spliceAI, index_spliceAI = self._add_tissue_info_to_spliceAI()
+            else:
+                df_spliceAI = self.df_spliceAI.copy()
+            l = list()
+            for tissue, samples in samples_for_tissue.items():
+                df = df_spliceAI[df_spliceAI['tissue'] == tissue]
                 df['samples'] \
                     = df['samples'].apply(lambda x: ';'.join(i for i in x.split(';') if i in samples))
                 df_filtered = df[(df['tissue'] == tissue) & ~(df['samples'] == '')]
@@ -114,6 +117,9 @@ class SplicingOutlierResult:
 
             if self.df_spliceAI is not None:
                 df_spliceAI, index_spliceAI = self._add_tissue_info_to_spliceAI()
+                if 'samples' in self.df_spliceAI:
+                    index_spliceAI.append('sample')
+                    df_spliceAI = self._explode_samples(df_spliceAI)
                 self.df_spliceAI = get_abs_max_rows(
                     df_spliceAI, index_spliceAI, 'delta_score') #TODO: double check that, before it was only for 'samples' in self.df
                 self._gene = self._join_spliceAI(self._gene)
@@ -135,19 +141,17 @@ class SplicingOutlierResult:
     def _add_tissue_info_to_spliceAI(self):
         df_spliceAI = self.df_spliceAI
         index_spliceAI = ['gene_name']
-        if 'samples' in self.df_spliceAI:
-            index_spliceAI.append('sample')
-            df_spliceAI = self._explode_samples(df_spliceAI)
-        if 'tissue' in self.df_spliceAI:
-            index_spliceAI.append('tissue')
-        else:
-            l = list()
-            for tissue in self.df['tissue'].unique():
-                _df = df_spliceAI.copy()
-                _df['tissue'] = tissue
-                l.append(_df)
-            df_spliceAI = pd.concat(l)
-            index_spliceAI.append('tissue')
+        if 'tissue' in self.df:
+            if 'tissue' in self.df_spliceAI:
+                index_spliceAI.append('tissue')
+            else:
+                l = list()
+                for tissue in self.df['tissue'].unique():
+                    _df = df_spliceAI.copy()
+                    _df['tissue'] = tissue
+                    l.append(_df)
+                df_spliceAI = pd.concat(l)
+                index_spliceAI.append('tissue')
         
         return df_spliceAI, index_spliceAI
         
