@@ -46,6 +46,7 @@ class SplicingOutlierResult:
             l = list()
             for tissue, samples in samples_for_tissue.items():
                 df = self.df[self.df['tissue'] == tissue]
+                df = df[~df['samples'].isna()]
                 df['samples'] \
                     = df['samples'].apply(lambda x: ';'.join(i for i in x.split(';') if i in samples))
                 df_filtered = df[(df['tissue'] == tissue) & ~(df['samples'] == '')]
@@ -60,6 +61,7 @@ class SplicingOutlierResult:
             l = list()
             for tissue, samples in samples_for_tissue.items():
                 df = df_spliceAI[df_spliceAI['tissue'] == tissue]
+                df = df[~df['samples'].isna()]
                 df['samples'] \
                     = df['samples'].apply(lambda x: ';'.join(i for i in x.split(';') if i in samples))
                 df_filtered = df[(df['tissue'] == tissue) & ~(df['samples'] == '')]
