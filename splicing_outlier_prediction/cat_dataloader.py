@@ -38,18 +38,23 @@ class CatInference(RefTableMixin):
                     .intersection(self.ct[i].junctions))
                 self.ct_cat5.append(self.ct[i].filter_event5(self.common_junctions5[i]))
                 self.ref_psi5_cat.append(self.ct_cat5[i].ref_psi5(annotation=False))
-                self.tissue_cat5.append(self.annotate_tissue_cat(count_cat[i], regex_pattern_cat))
+                self.tissue_cat5.append(self._annotate_tissue_cat(count_cat, i, regex_pattern_cat))
             if self.ref_tables3 is not None:
                 self.common_junctions3.append(set(self.combined_ref_tables3.df_all.index) \
                     .intersection(self.ct[i].junctions))
                 self.ct_cat3.append(self.ct[i].filter_event3(self.common_junctions3[i]))
                 self.ref_psi3_cat.append(self.ct_cat3[i].ref_psi3(annotation=False))
-                self.tissue_cat3.append(self.annotate_tissue_cat(count_cat[i], regex_pattern_cat))
+                self.tissue_cat3.append(self._annotate_tissue_cat(count_cat, i, regex_pattern_cat))
 
-    def annotate_tissue_cat(self, count_cat, regex_pattern_cat):
+    def _annotate_tissue_cat(self, count_cat, i, regex_pattern_cat):
         tissue_cat = None
         if regex_pattern_cat:
-            tissue_cat = re.search(regex_pattern_cat, count_cat).group(1)
+            if isinstance(regex_pattern_cat, str):
+                tissue_cat = re.search(regex_pattern_cat, count_cat[i]).group(1)
+            elif isinstance(regex_pattern_cat, list):
+                tissue_cat = regex_pattern_cat[i]
+            else:
+                raise('"regex_pattern_cat" has to be either a list of tissue names or a regular expression')
         return tissue_cat
 
     def contains(self, junction_id, sample, event_type):

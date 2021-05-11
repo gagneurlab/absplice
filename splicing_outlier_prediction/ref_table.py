@@ -17,7 +17,11 @@ class SplicingRefTable:
         if regex_pattern:
             for (i, path) in enumerate(path_list):
                 if 'tissue' not in l[i].columns:
-                    tissue = re.search(regex_pattern, path).group(1)
+                    if isinstance(regex_pattern, str):
+                        tissue = re.search(regex_pattern, path).group(1)
+                    elif isinstance(regex_pattern, list):
+                        tissue = regex_pattern[i]
+                    # tissue = re.search(regex_pattern, path).group(1)
                     l[i]['tissue'] = tissue
         return cls(l)
 
