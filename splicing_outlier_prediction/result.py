@@ -26,7 +26,7 @@ class SplicingOutlierResult:
     @staticmethod
     def _explode_samples(df):
         df = df.copy()
-        df['samples'] = df['samples'].str.split(';')
+        df['samples'] = df['samples'].str.split(';').map(set, na_action='ignore').map(list, na_action='ignore')
         return df.rename(columns={'samples': 'sample'}).explode('sample')
 
     @property
@@ -330,7 +330,7 @@ class SplicingOutlierResult:
 
     @staticmethod
     def _filter_private(df, max_num_sample=2):
-        return df[df['samples'].str.split(';')
+        return df[df['samples'].str.split(';').map(set, na_action='ignore').map(list, na_action='ignore')
                   .map(len) <= max_num_sample]
 
     def _add_filter_maf(self, df, population=None,
