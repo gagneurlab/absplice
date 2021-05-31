@@ -207,9 +207,11 @@ class SplicingOutlierResult:
             if 'tissue' in self.df and 'tissue' not in index:
                 index.append('tissue')
 
+            df_no_cat = self._junction[self._junction['delta_psi_cat'].isna()]
             self._junction_cat_concat = get_abs_max_rows(
                 self._junction, index, 'delta_psi_cat') \
                 .reset_index('event_type')
+            self._junction_cat_concat = pd.concat([self._junction_cat_concat, df_no_cat])
 
         return self._junction_cat_concat
 
@@ -227,9 +229,11 @@ class SplicingOutlierResult:
             if 'tissue' in self.df and 'tissue' not in index:
                 index.append('tissue')
 
+            df_no_cat = self._splice_site[self._splice_site['delta_psi_cat'].isna()]
             self._splice_site_cat_concat = get_abs_max_rows(
                 self._splice_site, index, 'delta_psi_cat') \
                 .reset_index('event_type')
+            self._splice_site_cat_concat = pd.concat([self._splice_site_cat_concat, df_no_cat])
 
         return self._splice_site_cat_concat
 
@@ -247,8 +251,10 @@ class SplicingOutlierResult:
             if 'tissue' in self.df and 'tissue' not in index:
                 index.append('tissue')
 
+            df_no_cat = self._gene[self._gene['delta_psi_cat'].isna()]
             self._gene_cat_concat = get_abs_max_rows(
                 self._gene[~self._gene['delta_psi_cat'].isna()], index, 'delta_psi_cat')
+            self._gene_cat_concat = pd.concat([self._gene_cat_concat, df_no_cat])
             
             if self.df_spliceAI is not None:
                 self._gene_cat_concat = self._join_spliceAI(self._gene_cat_concat)
