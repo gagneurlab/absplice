@@ -234,6 +234,23 @@ def test_outlier_results_cat_concat(cat_dl, outlier_model):
     assert results.gene_cat_concat.loc[(
         'BRCA1', 'NA00002', 'testis')] is not None
 
+    results._gene_cat_concat = None
+
+    results._gene = pd.concat([results._gene.iloc[0:1], results._gene])
+    cat_cols = [x for x in results._gene.columns if 'cat' in x]
+    for i in cat_cols:
+        results._gene.iloc[0, results._gene.columns.get_loc(i)] = np.NaN
+    r = results._gene.reset_index()
+    r.iloc[0, r.columns.get_loc('gene_name')] = 'BRCA1'
+    r.iloc[0, r.columns.get_loc('sample')] = 'NA00005'
+    r.iloc[0, r.columns.get_loc('tissue')] = 'lung'
+    results._gene = r.set_index(['gene_name', 'sample', 'tissue'])
+
+    assert results.gene.loc[(
+        'BRCA1', 'NA00005', 'lung')] is not None
+    assert results.gene_cat_concat.loc[(
+        'BRCA1', 'NA00005', 'lung')] is not None
+
 
 def test_outlier_results_cat_features(outlier_results, cat_dl, outlier_model):
     # with pytest.raises(ValueError):
@@ -305,6 +322,23 @@ def test_outlier_results_cat_features(outlier_results, cat_dl, outlier_model):
 
     assert results.gene_cat_features.loc[(
         'BRCA1', 'NA00002', 'testis')] is not None
+
+    results._gene_cat_features = None
+
+    results._gene = pd.concat([results._gene.iloc[0:1], results._gene])
+    cat_cols = [x for x in results._gene.columns if 'cat' in x]
+    for i in cat_cols:
+        results._gene.iloc[0, results._gene.columns.get_loc(i)] = np.NaN
+    r = results._gene.reset_index()
+    r.iloc[0, r.columns.get_loc('gene_name')] = 'BRCA1'
+    r.iloc[0, r.columns.get_loc('sample')] = 'NA00005'
+    r.iloc[0, r.columns.get_loc('tissue')] = 'lung'
+    results._gene = r.set_index(['gene_name', 'sample', 'tissue'])
+
+    assert results.gene.loc[(
+        'BRCA1', 'NA00005', 'lung')] is not None
+    assert results.gene_cat_features.loc[(
+        'BRCA1', 'NA00005', 'lung')] is not None
 
 
 def test_splicing_outlier_result_add_spliceAI(outlier_results, outlier_model):
