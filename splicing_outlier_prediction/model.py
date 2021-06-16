@@ -1,76 +1,11 @@
-import itertools
 from tqdm import tqdm
 import pandas as pd
-from kipoi.data import SampleIterator
 try:
     from mmsplice import MMSplice
-    from mmsplice.junction_dataloader import JunctionPSI5VCFDataloader, \
-        JunctionPSI3VCFDataloader
-    from mmsplice.utils import encodeDNA, df_batch_writer, \
-        delta_logit_PSI_to_delta_PSI
+    from mmsplice.utils import df_batch_writer, delta_logit_PSI_to_delta_PSI
 except ImportError:
     pass
-from splicing_outlier_prediction.dataloader import RefTableMixin
 from splicing_outlier_prediction.result import SplicingOutlierResult
-
-
-class SpliceOutlierDataloader(RefTableMixin, SampleIterator):
-
-    def __init__(self, fasta_file, vcf_file, 
-                ref_tables5=list(), 
-                ref_tables3=list(), 
-                combined_ref_tables5=None, 
-                combined_ref_tables3=None, 
-                regex_pattern=None,
-                save_combined_ref_tables=False,
-                **kwargs):
-        RefTableMixin.__init__(self, ref_tables5, ref_tables3, \
-            combined_ref_tables5, combined_ref_tables3, regex_pattern, save_combined_ref_tables, **kwargs)
-        import mmsplice
-        self.fasta_file = fasta_file
-        self.vcf_file = vcf_file
-        self._generator = iter([])
-
-        if self.combined_ref_tables5 is not None:
-            self.dl5 = JunctionPSI5VCFDataloader(
-                self.combined_ref_tables5_path, fasta_file, vcf_file, encode=False, **kwargs)
-            self._generator = itertools.chain(
-                self._generator,
-                self._iter_dl(self.dl5, self.combined_ref_tables5, event_type='psi5'))
-
-        if self.combined_ref_tables3 is not None:
-            self.dl3 = JunctionPSI3VCFDataloader(
-                self.combined_ref_tables3_path, fasta_file, vcf_file, encode=False, **kwargs)
-            self._generator = itertools.chain(
-                self._generator,
-                self._iter_dl(self.dl3, self.combined_ref_tables3, event_type='psi3'))
-
-    def _iter_dl(self, dl, intron_annotations, event_type):
-        for row in dl:
-            junction_id = row['metadata']['exon']['junction']
-            ref_row = intron_annotations.df.loc[junction_id]
-            row['metadata']['junction'] = dict()
-            row['metadata']['junction']['junction'] = ref_row.name
-            row['metadata']['junction']['event_type'] = event_type
-            row['metadata']['junction'].update(ref_row.to_dict())
-            yield row
-
-    def __next__(self):
-        return next(self._generator)
-
-    def __iter__(self):
-        return self
-
-    def batch_iter(self, batch_size=32, **kwargs):
-        for batch in super().batch_iter(batch_size, **kwargs):
-            batch['inputs']['seq'] = self._encode_batch_seq(
-                batch['inputs']['seq'])
-            batch['inputs']['mut_seq'] = self._encode_batch_seq(
-                batch['inputs']['mut_seq'])
-            yield batch
-
-    def _encode_batch_seq(self, batch):
-        return {k: encodeDNA(v.tolist()) for k, v in batch.items()}
 
 
 class SpliceOutlier:
@@ -81,10 +16,12 @@ class SpliceOutlier:
         self.clip_threshold = clip_threshold
 
     def _add_delta_psi_single_ref(self, df, ref_table):
-        cols_ref_table = list(set(ref_table.columns).difference(set(['junctions', 'Chromosome', 'Start', 'End', 'Strand'])))
-        ref_table = ref_table.rename(columns={'junctions':'junction'})
+        cols_ref_table = list(set(ref_table.columns).difference(
+            set(['junctions', 'Chromosome', 'Start', 'End', 'Strand'])))
+        ref_table = ref_table.rename(columns={'junctions': 'junction'})
         cols_df = [c for c in df.columns if (c not in cols_ref_table)]
-        df_joined = ref_table.set_index('junction')[cols_ref_table].join(df[cols_df].set_index('junction'), how='inner').reset_index()
+        df_joined = ref_table.set_index('junction')[cols_ref_table].join(
+            df[cols_df].set_index('junction'), how='inner').reset_index()
         delta_psi = delta_logit_PSI_to_delta_PSI(
             df_joined['delta_logit_psi'],
             df_joined['ref_psi'],

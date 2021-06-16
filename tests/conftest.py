@@ -21,26 +21,25 @@ pickle_DNA_CAT = 'tests/data/model_CAT_concat.pkl'
 def outlier_dl():
     return SpliceOutlierDataloader(
         fasta_file, vcf_file,
-        ref_tables5=[ref_table5_kn_testis, ref_table5_kn_lung], 
-        ref_tables3=[ref_table3_kn_testis, ref_table3_kn_lung],
-        combined_ref_tables5=combined_ref_tables5_testis_lung, 
-        combined_ref_tables3=combined_ref_tables3_testis_lung,
-        regex_pattern='test_(.*)_ref',
-        save_combined_ref_tables=True,
-        )
+        splicemap5=[ref_table5_kn_testis, ref_table5_kn_lung],
+        splicemap3=[ref_table3_kn_testis, ref_table3_kn_lung])
+
 
 @pytest.fixture
 def cat_dl():
-    return CatInference(ref_tables5=[ref_table5_kn_testis, ref_table5_kn_lung], 
+    return CatInference(ref_tables5=[ref_table5_kn_testis, ref_table5_kn_lung],
                         ref_tables3=[ref_table3_kn_testis, ref_table3_kn_lung],
                         regex_pattern='test_(.*)_ref',
-                        count_cat=[count_cat_file_lymphocytes, count_cat_file_blood],
+                        count_cat=[count_cat_file_lymphocytes,
+                                   count_cat_file_blood],
                         regex_pattern_cat='chrom17_(.*).csv',
                         )
+
 
 @pytest.fixture
 def outlier_model():
     return SpliceOutlier()
+
 
 @pytest.fixture
 def outlier_results(outlier_model, outlier_dl):
@@ -51,10 +50,10 @@ def outlier_results(outlier_model, outlier_dl):
 def outlier_dl_multi():
     return SpliceOutlierDataloader(
         fasta_file, multi_vcf_file,
-        ref_tables5=[ref_table5_kn_testis, ref_table5_kn_lung], 
+        ref_tables5=[ref_table5_kn_testis, ref_table5_kn_lung],
         ref_tables3=[ref_table3_kn_testis, ref_table3_kn_lung],
-        combined_ref_tables5=combined_ref_tables5_testis_lung, 
+        combined_ref_tables5=combined_ref_tables5_testis_lung,
         combined_ref_tables3=combined_ref_tables3_testis_lung,
         regex_pattern='test_(.*)_ref',
         samples=True
-        )
+    )
