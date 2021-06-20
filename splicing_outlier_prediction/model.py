@@ -15,50 +15,43 @@ class SpliceOutlier:
         self.mmsplice = MMSplice()
         self.clip_threshold = clip_threshold
 
-    def _add_delta_psi_single_ref(self, df, ref_table):
-        cols_ref_table = list(set(ref_table.columns).difference(
-            set(['junctions', 'Chromosome', 'Start', 'End', 'Strand'])))
-        ref_table = ref_table.rename(columns={'junctions': 'junction'})
-        cols_df = [c for c in df.columns if (c not in cols_ref_table)]
-        df_joined = ref_table.set_index('junction')[cols_ref_table].join(
-            df[cols_df].set_index('junction'), how='inner').reset_index()
+    def _add_delta_psi_single_ref(self, df, splicemap):
+        df_splicemap = splicemap.df
+
+        core_cols = ['junctions', 'Chromosome', 'Start', 'End', 'Strand']
+        cols_splicemap = df_splicemap.columns.difference(core_cols, False)
+        df_splicemap = df_splicemap.rename(columns={'junctions': 'junction'}) \
+            .set_index('junction')[cols_splicemap]
+
+        df = df[df.columns.difference(cols_splicemap, False)] \
+            .set_index('junction')
+
+        df_joined = df.join(df_splicemap, how='inner').reset_index()
+
         delta_psi = delta_logit_PSI_to_delta_PSI(
             df_joined['delta_logit_psi'],
             df_joined['ref_psi'],
             clip_threshold=self.clip_threshold or 0.01
         )
-        df_joined.insert(18, 'delta_psi', delta_psi)
+        df_joined.insert(8, 'delta_psi', delta_psi)
+        df_joined.insert(3, 'tissue', splicemap.name)
         return df_joined
 
-    def _add_delta_psi5(self, df, dataloader):
-        df5_list = list()
-        df5 = df[df['event_type'] == 'psi5']
-        for ref_table5 in dataloader.combined_ref_tables5.ref_tables:
-            df5_joined = self._add_delta_psi_single_ref(df5, ref_table5)
-            df5_list.append(df5_joined)
-        df5_with_delta_psi = pd.concat(df5_list)
-        return df5_with_delta_psi
+    def _add_delta_event(self, df, dl, event_type):
+        df = df[df['event_type'] == event_type]
+        return pd.concat(
+            self._add_delta_psi_single_ref(df, splicemap)
+            for splicemap in dl.splicemaps5
+        )
 
-    def _add_delta_psi3(self, df, dataloader):
-        df3_list = list()
-        df3 = df[df['event_type'] == 'psi3']
-        for ref_table3 in dataloader.combined_ref_tables3.ref_tables:
-            df3_joined = self._add_delta_psi_single_ref(df3, ref_table3)
-            df3_list.append(df3_joined)
-        df3_with_delta_psi = pd.concat(df3_list)
-        return df3_with_delta_psi
-
-    def _add_delta_psi(self, df, dataloader):
-        df5_with_delta_psi = self._add_delta_psi5(df, dataloader)
-        df3_with_delta_psi = self._add_delta_psi3(df, dataloader)
-        df_with_delta_psi = pd.concat([df5_with_delta_psi, df3_with_delta_psi])
-        return df_with_delta_psi
+    def _add_delta_psi(self, df, dl):
+        return pd.concat([
+            self._add_delta_event(df, dl, 'psi5'),
+            self._add_delta_event(df, dl, 'psi3')
+        ])
 
     def predict_on_batch(self, batch, dataloader):
-        columns = [
-            'samples', 'maf', 'genotype', 'GQ', 'DP_ALT',
-            *batch['metadata']['junction'].keys()
-        ]
+        columns = batch['metadata']['junction'].keys()
         df = self.mmsplice._predict_batch(batch, columns)
         del df['exons']
         df = df.rename(columns={'ID': 'variant'})

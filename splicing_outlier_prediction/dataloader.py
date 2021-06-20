@@ -72,19 +72,19 @@ class SpliceOutlierDataloader(SpliceMapMixin, SampleIterator):
                 self.combined_splicemap5, fasta_file, vcf_file, encode=False)
             self._generator = itertools.chain(
                 self._generator,
-                self._iter_dl(self.dl5, self.combined_ref_tables5, event_type='psi5'))
+                self._iter_dl(self.dl5, self.combined_splicemap5, event_type='psi5'))
 
         if self.combined_splicemap3 is not None:
             self.dl3 = JunctionPSI3VCFDataloader(
                 self.combined_splicemap3, fasta_file, vcf_file, encode=False)
             self._generator = itertools.chain(
                 self._generator,
-                self._iter_dl(self.dl3, self.combined_ref_tables3, event_type='psi3'))
+                self._iter_dl(self.dl3, self.combined_splicemap3, event_type='psi3'))
 
     def _iter_dl(self, dl, intron_annotations, event_type):
         for row in dl:
             junction_id = row['metadata']['exon']['junction']
-            ref_row = intron_annotations.df.loc[junction_id]
+            ref_row = intron_annotations.loc[junction_id]
             row['metadata']['junction'] = dict()
             row['metadata']['junction']['junction'] = ref_row.name
             row['metadata']['junction']['event_type'] = event_type
