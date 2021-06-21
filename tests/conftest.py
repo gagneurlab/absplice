@@ -27,15 +27,12 @@ def outlier_dl():
 
 @pytest.fixture
 def cat_dl():
-    return CatInference(ref_tables5=[ref_table5_kn_testis, ref_table5_kn_lung],
-                        ref_tables3=[ref_table3_kn_testis, ref_table3_kn_lung],
-                        regex_pattern='test_(.*)_ref',
+    return CatInference(splicemap5=[ref_table5_kn_testis, ref_table5_kn_lung],
+                        splicemap3=[ref_table3_kn_testis, ref_table3_kn_lung],
                         count_cat=[count_cat_file_lymphocytes,
                                    count_cat_file_blood],
-                        regex_pattern_cat='chrom17_(.*).csv',
                         )
-
-
+                        
 @pytest.fixture
 def outlier_model():
     return SpliceOutlier()

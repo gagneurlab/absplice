@@ -9,33 +9,29 @@ from conftest import ref_table5_kn_testis, ref_table3_kn_testis, \
 @pytest.fixture
 def cat_dl5():
     return CatInference(
-        ref_tables5=[ref_table5_kn_testis],
-        regex_pattern='test_(.*)_ref',
+        splicemap5=[ref_table5_kn_testis],
         count_cat=[count_cat_file_lymphocytes],
-        regex_pattern_cat='chrom17_(.*).csv'
     )
 
 
 @pytest.fixture
 def cat_dl3():
     return CatInference(
-        ref_tables3=[ref_table3_kn_testis],
-        regex_pattern='test_(.*)_ref',
+        splicemap3=[ref_table3_kn_testis],
         count_cat=[count_cat_file_lymphocytes],
-        regex_pattern_cat='chrom17_(.*).csv'
     )
 
 
 def test_cat_dataloader_init(cat_dl):
-    assert cat_dl.combined_ref_tables5.method == ['kn', 'kn']
-    assert cat_dl.combined_ref_tables5.df_all.shape[0] == 49
-    assert sorted(list(cat_dl.combined_ref_tables5.df_all['tissue'].unique())) \
-        == sorted(['testis', 'lung'])
+    assert [cat_dl.splicemaps5[i].method for i in range(len(cat_dl.splicemaps5))] == ['kn', 'kn']
+    assert cat_dl.combined_splicemap5.shape[0] == 38
+    assert sorted([cat_dl.splicemaps5[i].name for i in range(len(cat_dl.splicemaps5))]) \
+        == sorted(['gtex-grch37-testis-psi5', 'gtex-grch37-lung-psi5'])
 
-    assert cat_dl.combined_ref_tables3.method == ['kn', 'kn']
-    assert cat_dl.combined_ref_tables3.df_all.shape[0] == 71
-    assert sorted(list(cat_dl.combined_ref_tables3.df_all['tissue'].unique())) \
-        == sorted(['testis', 'lung'])
+    assert [cat_dl.splicemaps3[i].method for i in range(len(cat_dl.splicemaps3))] == ['kn', 'kn']
+    assert cat_dl.combined_splicemap3.shape[0] == 58
+    assert sorted([cat_dl.splicemaps3[i].name for i in range(len(cat_dl.splicemaps3))]) \
+        == sorted(['gtex-grch37-testis-psi3', 'gtex-grch37-lung-psi3'])
 
 
 def test_cat_dataloader_common(cat_dl):
@@ -59,11 +55,9 @@ def test_cat_dataloader_sample_mapping():
     }
 
     cat_dl_map = CatInference(
-        ref_tables5=[ref_table5_kn_testis, ref_table5_kn_lung],
-        ref_tables3=[ref_table3_kn_testis, ref_table3_kn_lung],
-        regex_pattern='test_(.*)_ref',
+        splicemap5=[ref_table5_kn_testis, ref_table5_kn_lung],
+        splicemap3=[ref_table3_kn_testis, ref_table3_kn_lung],
         count_cat=[count_cat_file_lymphocytes, count_cat_file_blood],
-        regex_pattern_cat='chrom17_(.*).csv',
         sample_mapping=sample_mapping
     )
 
@@ -77,8 +71,8 @@ def test_cat_dataloader_infer(cat_dl):
         {
             'junction': '17:41154800-41154888:+',
             'sample': 'NA00002',
-            'tissue': 'testis',
-            'tissue_cat': 'lymphocytes',
+            'tissue': 'gtex-grch37-testis-psi5',
+            'tissue_cat': 'test_count_table_cat_chrom17_lymphocytes',
             'count_cat': 3936,
             'delta_logit_psi_cat': 0.0,
             'delta_psi_cat': 0.0,
