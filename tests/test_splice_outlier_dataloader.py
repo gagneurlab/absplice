@@ -23,8 +23,8 @@ def test_splicing_outlier_dataloader_init(outlier_dl):
     # splicemap5
     assert outlier_dl.combined_splicemap5.shape[0] == 38
 
-    assert outlier_dl.splicemaps5[0].name == 'gtex-grch37-testis-psi5'
-    assert outlier_dl.splicemaps5[1].name == 'gtex-grch37-lung-psi5'
+    assert outlier_dl.splicemaps5[0].name == 'gtex-grch37-testis'
+    assert outlier_dl.splicemaps5[1].name == 'gtex-grch37-lung'
 
     assert sorted(
         set(outlier_dl.splicemaps5[0].df['junctions']).union(
@@ -35,8 +35,8 @@ def test_splicing_outlier_dataloader_init(outlier_dl):
     # splicemap3
     assert outlier_dl.combined_splicemap3.shape[0] == 58
 
-    assert outlier_dl.splicemaps3[0].name == 'gtex-grch37-testis-psi3'
-    assert outlier_dl.splicemaps3[1].name == 'gtex-grch37-lung-psi3'
+    assert outlier_dl.splicemaps3[0].name == 'gtex-grch37-testis'
+    assert outlier_dl.splicemaps3[1].name == 'gtex-grch37-lung'
 
     assert sorted(
         set(outlier_dl.splicemaps3[0].df['junctions']).union(
@@ -50,7 +50,7 @@ def test_splicing_outlier_dataloader_init_dl3(outlier_dl3):
     assert outlier_dl3.combined_splicemap5 is None
     # psi 3
     assert outlier_dl3.combined_splicemap3.shape[0] == 45
-    assert outlier_dl3.splicemaps3[0].name == 'gtex-grch37-testis-psi3'
+    assert outlier_dl3.splicemaps3[0].name == 'gtex-grch37-testis'
 
     assert sorted(set(outlier_dl3.splicemaps3[0].df['junctions'])) \
         == sorted(set(outlier_dl3.combined_splicemap3.index))

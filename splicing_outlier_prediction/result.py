@@ -2,6 +2,7 @@ from tqdm import tqdm
 import pandas as pd
 import pickle
 from splicing_outlier_prediction.utils import get_abs_max_rows
+from splicing_outlier_prediction.cat_dataloader import CatInference
 
 
 class SplicingOutlierResult:
@@ -37,6 +38,11 @@ class SplicingOutlierResult:
     def psi3(self):
         return SplicingOutlierResult(self.df[self.df['event_type'] == 'psi3'])
 
+    def add_samples(self, var_samples_df):
+        var_samples_df['samples'] = var_samples_df.groupby('variant')['sample'].transform(lambda x : ';'.join(x))
+        var_samples_df = var_samples_df[['variant', 'samples']].drop_duplicates()
+        self.df = self.df.set_index('variant')\
+            .join(var_samples_df.set_index('variant')).reset_index()
 
     def filter_samples_with_RNA_seq(self, samples_for_tissue):
         if 'tissue' not in self.df or 'samples' not in self.df:
@@ -172,22 +178,25 @@ class SplicingOutlierResult:
             df = df.reset_index('tissue_cat')
         return df
 
-
     def infer_cat(self, cat_inference, progress=False):
-
+        """
+        cat_inference: List[CatInference] or CatInference
+        """
         if 'samples' not in self.df.columns:
             raise ValueError('"samples" column is missing.')
 
-        rows = self.junction.iterrows()
-        if progress:
-            rows = tqdm(rows, total=self.junction.shape[0])
+        if type(cat_inference) == CatInference:
+            cat_inference = [cat_inference]
 
-        df = pd.DataFrame([
-            j
-            for (junction, sample, tissue), row in rows
-            for j in cat_inference.infer(junction, sample, row['event_type'])
-            if cat_inference.contains(junction, sample, row['event_type'])
-        ])
+        infer_rows = list()
+        for cat in cat_inference:
+            rows = self.junction.iterrows()
+            if progress:
+                rows = tqdm(rows, total=self.junction.shape[0])
+            for (junction, sample, tissue), row in rows:
+                if cat.contains(junction, sample, tissue, row['event_type']):
+                    infer_rows.append(cat.infer(junction, sample, tissue, row['event_type']))
+        df = pd.DataFrame(infer_rows)
         df = df.drop_duplicates().set_index(['junction', 'sample', 'tissue'])
         self._junction = self.junction.join(df)
         self._splice_site = None

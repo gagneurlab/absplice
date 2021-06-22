@@ -1,5 +1,3 @@
- 
-
 from splicemap import SpliceCountTable as CountTable
 from splicing_outlier_prediction.dataloader import SpliceMapMixin
 from splicing_outlier_prediction.utils import delta_logit_PSI_to_delta_PSI, logit
@@ -7,119 +5,89 @@ import pandas as pd
 import re
 from typing import List
 
+class CatInference(SpliceMapMixin):
 
-class CatInferenceMixin(SpliceMapMixin):
-
-    def __init__(self, count_cat, splicemap5=None, splicemap3=None):
+    def __init__(self, count_cat, splicemap5=None, splicemap3=None, sample_mapping=None, name=None):
         SpliceMapMixin.__init__(self, splicemap5, splicemap3)
-        self.ct = self._read_cat_count_table(count_cat)
-        self.samples = self._samples(self.ct)
+        self.ct = self._read_cat_count_table(count_cat, name)
+        if sample_mapping:
+            self._update_samples(sample_mapping)
+        self.samples = set(self.ct.samples)
         self.common_junctions5 = list()
         self.common_junctions3 = list()
- 
+        self.tissues5 = list()
+        self.tissues3 = list()
+
         if self.combined_splicemap5 is not None:
-            self.common_junctions5 = self._common_junctions5(self.ct, self.combined_splicemap5)
-            self.ct_cat5 = self._ct_cat5(self.ct, self.common_junctions5)
-            self.ref_psi5_cat = self._ref_psi5_cat(self.ct_cat5)
+            self.common_junctions5 = [set(sm5.df['junctions'])\
+                .intersection(self.ct.junctions) for sm5 in self.splicemaps5]
+            self.ct_cat5 = self.ct.filter_event5(list(set.union(*self.common_junctions5)))
+            self.ref_psi5_cat = self.ct_cat5.ref_psi5(annotation=False)
+            self.tissues5 = [sm.name for sm in self.splicemaps5]
         if self.combined_splicemap3 is not None:
-            self.common_junctions3 = self._common_junctions3(self.ct, self.combined_splicemap3)
-            self.ct_cat3 = self._ct_cat3(self.ct, self.common_junctions3)
-            self.ref_psi3_cat = self._ref_psi3_cat(self.ct_cat3)
+            self.common_junctions3 = [set(sm3.df['junctions'])\
+                .intersection(self.ct.junctions) for sm3 in self.splicemaps3]
+            self.ct_cat3 = self.ct.filter_event3(list(set.union(*self.common_junctions3)))
+            self.ref_psi3_cat = self.ct_cat3.ref_psi3(annotation=False)
+            self.tissues3 = [sm.name for sm in self.splicemaps3]
 
     @staticmethod
-    def _read_cat_count_table(path):
+    def _read_cat_count_table(path, name):
         if type(path) is str:
-            return [CountTable.read_csv(path)]
+            return CountTable.read_csv(path, name)
         elif type(path) is CountTable:
             return [path]
-        elif type(path) is list:
-            return [CatInferenceMixin._read_cat_count_table(i)[0] for i in path]
         else:
             print(type(path))
             raise ValueError(
                 '`count_cat` argument should'
-                ' be list of path to cat SpliceCountTable files'
+                ' be path to cat SpliceCountTable files'
                 ' or `SpliceCountTable` object')
 
-    @staticmethod
-    def _samples(cat_count_tables: List[CountTable]):
-        return [set(ct.samples) for ct in cat_count_tables]
-
-    @staticmethod
-    def _common_junctions5(cat_count_tables: List[CountTable], combined_splicemap5):
-        return [set(combined_splicemap5.index).intersection(ct.junctions) for ct in cat_count_tables]
-
-    @staticmethod
-    def _common_junctions3(cat_count_tables: List[CountTable], combined_splicemap3):
-        return [set(combined_splicemap3.index).intersection(ct.junctions) for ct in cat_count_tables]
-
-    @staticmethod
-    def _ct_cat5(cat_count_tables: List[CountTable], common_junctions5):
-        return [ct.filter_event5(common_j5) for (ct, common_j5) in zip(cat_count_tables, common_junctions5)]
-
-    @staticmethod
-    def _ct_cat3(cat_count_tables: List[CountTable], common_junctions3):
-        return [ct.filter_event3(common_j3) for (ct, common_j3) in zip(cat_count_tables, common_junctions3)]
-
-    @staticmethod
-    def _ref_psi5_cat(ct_cat5):
-        return [ct.ref_psi5(annotation=False) for ct in ct_cat5]
-
-    @staticmethod
-    def _ref_psi3_cat(ct_cat3):
-        return [ct.ref_psi3(annotation=False) for ct in ct_cat3]
-
-        
-class CatInference(CatInferenceMixin):
-
-    def __init__(self, count_cat, splicemap5=None, splicemap3=None, sample_mapping=None):
-        CatInferenceMixin.__init__(self, count_cat, splicemap5, splicemap3)
-
-        if sample_mapping:
-            self._update_samples(sample_mapping)
-            self.samples = self._samples(self.ct)
-
     def _update_samples(self, sample_mapping):
-        [self.ct[i].update_samples(sample_mapping) for i in range(len(self.ct))]
+        self.ct.update_samples(sample_mapping)
 
-    def contains(self, junction_id, sample, event_type):
-        if sample not in set.union(*self.samples):
+    def contains(self, junction_id, sample, tissue, event_type):
+        if sample not in self.samples:
             return False
         else:
             if event_type == 'psi5':
-                return junction_id in set.union(*self.common_junctions5)
+                return junction_id in self.common_junctions5[self.tissues5.index(tissue)]
             elif event_type == 'psi3':
-                return junction_id in set.union(*self.common_junctions3)
+                return junction_id in self.common_junctions3[self.tissues3.index(tissue)]
             else:
                 raise ValueError('"event_type" should be "psi5" or "psi3"')
 
-    def _which_cat_contains(self, junction_id, sample, event_type):
-        if event_type == 'psi5':
-            return [junction_id in j and sample in s for (j, s) in zip(self.common_junctions5,self.samples)]
-        if event_type == 'psi3':
-            return [junction_id in j and sample in s for (j, s) in zip(self.common_junctions3,self.samples)]
+    def infer(self, junction_id, sample, tissue, event_type, clip_threshold=0.01):
+        if sample not in self.samples:
+            return {
+                'junction': junction_id,
+                'sample': sample,
+                'tissue': tissue,
+                'count_cat': None,
+                'psi_cat': None,
+                'ref_psi_cat': None,
+                'k_cat': None,
+                'n_cat': None,
+                'delta_logit_psi_cat': None,
+                'delta_psi_cat': None,
+                'tissue_cat': self.ct.name
+            }
 
-    def _which_target_contains(self, junction_id, event_type):
         if event_type == 'psi5':
-            return [junction_id in set(sm.df['junctions']) for sm in self.splicemaps5]
-        if event_type == 'psi3':
-            return [junction_id in set(sm.df['junctions']) for sm in self.splicemaps3]
-
-    def _infer_single(self, i, j, junction_id, sample, event_type, clip_threshold):
-        if event_type == 'psi5':
-            ct_cat = self.ct_cat5[j]
+            ct_cat = self.ct_cat5
             psi_cat_df = ct_cat.psi5
-            ref_psi_cat_df = self.ref_psi5_cat[j].df
-            tissue_cat = self.ct_cat5[j].name
-            splicemap_target_df = self.splicemaps5[i].df.set_index('junctions')
-            tissue_target = self.splicemaps5[i].name
+            ref_psi_cat_df = self.ref_psi5_cat.df
+            tissue_cat = ct_cat.name
+            splicemap_target_df = self.splicemaps5[self.tissues5.index(tissue)]\
+                .df.set_index('junctions')
         elif event_type == 'psi3':
-            ct_cat = self.ct_cat3[j]
+            ct_cat = self.ct_cat3
             psi_cat_df = ct_cat.psi3
-            ref_psi_cat_df = self.ref_psi3_cat[j].df
-            tissue_cat = self.ct_cat3[j].name
-            splicemap_target_df = self.splicemaps3[i].df.set_index('junctions')
-            tissue_target = self.splicemaps3[i].name
+            ref_psi_cat_df = self.ref_psi3_cat.df
+            tissue_cat = ct_cat.name
+            splicemap_target_df = self.splicemaps3[self.tissues3.index(tissue)]\
+                .df.set_index('junctions')
         else:
             raise ValueError('Site should be "psi5" or "psi3"')
 
@@ -132,7 +100,7 @@ class CatInference(CatInferenceMixin):
         return {
             'junction': junction_id,
             'sample': sample,
-            'tissue': tissue_target,
+            'tissue': tissue,
             'count_cat': ct_cat.df.loc[junction_id, sample],
             'psi_cat': psi_cat,
             'ref_psi_cat': ref_psi_cat,
@@ -144,20 +112,3 @@ class CatInference(CatInferenceMixin):
                 delta_logit_psi_cat, ref_psi_target, clip_threshold=clip_threshold),
             'tissue_cat': tissue_cat
         }
-
-    def infer(self, junction_id, sample, event_type, clip_threshold=0.01):
-        cats_with_junction = self._which_cat_contains(junction_id, sample, event_type)
-        targets_with_junction = self._which_target_contains(junction_id, event_type)
-
-        cat_infer_results = list()
-        for i in range(len(targets_with_junction)):
-            for j in range(len(cats_with_junction)):
-                if targets_with_junction[i] and cats_with_junction[j]:
-                    cat_infer_single = self._infer_single(i, j, junction_id, sample, event_type, clip_threshold)
-                    cat_infer_results.append(cat_infer_single)
-
-        return cat_infer_results
-
-
-
-    

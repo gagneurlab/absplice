@@ -37,17 +37,17 @@ class SpliceOutlier:
         df_joined.insert(3, 'tissue', splicemap.name)
         return df_joined
 
-    def _add_delta_event(self, df, dl, event_type):
+    def _add_delta_event(self, df, splicemaps, event_type):
         df = df[df['event_type'] == event_type]
         return pd.concat(
             self._add_delta_psi_single_ref(df, splicemap)
-            for splicemap in dl.splicemaps5
+            for splicemap in splicemaps
         )
 
     def _add_delta_psi(self, df, dl):
         return pd.concat([
-            self._add_delta_event(df, dl, 'psi5'),
-            self._add_delta_event(df, dl, 'psi3')
+            self._add_delta_event(df, dl.splicemaps5, 'psi5'),
+            self._add_delta_event(df, dl.splicemaps3, 'psi3')
         ])
 
     def predict_on_batch(self, batch, dataloader):
