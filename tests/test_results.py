@@ -90,11 +90,8 @@ def test_outlier_results_infer_cat(outlier_results, cat_dl, outlier_model):
 
     dl = SpliceOutlierDataloader(
         fasta_file, multi_vcf_file,
-        ref_tables5=[ref_table5_kn_testis, ref_table5_kn_lung],
-        ref_tables3=[ref_table3_kn_testis, ref_table3_kn_lung],
-        combined_ref_tables5=combined_ref_tables5_testis_lung,
-        combined_ref_tables3=combined_ref_tables3_testis_lung,
-        regex_pattern='test_(.*)_ref',
+        splicemap5=[ref_table5_kn_testis, ref_table5_kn_lung],
+        splicemap3=[ref_table3_kn_testis, ref_table3_kn_lung],
         samples=True)
 
     results = outlier_model.predict_on_dataloader(dl)
