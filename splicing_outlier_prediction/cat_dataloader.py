@@ -59,7 +59,7 @@ class CatInference(SpliceMapMixin):
                 raise ValueError('"event_type" should be "psi5" or "psi3"')
 
     def infer(self, junction_id, sample, tissue, event_type, clip_threshold=0.01):
-        if sample not in self.samples:
+        if not self.contains(junction_id, sample, tissue, event_type):
             return {
                 'junction': junction_id,
                 'sample': sample,
