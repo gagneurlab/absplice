@@ -236,7 +236,7 @@ class SplicingOutlierResult:
         and inferred scores from CAT ('delta_psi_cat'). Max aggregated scores are then joined.
         (Independent max aggregation is performed because the junction with maximum 'delta_psi' 
         could have missing value for 'delta_psi_cat' even though there is another junction 
-        (on the same level, e.g. same gene) with large 'delta_psi_cat', but slightly smaller 'delta_psi')
+        (on the same level, e.g. same gene) with large 'delta_psi_cat', but slightly smaller 'delta_psi'))
         """
         if self._junction is None or 'tissue_cat' not in self._junction:
             raise IndexError('"You have to run infer_cat first"')
