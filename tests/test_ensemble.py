@@ -102,7 +102,7 @@ def test_splicing_outlier_result_train_ensemble_DNA_CAT(outlier_results_multi, c
         results.gene_cat_concat, features_DNA_CAT, feature_to_filter_na=None, nsplits=2)
 
     assert sorted(results_ensemble.columns.tolist()) == sorted([
-        *results._gene.index.names, *features_DNA_CAT,
+        *results.gene.index.names, *features_DNA_CAT,
         'fold', 'y_test', 'y_pred'
     ])
 
@@ -132,6 +132,6 @@ def test_splicing_outlier_result_train_ensemble_DNA_CAT_cross_apply(outlier_resu
                                                features_train=features_DNA_CAT_train, features_test=features_DNA_CAT_test)
 
     assert sorted(results_ensemble.columns.tolist()) == sorted([
-        *results._gene.index.names, *features_DNA_CAT,
+        *results.gene.index.names, *features_DNA_CAT,
         'fold', 'y_test', 'y_pred', 'y_pred_on_train_features'
     ])

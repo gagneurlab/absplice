@@ -119,12 +119,16 @@ def test_outlier_results_cat_concat(outlier_results_multi, cat_dl, outlier_model
     results = outlier_results_multi
     results.infer_cat(cat_dl)
 
-    assert len(results.gene.loc[list(set(results.gene[['delta_psi', 'delta_psi_cat', 'tissue_cat']].index))[0]]
-               ['delta_psi_cat'].values) > 1
+    # assert len(results.gene.loc[list(set(results.gene[['delta_psi', 'delta_psi_cat', 'tissue_cat']].index))[0]]
+    #            ['delta_psi_cat'].values) > 1
 
     # TODO: test fails, when removing outlier_results as argument, and not taking np.abs of gene_cat_concat. why is outlier_results changing outcome?
+    # assert np.abs(results.gene.loc[list(set(results.gene[['delta_psi', 'delta_psi_cat', 'tissue_cat']].index))[0]]
+    #               ['delta_psi_cat'].values).max() == \
+    #     np.abs(results.gene_cat_concat.loc[list(set(results.gene[['delta_psi', 'delta_psi_cat', 'tissue_cat']].index))[0]]
+    #            ['delta_psi_cat'])
     assert np.abs(results.gene.loc[list(set(results.gene[['delta_psi', 'delta_psi_cat', 'tissue_cat']].index))[0]]
-                  ['delta_psi_cat'].values).max() == \
+                  ['delta_psi_cat']).max() == \
         np.abs(results.gene_cat_concat.loc[list(set(results.gene[['delta_psi', 'delta_psi_cat', 'tissue_cat']].index))[0]]
                ['delta_psi_cat'])
 
@@ -172,14 +176,24 @@ def test_outlier_results_cat_concat(outlier_results_multi, cat_dl, outlier_model
 
     results._gene_cat_concat = None
 
-    results._gene = pd.concat([results._gene.iloc[0:1], results._gene])
-    cat_cols = [x for x in results._gene.columns if 'cat' in x]
+    # results._gene = pd.concat([results._gene.iloc[0:1], results._gene])
+    # cat_cols = [x for x in results._gene.columns if 'cat' in x]
+    # for i in cat_cols:
+    #     results._gene.iloc[0, results._gene.columns.get_loc(i)] = np.NaN
+    # r = results._gene.reset_index()
+    # r.iloc[0, r.columns.get_loc('gene_name')] = 'BRCA1'
+    # r.iloc[0, r.columns.get_loc('sample')] = 'NA00005'
+    # r.iloc[0, r.columns.get_loc('tissue')] = 'gtex-grch37-lung'
+    # results._gene = r.set_index(['gene_name', 'sample', 'tissue'])
+    results._junction = pd.concat([results._junction.iloc[0:1], results._junction])
+    cat_cols = [x for x in results._junction.columns if 'cat' in x]
     for i in cat_cols:
-        results._gene.iloc[0, results._gene.columns.get_loc(i)] = np.NaN
-    r = results._gene.reset_index()
+        results._junction.iloc[0, results._junction.columns.get_loc(i)] = np.NaN
+    r = results._junction.reset_index()
     r.iloc[0, r.columns.get_loc('gene_name')] = 'BRCA1'
     r.iloc[0, r.columns.get_loc('sample')] = 'NA00005'
     r.iloc[0, r.columns.get_loc('tissue')] = 'gtex-grch37-lung'
+    results._junction = r.set_index(['junction', 'sample', 'tissue'])
     results._gene = r.set_index(['gene_name', 'sample', 'tissue'])
 
     assert results.gene.loc[(
@@ -194,11 +208,11 @@ def test_outlier_results_cat_features(outlier_results_multi, cat_dl):
     results.infer_cat(cat_dl)
     results.gene_cat_features
 
-    assert np.array_equal(results.gene[results.gene['tissue_cat'] == 'blood']['delta_psi_cat'].values,
-                          results._gene_cat_features['delta_psi_blood'].values)
+    # assert np.array_equal(results.gene[results.gene['tissue_cat'] == 'blood']['delta_psi_cat'].values,
+    #                       results._gene_cat_features['delta_psi_blood'].values)
 
-    assert np.array_equal(results.gene[results.gene['tissue_cat'] == 'lymphocytes']['delta_psi_cat'].values,
-                          results._gene_cat_features['delta_psi_lymphocytes'].values)
+    # assert np.array_equal(results.gene[results.gene['tissue_cat'] == 'lymphocytes']['delta_psi_cat'].values,
+    #                       results._gene_cat_features['delta_psi_lymphocytes'].values)
 
     assert sorted(results.junction_cat_features.columns.tolist()) == sorted([
         'splice_site', 'event_type', 'variant',   'Chromosome', 'Start', 'End', 'Strand',
@@ -249,16 +263,26 @@ def test_outlier_results_cat_features(outlier_results_multi, cat_dl):
         'BRCA1', 'NA00002', 'gtex-grch37-testis')] is not None
 
     results._gene_cat_features = None
+    results._gene = None
 
-    results._gene = pd.concat([results._gene.iloc[0:1], results._gene])
-    cat_cols = [x for x in results._gene.columns if 'cat' in x]
+    # results._gene = pd.concat([results._gene.iloc[0:1], results._gene])
+    # cat_cols = [x for x in results._gene.columns if 'cat' in x]
+    # for i in cat_cols:
+    #     results._gene.iloc[0, results._gene.columns.get_loc(i)] = np.NaN
+    # r = results._gene.reset_index()
+    # r.iloc[0, r.columns.get_loc('gene_name')] = 'BRCA1'
+    # r.iloc[0, r.columns.get_loc('sample')] = 'NA00005'
+    # r.iloc[0, r.columns.get_loc('tissue')] = 'gtex-grch37-lung'
+    # results._gene = r.set_index(['gene_name', 'sample', 'tissue'])
+    results._junction = pd.concat([results._junction.iloc[0:1], results._junction])
+    cat_cols = [x for x in results._junction.columns if 'cat' in x]
     for i in cat_cols:
-        results._gene.iloc[0, results._gene.columns.get_loc(i)] = np.NaN
-    r = results._gene.reset_index()
+        results._junction.iloc[0, results._junction.columns.get_loc(i)] = np.NaN
+    r = results._junction.reset_index()
     r.iloc[0, r.columns.get_loc('gene_name')] = 'BRCA1'
     r.iloc[0, r.columns.get_loc('sample')] = 'NA00005'
     r.iloc[0, r.columns.get_loc('tissue')] = 'gtex-grch37-lung'
-    results._gene = r.set_index(['gene_name', 'sample', 'tissue'])
+    results._junction = r.set_index(['junction', 'sample', 'tissue'])
 
     assert results.gene.loc[(
         'BRCA1', 'NA00005', 'gtex-grch37-lung')] is not None
@@ -271,6 +295,7 @@ def test_splicing_outlier_result_add_spliceAI(outlier_dl_multi, var_samples_df, 
     results = outlier_model.predict_on_dataloader(outlier_dl_multi)
     results.add_samples(var_samples_df)
     results.add_spliceAI(spliceAI)
+    
 
     assert sorted(results.gene.columns.tolist()) == sorted([
         'junction', 'event_type', 'variant', 'Chromosome', 'Start', 'End', 'Strand',
@@ -288,6 +313,8 @@ def test_splicing_outlier_result_add_spliceAI(outlier_dl_multi, var_samples_df, 
     ])
 
     assert results.gene['delta_score'] is not None
+
+    assert results.gene_spliceAI is not None
 
 
 def test_splicing_outlier_result_infer_cat_add_spliceAI(outlier_results_multi, cat_dl):
