@@ -27,12 +27,16 @@ def outlier_dl():
 
 @pytest.fixture
 def cat_dl():
-    return CatInference(splicemap5=[ref_table5_kn_testis, ref_table5_kn_lung],
-                        splicemap3=[ref_table3_kn_testis, ref_table3_kn_lung],
-                        count_cat=[count_cat_file_lymphocytes,
-                                   count_cat_file_blood],
-                        )
-                        
+    return [
+        CatInference(splicemap5=[ref_table5_kn_testis, ref_table5_kn_lung],
+                     splicemap3=[ref_table3_kn_testis, ref_table3_kn_lung],
+                     count_cat=count_cat_file_lymphocytes),
+        CatInference(splicemap5=[ref_table5_kn_testis, ref_table5_kn_lung],
+                     splicemap3=[ref_table3_kn_testis, ref_table3_kn_lung],
+                     count_cat=count_cat_file_blood)
+    ]
+
+
 @pytest.fixture
 def outlier_model():
     return SpliceOutlier()
