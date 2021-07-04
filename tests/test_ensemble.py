@@ -12,20 +12,9 @@ from conftest import fasta_file, multi_vcf_file, \
     spliceAI, pickle_DNA, pickle_DNA_CAT
 
 
-def test_splicing_outlier_result_predict_ensemble_DNA(outlier_results, outlier_model):
-    # with pytest.raises(ValueError):
-    #     outlier_results.infer_cat(cat_dl)
+def test_splicing_outlier_result_predict_ensemble_DNA(outlier_results_multi):
 
-    dl = SpliceOutlierDataloader(
-        fasta_file, multi_vcf_file,
-        ref_tables5=[ref_table5_kn_testis, ref_table5_kn_lung],
-        ref_tables3=[ref_table3_kn_testis, ref_table3_kn_lung],
-        combined_ref_tables5=combined_ref_tables5_testis_lung,
-        combined_ref_tables3=combined_ref_tables3_testis_lung,
-        regex_pattern='test_(.*)_ref',
-        samples=True)
-
-    results = outlier_model.predict_on_dataloader(dl)
+    results = outlier_results_multi
     results.add_spliceAI(spliceAI)
 
     features_DNA = ['delta_psi', 'delta_score', 'median_n', 'ref_psi']
@@ -34,7 +23,7 @@ def test_splicing_outlier_result_predict_ensemble_DNA(outlier_results, outlier_m
         'junction', 'event_type', 'variant', 'Chromosome', 'Start', 'End', 'Strand',
         'events', 'splice_site', 'ref_psi', 'k', 'n', 'median_n',
         'novel_junction', 'weak_site_acceptor', 'weak_site_donor',
-        'gene_id', 'transcript_id', 'gene_type', 'genotype',
+        'gene_id', 'transcript_id', 'gene_type',  
         'delta_psi', 'delta_logit_psi',
         'ref_acceptorIntron', 'ref_acceptor', 'ref_exon', 'ref_donor', 'ref_donorIntron',
         'alt_acceptorIntron', 'alt_acceptor', 'alt_exon', 'alt_donor', 'alt_donorIntron',
@@ -47,20 +36,9 @@ def test_splicing_outlier_result_predict_ensemble_DNA(outlier_results, outlier_m
     assert results._ensemble['ensemble_pred'] is not None
 
 
-def test_splicing_outlier_result_predict_ensemble_DNA_CAT(outlier_results, cat_dl, outlier_model):
-    # with pytest.raises(ValueError):
-    #     outlier_results.infer_cat(cat_dl)
-
-    dl = SpliceOutlierDataloader(
-        fasta_file, multi_vcf_file,
-        ref_tables5=[ref_table5_kn_testis, ref_table5_kn_lung],
-        ref_tables3=[ref_table3_kn_testis, ref_table3_kn_lung],
-        combined_ref_tables5=combined_ref_tables5_testis_lung,
-        combined_ref_tables3=combined_ref_tables3_testis_lung,
-        regex_pattern='test_(.*)_ref',
-        samples=True)
-
-    results = outlier_model.predict_on_dataloader(dl)
+def test_splicing_outlier_result_predict_ensemble_DNA_CAT(outlier_results_multi, cat_dl):
+    
+    results = outlier_results_multi
     results.add_spliceAI(spliceAI)
     results.infer_cat(cat_dl)
 
@@ -72,7 +50,7 @@ def test_splicing_outlier_result_predict_ensemble_DNA_CAT(outlier_results, cat_d
         'junction', 'event_type', 'variant', 'Chromosome', 'Start', 'End', 'Strand',
         'events', 'splice_site', 'ref_psi', 'k', 'n', 'median_n',
         'novel_junction', 'weak_site_acceptor', 'weak_site_donor',
-        'gene_id', 'transcript_id', 'gene_type', 'genotype',
+        'gene_id', 'transcript_id', 'gene_type',  
         'delta_psi', 'delta_logit_psi',
         'ref_acceptorIntron', 'ref_acceptor', 'ref_exon', 'ref_donor', 'ref_donorIntron',
         'alt_acceptorIntron', 'alt_acceptor', 'alt_exon', 'alt_donor', 'alt_donorIntron',
@@ -86,17 +64,9 @@ def test_splicing_outlier_result_predict_ensemble_DNA_CAT(outlier_results, cat_d
     assert results._ensemble['ensemble_pred'] is not None
 
 
-def test_splicing_outlier_result_train_ensemble_DNA(outlier_results, outlier_model):
-    dl = SpliceOutlierDataloader(
-        fasta_file, multi_vcf_file,
-        ref_tables5=[ref_table5_kn_testis, ref_table5_kn_lung],
-        ref_tables3=[ref_table3_kn_testis, ref_table3_kn_lung],
-        combined_ref_tables5=combined_ref_tables5_testis_lung,
-        combined_ref_tables3=combined_ref_tables3_testis_lung,
-        regex_pattern='test_(.*)_ref',
-        samples=True)
+def test_splicing_outlier_result_train_ensemble_DNA(outlier_results_multi):
 
-    results = outlier_model.predict_on_dataloader(dl)
+    results = outlier_results_multi
     results.add_spliceAI(spliceAI)
 
     features_DNA = ['delta_psi', 'delta_score', 'median_n', 'ref_psi']
@@ -114,20 +84,9 @@ def test_splicing_outlier_result_train_ensemble_DNA(outlier_results, outlier_mod
     ])
 
 
-def test_splicing_outlier_result_train_ensemble_DNA_CAT(outlier_results, cat_dl, outlier_model):
-    # with pytest.raises(ValueError):
-    #     outlier_results.infer_cat(cat_dl)
-
-    dl = SpliceOutlierDataloader(
-        fasta_file, multi_vcf_file,
-        ref_tables5=[ref_table5_kn_testis, ref_table5_kn_lung],
-        ref_tables3=[ref_table3_kn_testis, ref_table3_kn_lung],
-        combined_ref_tables5=combined_ref_tables5_testis_lung,
-        combined_ref_tables3=combined_ref_tables3_testis_lung,
-        regex_pattern='test_(.*)_ref',
-        samples=True)
-
-    results = outlier_model.predict_on_dataloader(dl)
+def test_splicing_outlier_result_train_ensemble_DNA_CAT(outlier_results_multi, cat_dl):
+    
+    results = outlier_results_multi
     results.add_spliceAI(spliceAI)
     results.infer_cat(cat_dl)
 
@@ -143,25 +102,14 @@ def test_splicing_outlier_result_train_ensemble_DNA_CAT(outlier_results, cat_dl,
         results.gene_cat_concat, features_DNA_CAT, feature_to_filter_na=None, nsplits=2)
 
     assert sorted(results_ensemble.columns.tolist()) == sorted([
-        *results._gene.index.names, *features_DNA_CAT,
+        *results.gene.index.names, *features_DNA_CAT,
         'fold', 'y_test', 'y_pred'
     ])
 
 
-def test_splicing_outlier_result_train_ensemble_DNA_CAT_cross_apply(outlier_results, cat_dl, outlier_model):
-    # with pytest.raises(ValueError):
-    #     outlier_results.infer_cat(cat_dl)
-
-    dl = SpliceOutlierDataloader(
-        fasta_file, multi_vcf_file,
-        ref_tables5=[ref_table5_kn_testis, ref_table5_kn_lung],
-        ref_tables3=[ref_table3_kn_testis, ref_table3_kn_lung],
-        combined_ref_tables5=combined_ref_tables5_testis_lung,
-        combined_ref_tables3=combined_ref_tables3_testis_lung,
-        regex_pattern='test_(.*)_ref',
-        samples=True)
-
-    results = outlier_model.predict_on_dataloader(dl)
+def test_splicing_outlier_result_train_ensemble_DNA_CAT_cross_apply(outlier_results_multi, cat_dl):
+    
+    results = outlier_results_multi
     results.add_spliceAI(spliceAI)
     results.infer_cat(cat_dl)
 
@@ -184,6 +132,6 @@ def test_splicing_outlier_result_train_ensemble_DNA_CAT_cross_apply(outlier_resu
                                                features_train=features_DNA_CAT_train, features_test=features_DNA_CAT_test)
 
     assert sorted(results_ensemble.columns.tolist()) == sorted([
-        *results._gene.index.names, *features_DNA_CAT,
+        *results.gene.index.names, *features_DNA_CAT,
         'fold', 'y_test', 'y_pred', 'y_pred_on_train_features'
     ])

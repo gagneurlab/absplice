@@ -39,6 +39,11 @@ def test_splicing_outlier_predict_on_dataloader(outlier_model, outlier_dl):
         'alt_acceptorIntron', 'alt_acceptor', 'alt_exon', 'alt_donor', 'alt_donorIntron'])
 
 
+# def test_splicing_outlier_predict_on_dataloader_correct_tissue(outlier_model, outlier_dl):
+#     results = outlier_model.predict_on_dataloader(outlier_dl)
+#     assert False not in results.df.apply(lambda x: x['event_type'] in x['tissue'], axis=1)
+
+
 def test_splicing_outlier_predict_save(outlier_model, outlier_dl, tmp_path):
     output_csv = tmp_path / 'pred.csv'
     outlier_model.predict_save(outlier_dl, output_csv)

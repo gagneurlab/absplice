@@ -1,8 +1,10 @@
 import pytest
+import pandas as pd
 from splicing_outlier_prediction import SpliceOutlierDataloader, SpliceOutlier, CatInference
 
 vcf_file = 'tests/data/test.vcf.gz'
 multi_vcf_file = 'tests/data/multi_test.vcf.gz'
+multi_vcf_samples = 'tests/data/multi_test.vcf_samples.csv'
 fasta_file = 'tests/data/hg19.nochr.chr17.fa'
 ref_table5_kn_testis = 'tests/data/test_testis_ref_table5_kn.csv'
 ref_table3_kn_testis = 'tests/data/test_testis_ref_table3_kn.csv'
@@ -30,10 +32,12 @@ def cat_dl():
     return [
         CatInference(splicemap5=[ref_table5_kn_testis, ref_table5_kn_lung],
                      splicemap3=[ref_table3_kn_testis, ref_table3_kn_lung],
-                     count_cat=count_cat_file_lymphocytes),
+                     count_cat=count_cat_file_lymphocytes,
+                     name='lymphocytes'),
         CatInference(splicemap5=[ref_table5_kn_testis, ref_table5_kn_lung],
                      splicemap3=[ref_table3_kn_testis, ref_table3_kn_lung],
-                     count_cat=count_cat_file_blood)
+                     count_cat=count_cat_file_blood,
+                     name='blood'),
     ]
 
 
@@ -48,13 +52,21 @@ def outlier_results(outlier_model, outlier_dl):
 
 
 @pytest.fixture
+def outlier_results_multi(outlier_model, outlier_dl_multi, var_samples_df):
+    results = outlier_model.predict_on_dataloader(outlier_dl_multi)
+    results.add_samples(var_samples_df)
+    return results
+
+
+@pytest.fixture
+def var_samples_df():
+    return pd.read_csv(multi_vcf_samples)
+
+
+@pytest.fixture
 def outlier_dl_multi():
     return SpliceOutlierDataloader(
         fasta_file, multi_vcf_file,
-        ref_tables5=[ref_table5_kn_testis, ref_table5_kn_lung],
-        ref_tables3=[ref_table3_kn_testis, ref_table3_kn_lung],
-        combined_ref_tables5=combined_ref_tables5_testis_lung,
-        combined_ref_tables3=combined_ref_tables3_testis_lung,
-        regex_pattern='test_(.*)_ref',
-        samples=True
+        splicemap5=[ref_table5_kn_testis, ref_table5_kn_lung],
+        splicemap3=[ref_table3_kn_testis, ref_table3_kn_lung]
     )
