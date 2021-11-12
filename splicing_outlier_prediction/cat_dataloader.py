@@ -4,10 +4,14 @@ from splicing_outlier_prediction.utils import delta_logit_PSI_to_delta_PSI, logi
 import pandas as pd
 import re
 from typing import List
+from splicemap.splice_map import SpliceMap
 
 class CatInference(SpliceMapMixin):
 
-    def __init__(self, count_cat, splicemap5=None, splicemap3=None, sample_mapping=None, name=None):
+    def __init__(
+        self, count_cat, splicemap_cat5=None, splicemap_cat3=None, 
+        splicemap5=None, splicemap3=None, sample_mapping=None, name=None
+        ):
         SpliceMapMixin.__init__(self, splicemap5, splicemap3)
         self.ct = self._read_cat_count_table(count_cat, name)
         if sample_mapping:
@@ -17,19 +21,27 @@ class CatInference(SpliceMapMixin):
         self.common_junctions3 = list()
         self.tissues5 = list()
         self.tissues3 = list()
+        self.splicemap_cat5_provided = False
+        self.splicemap_cat3_provided = False
 
         if self.combined_splicemap5 is not None:
+            self.tissues5 = [sm.name for sm in self.splicemaps5]
             self.common_junctions5 = [set(sm5.df['junctions'])\
                 .intersection(self.ct.junctions) for sm5 in self.splicemaps5]
             self.ct_cat5 = self.ct.filter_event5(list(set.union(*self.common_junctions5)))
+            if splicemap_cat5 is not None:
+                self.splicemap_cat5_provided = True
+                self.splicemap5_cat = SpliceMapMixin._read_splicemap(splicemap_cat5)[0]
             self.ref_psi5_cat = self.ct_cat5.ref_psi5(annotation=False)
-            self.tissues5 = [sm.name for sm in self.splicemaps5]
         if self.combined_splicemap3 is not None:
+            self.tissues3 = [sm.name for sm in self.splicemaps3]
             self.common_junctions3 = [set(sm3.df['junctions'])\
                 .intersection(self.ct.junctions) for sm3 in self.splicemaps3]
             self.ct_cat3 = self.ct.filter_event3(list(set.union(*self.common_junctions3)))
+            if splicemap_cat3 is not None:
+                self.splicemap_cat3_provided = True
+                self.splicemap3_cat = SpliceMapMixin._read_splicemap(splicemap_cat3)[0]
             self.ref_psi3_cat = self.ct_cat3.ref_psi3(annotation=False)
-            self.tissues3 = [sm.name for sm in self.splicemaps3]
 
     @staticmethod
     def _read_cat_count_table(path, name):
@@ -74,10 +86,15 @@ class CatInference(SpliceMapMixin):
                 'tissue_cat': self.ct.name
             }
 
+        splicemap_cat_provided = False
+
         if event_type == 'psi5':
             ct_cat = self.ct_cat5
             psi_cat_df = ct_cat.psi5
             ref_psi_cat_df = self.ref_psi5_cat.df
+            if self.splicemap_cat5_provided:
+                splicemap_cat_provided = True
+                splicemap_cat_df = self.splicemap5_cat.df.set_index('junctions')
             tissue_cat = ct_cat.name
             splicemap_target_df = self.splicemaps5[self.tissues5.index(tissue)]\
                 .df.set_index('junctions')
@@ -85,15 +102,26 @@ class CatInference(SpliceMapMixin):
             ct_cat = self.ct_cat3
             psi_cat_df = ct_cat.psi3
             ref_psi_cat_df = self.ref_psi3_cat.df
+            if self.splicemap_cat3_provided:
+                splicemap_cat_provided = True
+                splicemap_cat_df = self.splicemap3_cat.df.set_index('junctions')
             tissue_cat = ct_cat.name
             splicemap_target_df = self.splicemaps3[self.tissues3.index(tissue)]\
                 .df.set_index('junctions')
         else:
             raise ValueError('Site should be "psi5" or "psi3"')
 
+        ref_psi_target = splicemap_target_df.loc[junction_id]['ref_psi']
         psi_cat = psi_cat_df.loc[junction_id, sample]
         ref_psi_cat = ref_psi_cat_df.loc[junction_id]['ref_psi']
-        ref_psi_target = splicemap_target_df.loc[junction_id]['ref_psi']
+        median_n_cat = ref_psi_cat_df.loc[junction_id]['median_n']
+        # If junction is in SpliceMap of CAT and there is more statistical power, use SpliceMap
+        if splicemap_cat_provided:
+            if junction_id in splicemap_cat_df.index:
+                if splicemap_cat_df.loc[junction_id]['n'] > ref_psi_cat_df.loc[junction_id]['n']:
+                    ref_psi_cat = splicemap_cat_df.loc[junction_id]['ref_psi']
+                    median_n_cat = splicemap_cat_df.loc[junction_id]['median_n']
+            
         delta_logit_psi_cat = logit(psi_cat, clip_threshold) - \
             logit(ref_psi_cat, clip_threshold)
 
@@ -106,7 +134,7 @@ class CatInference(SpliceMapMixin):
             'ref_psi_cat': ref_psi_cat,
             'k_cat': ref_psi_cat_df.loc[junction_id]['k'],
             'n_cat': ref_psi_cat_df.loc[junction_id]['n'],
-            'median_n_cat': ref_psi_cat_df.loc[junction_id]['median_n'],
+            'median_n_cat': median_n_cat,
             'delta_logit_psi_cat': delta_logit_psi_cat,
             'delta_psi_cat': delta_logit_PSI_to_delta_PSI(
                 delta_logit_psi_cat, ref_psi_target, clip_threshold=clip_threshold),

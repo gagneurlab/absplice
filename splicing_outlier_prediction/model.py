@@ -2,7 +2,7 @@ from tqdm import tqdm
 import pandas as pd
 try:
     from mmsplice import MMSplice
-    from mmsplice.utils import df_batch_writer, delta_logit_PSI_to_delta_PSI
+    from mmsplice.utils import df_batch_writer, df_batch_writer_parquet, delta_logit_PSI_to_delta_PSI
 except ImportError:
     pass
 from splicing_outlier_prediction.result import SplicingOutlierResult
@@ -75,6 +75,9 @@ class SpliceOutlier:
                 progress=progress)
         ))
 
-    def predict_save(self, dataloader, output_csv,
+    def predict_save(self, dataloader, output_path,
                      batch_size=512, progress=True):
-        df_batch_writer(self._predict_on_dataloader(dataloader), output_csv)
+        if output_path.suffix.lower() == '.csv':
+            df_batch_writer(self._predict_on_dataloader(dataloader), output_path)
+        elif output_path.suffix.lower() == '.parquet':
+            df_batch_writer_parquet(self._predict_on_dataloader(dataloader), output_path)

@@ -42,10 +42,10 @@ def train_model_ebm(df_ensemble,
     gkf = GroupKFold(n_splits=nsplits)
     for fold, (train, test) in enumerate(gkf.split(X, y, groups=groups)):
         # train, test
-        X_train = np.abs(X[features_train].iloc[train].fillna(0))
-        X_test = np.abs(X[features_test].iloc[test].fillna(0))
-        y_train = np.abs(y.iloc[train])
-        y_test = np.abs(y.iloc[test])
+        X_train = X[features_train].iloc[train].fillna(0)
+        X_test = X[features_test].iloc[test].fillna(0)
+        y_train = y.iloc[train]
+        y_test = y.iloc[test]
         # fit model
         model = ExplainableBoostingClassifier() #TODO: model=chosen_model
         model.fit(X_train, y_train)
@@ -93,14 +93,13 @@ def _update_fold_results(X, y, y_test, y_pred, test, fold, features, features_tr
                             'y_test': np.array([i for l in y_test.values.tolist() for i in l]),
                             'fold': fold})
 
-    if features_train != features_test:
-        X_test_on_train_features = np.abs(X[features_train].iloc[test].fillna(0))
-        y_pred_on_train_features = model.predict_proba(X_test_on_train_features)[:, 1]
-
-    X_test_all = np.abs(X[features].iloc[test].fillna(0))
+    X_test_all = X[features].iloc[test].fillna(0)
     for feature in features:
         results[feature] = X_test_all.iloc[:, features.index(feature)].values
+
     if features_train != features_test:
+        X_test_on_train_features = X[features_train].iloc[test].fillna(0)
+        y_pred_on_train_features = model.predict_proba(X_test_on_train_features)[:, 1]
         results['y_pred_on_train_features'] = y_pred_on_train_features  
     
     return results
@@ -126,6 +125,10 @@ def _update_results_with_missing(X_missing, y_missing, y_pred_missing_iterm, fea
     })
     for feature in features:
         results_missing[feature] = X_missing.values[:, features.index(feature)]
+
+    if features_train != features_test:
+        results_missing['y_pred_on_train_features'] = y_pred_missing_on_train_features
+
     results_all_df = pd.concat([results_all_df,
                                 results_missing]).reset_index()
     

@@ -2,6 +2,7 @@ import pytest
 from splicing_outlier_prediction import CatInference
 from conftest import ref_table5_kn_testis, ref_table3_kn_testis, \
     ref_table5_kn_lung, ref_table3_kn_lung, \
+    ref_table5_kn_blood, ref_table3_kn_blood, \
     count_cat_file_lymphocytes, count_cat_file_blood, \
     vcf_file, multi_vcf_file, fasta_file
 
@@ -21,6 +22,17 @@ def cat_dl3():
         count_cat=count_cat_file_lymphocytes,
     )
 
+
+@pytest.fixture
+def cat_dl_splicemap_cat():
+    return CatInference(
+        splicemap5=[ref_table5_kn_testis, ref_table5_kn_lung],
+        splicemap3=[ref_table3_kn_testis, ref_table3_kn_lung],
+        count_cat=count_cat_file_blood,
+        splicemap_cat5=ref_table5_kn_blood,
+        splicemap_cat3=ref_table3_kn_blood,
+        name='blood',
+    )
 
 def test_cat_dataloader_init(cat_dl):
     assert len(cat_dl) == 2
@@ -157,3 +169,48 @@ def test_cat_dataloader_infer_only_one_cat(cat_dl):
     }
     assert cat_dl[1].contains(junction_id, sample, tissue, event_type) == False
 
+
+def test_cat_dataloader_infer_splicemap_cat(cat_dl_splicemap_cat):
+    junction_id = '17:41170223-41170608:-'
+    sample = 'NA00002'
+    tissue = 'gtex-grch37-testis'
+    event_type = 'psi5'
+
+    row = cat_dl_splicemap_cat.infer(junction_id, sample, tissue, event_type)
+    assert row == {
+        'junction': '17:41170223-41170608:-',
+        'sample': 'NA00002',
+        'tissue': 'gtex-grch37-testis',
+        'tissue_cat': 'blood',
+        'count_cat': 46,
+        'delta_logit_psi_cat': 0.0,
+        'delta_psi_cat': 0.0,
+        'k_cat': 220,
+        'median_n_cat': 50.0,
+        'n_cat': 220,
+        'psi_cat': 1.0,
+        'ref_psi_cat': 1.0
+    }
+    assert cat_dl_splicemap_cat.contains(junction_id, sample, tissue, event_type) == True
+
+    # junction_id not in SpliceMap of CAT
+    junction_id = '17:41168587-41169857:-'
+    sample = 'NA00002'
+    tissue = 'gtex-grch37-testis'
+    event_type = 'psi5'
+    
+    row = cat_dl_splicemap_cat.infer(junction_id, sample, tissue, event_type)
+    assert row == {
+        'junction': '17:41168587-41169857:-',
+        'sample': 'NA00002',
+        'tissue': 'gtex-grch37-testis',
+        'tissue_cat': 'blood',
+        'count_cat': 0,
+        'delta_logit_psi_cat': 0.0,
+        'delta_psi_cat': 1.734723475976807e-18,
+        'k_cat': 0,
+        'median_n_cat': 73.0,
+        'n_cat': 307,
+        'psi_cat': 0.0,
+        'ref_psi_cat': 0.0
+    }

@@ -27,11 +27,13 @@ class SplicingOutlierResult:
         return cls(pd.read_csv(path, **kwargs))
 
     @staticmethod
-    def _explode_samples(df):
+    def _explode(df, col='samples', new_name='sample'):
+        if new_name == None:
+            new_name = col
         df = df.copy()
-        df['samples'] = df['samples'].str.split(';').map(
+        df[col] = df[col].str.split(';').map(
             set, na_action='ignore').map(list, na_action='ignore')
-        return df.rename(columns={'samples': 'sample'}).explode('sample')
+        return df.rename(columns={col: new_name}).explode(new_name)
 
     @property
     def psi5(self):
@@ -100,7 +102,7 @@ class SplicingOutlierResult:
         if self._junction is None:
             df = self.df
             if 'samples' in self.df:
-                df = self._explode_samples(df)
+                df = self._explode(df, col='samples', new_name='sample')
                 index = ['junction', 'sample', 'event_type']
             else:
                 index = ['junction', 'event_type']
@@ -135,19 +137,22 @@ class SplicingOutlierResult:
         stores scores in self._gene
         """
         if self._gene is None:
+            df = self.junction.copy()
             index = ['gene_name']
+            df = self._explode(df, index)
             if 'samples' in self.df:
                 index.append('sample')
             if 'tissue' in self.df and 'tissue' not in index:
                 index.append('tissue')
+        
             self._gene = get_abs_max_rows(
-                self.junction, index, 'delta_psi')
+                df, index, 'delta_psi')
 
             if self.df_spliceAI is not None:
                 df_spliceAI, index_spliceAI = self._add_tissue_info_to_spliceAI()
                 if 'samples' in self.df_spliceAI:
                     index_spliceAI.append('sample')
-                    df_spliceAI = self._explode_samples(df_spliceAI)
+                    df_spliceAI = self._explode(df_spliceAI, col='samples', new_name='sample')
                 self.df_spliceAI = get_abs_max_rows(
                     df_spliceAI, index_spliceAI, 'delta_score')  # TODO: double check that, before it was only for 'samples' in self.df
                 self._gene = self._join_spliceAI(self._gene)
@@ -204,7 +209,7 @@ class SplicingOutlierResult:
                     index_spliceAI.append('tissue')
             if 'samples' in self.df_spliceAI:
                 index_spliceAI.append('sample')
-                df_spliceAI = self._explode_samples(df_spliceAI)
+                df_spliceAI = self._explode(df_spliceAI, col='samples', new_name='sample')
             index_spliceAI = sorted(index_spliceAI)
             self._gene_spliceAI = get_abs_max_rows(
                 df_spliceAI, index_spliceAI, 'delta_score')
