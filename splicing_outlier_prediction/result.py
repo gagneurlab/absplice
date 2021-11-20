@@ -45,7 +45,8 @@ class SplicingOutlierResult:
 
     def add_samples(self, var_samples_df):
         '''
-        var_samples_df: dataframe with variant and sample columns (e.g. output of 'to_sample_csv' from kipoiseq.extractors.vcf_query)
+        var_samples_df: dataframe with variant and sample columns 
+        (e.g. output of 'to_sample_csv' from kipoiseq.extractors.vcf_query)
         '''
         var_samples_df['samples'] = var_samples_df \
             .groupby('variant')['sample'] \

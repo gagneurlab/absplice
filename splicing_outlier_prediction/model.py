@@ -6,6 +6,8 @@ try:
 except ImportError:
     pass
 from splicing_outlier_prediction.result import SplicingOutlierResult
+from pathlib import Path
+import pathlib
 
 
 class SpliceOutlier:
@@ -77,6 +79,8 @@ class SpliceOutlier:
 
     def predict_save(self, dataloader, output_path,
                      batch_size=512, progress=True):
+        if not isinstance(output_path, pathlib.PosixPath):
+            output_path = Path(output_path)
         if output_path.suffix.lower() == '.csv':
             df_batch_writer(self._predict_on_dataloader(dataloader), output_path)
         elif output_path.suffix.lower() == '.parquet':

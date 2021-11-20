@@ -140,3 +140,25 @@ class CatInference(SpliceMapMixin):
                 delta_logit_psi_cat, ref_psi_target, clip_threshold=clip_threshold),
             'tissue_cat': tissue_cat
         }
+
+
+    def infer_all(self, event_type):
+
+        if event_type == 'psi5':
+            common_junctions = self.common_junctions5
+            tissues = self.tissues5
+        elif event_type == 'psi3':
+            common_junctions = self.common_junctions3
+            tissues = self.tissues3
+
+        infer_rows = list()
+        for tissue in tissues:
+            for sample in self.samples:
+                for junction in common_junctions[tissues.index(tissue)]:
+                    if self.contains(junction, sample, tissue, event_type):
+                        infer_rows.append(
+                            self.infer(junction, sample, tissue, event_type))
+        df = pd.DataFrame(infer_rows)
+        df = df.drop_duplicates().set_index(['junction', 'sample', 'tissue'])
+
+        return df

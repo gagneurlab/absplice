@@ -214,3 +214,19 @@ def test_cat_dataloader_infer_splicemap_cat(cat_dl_splicemap_cat):
         'psi_cat': 0.0,
         'ref_psi_cat': 0.0
     }
+
+
+def test_cat_dataloader_infer_all(cat_dl):
+
+    df = cat_dl[0].infer_all('psi5')
+
+    common_junctions = [i for sublist in cat_dl[0].common_junctions5 for i in sublist]
+    assert len(set(common_junctions)) == len(set(df.index.get_level_values('junction')))
+
+    tissues = cat_dl[0].tissues5
+    assert len(set(tissues)) == len(set(df.index.get_level_values('tissue')))
+
+    samples = cat_dl[0].samples
+    assert len(set(samples)) == len(set(df.index.get_level_values('sample')))
+
+    assert df.shape[0] <= len(set(common_junctions)) * len(set(tissues)) * len(set(samples))
