@@ -27,7 +27,7 @@ class SplicingOutlierResult:
         return cls(pd.read_csv(path, **kwargs))
 
     @staticmethod
-    def _explode(df, col='samples', new_name='sample'):
+    def _explode(df, col='samples', new_name=None):
         if new_name == None:
             new_name = col
         df = df.copy()
@@ -48,14 +48,15 @@ class SplicingOutlierResult:
         var_samples_df: dataframe with variant and sample columns 
         (e.g. output of 'to_sample_csv' from kipoiseq.extractors.vcf_query)
         '''
-        var_samples_df['samples'] = var_samples_df \
-            .groupby('variant')['sample'] \
-            .transform(lambda x: ';'.join(x))
-        var_samples_df = var_samples_df[['variant', 'samples']] \
-            .drop_duplicates()
-        self.df = self.df.set_index('variant') \
-            .join(var_samples_df.set_index('variant')) \
-            .reset_index()
+        if 'samples' not in self.df.columns:
+            var_samples_df['samples'] = var_samples_df \
+                .groupby('variant')['sample'] \
+                .transform(lambda x: ';'.join(x))
+            var_samples_df = var_samples_df[['variant', 'samples']] \
+                .drop_duplicates()
+            self.df = self.df.set_index('variant') \
+                .join(var_samples_df.set_index('variant')) \
+                .reset_index()
 
     def filter_samples_with_RNA_seq(self, samples_for_tissue):
         """
@@ -138,16 +139,16 @@ class SplicingOutlierResult:
         stores scores in self._gene
         """
         if self._gene is None:
-            df = self.junction.copy()
+            df = self.junction.copy().reset_index()
             index = ['gene_name']
-            df = self._explode(df, index)
+            df = self._explode(df, col='gene_name')
             if 'samples' in self.df:
                 index.append('sample')
             if 'tissue' in self.df and 'tissue' not in index:
                 index.append('tissue')
         
             self._gene = get_abs_max_rows(
-                df, index, 'delta_psi')
+                df.set_index(index), index, 'delta_psi')
 
             if self.df_spliceAI is not None:
                 df_spliceAI, index_spliceAI = self._add_tissue_info_to_spliceAI()

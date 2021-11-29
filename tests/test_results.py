@@ -41,8 +41,10 @@ def test_splicing_outlier_result_gene(outlier_results, outlier_results_multi):
         == sorted(set(outlier_results.df.set_index(['gene_name', 'tissue']).index))
 
     assert sorted(set(outlier_results_multi.gene.index)) \
-        == sorted(set(outlier_results_multi._explode_samples(outlier_results_multi.df).set_index(['gene_name', 'sample', 'tissue']).index))
-
+        == sorted(set(outlier_results_multi._explode(outlier_results_multi.df, 
+                                                     col='samples', new_name='sample').set_index(
+                                                         ['gene_name', 'sample', 'tissue']
+                                                         ).index))
 
 def test_outlier_results_multi_vcf(outlier_dl_multi, outlier_model, var_samples_df):
 
