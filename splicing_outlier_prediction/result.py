@@ -244,6 +244,7 @@ class SplicingOutlierResult:
                     infer_rows.append(
                         cat.infer(junction, sample, tissue, row['event_type']))
         df = pd.DataFrame(infer_rows)
+        assert df.shape[0] > 0
         df = df.drop_duplicates().set_index(['junction', 'sample', 'tissue'])
         # self._junction can contain multiple cats (junction, sample, tissue) is not unique index
         self._junction = self.junction.join(df)

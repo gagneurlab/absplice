@@ -64,9 +64,17 @@ class CatInference(SpliceMapMixin):
             return False
         else:
             if event_type == 'psi5':
-                return junction_id in self.common_junctions5[self.tissues5.index(tissue)]
+                if tissue not in self.tissues5:
+                    raise ValueError('"CatInference and MMSplice+SpliceMap should use the same SpliceMaps"')
+                    # return False
+                else:
+                    return junction_id in self.common_junctions5[self.tissues5.index(tissue)]
             elif event_type == 'psi3':
-                return junction_id in self.common_junctions3[self.tissues3.index(tissue)]
+                if tissue not in self.tissues5:
+                    raise ValueError('"CatInference and MMSplice+SpliceMap should use the same SpliceMaps"')
+                    # return False
+                else:
+                    return junction_id in self.common_junctions3[self.tissues3.index(tissue)]
             else:
                 raise ValueError('"event_type" should be "psi5" or "psi3"')
 
