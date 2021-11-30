@@ -11,6 +11,7 @@ class SplicingOutlierResult:
     def __init__(self, df, df_spliceAI=None):
         self.df = df
         self.df_spliceAI = df_spliceAI
+        self.contains_chr = self._contains_chr()
         self._gene_spliceAI = None
         self._junction = None
         self._splice_site = None
@@ -34,6 +35,9 @@ class SplicingOutlierResult:
         df[col] = df[col].str.split(';').map(
             set, na_action='ignore').map(list, na_action='ignore')
         return df.rename(columns={col: new_name}).explode(new_name)
+    
+    def _contains_chr(self):
+        return 'chr' in self.df.junction[0]
 
     @property
     def psi5(self):
@@ -236,6 +240,7 @@ class SplicingOutlierResult:
 
         infer_rows = list()
         for cat in cat_inference:
+            assert self.contains_chr == cat.contains_chr
             rows = self.junction.iterrows()
             if progress:
                 rows = tqdm(rows, total=self.junction.shape[0])

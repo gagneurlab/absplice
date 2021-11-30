@@ -14,6 +14,7 @@ class CatInference(SpliceMapMixin):
         ):
         SpliceMapMixin.__init__(self, splicemap5, splicemap3)
         self.ct = self._read_cat_count_table(count_cat, name)
+        self.contains_chr = self._contains_chr()
         if sample_mapping:
             self._update_samples(sample_mapping)
         self.samples = set(self.ct.samples)
@@ -55,6 +56,9 @@ class CatInference(SpliceMapMixin):
                 '`count_cat` argument should'
                 ' be path to cat SpliceCountTable files'
                 ' or `SpliceCountTable` object')
+            
+    def _contains_chr(self):
+        return 'chr' in self.ct.junctions[0]
 
     def _update_samples(self, sample_mapping):
         self.ct.update_samples(sample_mapping)
