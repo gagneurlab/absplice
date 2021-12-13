@@ -2,6 +2,8 @@ from tqdm import tqdm
 import pandas as pd
 import numpy as np
 import pickle
+from pathlib import Path
+import pathlib
 from splicing_outlier_prediction.utils import get_abs_max_rows
 from splicing_outlier_prediction.cat_dataloader import CatInference
 
@@ -25,7 +27,12 @@ class SplicingOutlierResult:
 
     @classmethod
     def read_csv(cls, path, **kwargs):
-        return cls(pd.read_csv(path, **kwargs))
+        if not isinstance(path, pathlib.PosixPath):
+            path = Path(path)
+        if path.suffix.lower() == '.csv':
+            return cls(pd.read_csv(path, **kwargs))
+        elif path.suffix.lower() == '.parquet':
+            return cls(pd.read_parquet(path, **kwargs))
 
     @staticmethod
     def _explode(df, col='samples', new_name=None):
