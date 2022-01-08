@@ -63,7 +63,7 @@ class CatInference(SpliceMapMixin):
     def _update_samples(self, sample_mapping):
         self.ct.update_samples(sample_mapping)
 
-    def contains(self, junction_id, sample, tissue, event_type):
+    def contains(self, junction_id, tissue, sample, event_type):
         if sample not in self.samples:
             return False
         else:
@@ -82,8 +82,8 @@ class CatInference(SpliceMapMixin):
             else:
                 raise ValueError('"event_type" should be "psi5" or "psi3"')
 
-    def infer(self, junction_id, sample, tissue, event_type, clip_threshold=0.01):
-        if not self.contains(junction_id, sample, tissue, event_type):
+    def infer(self, junction_id, tissue, sample, event_type, clip_threshold=0.01):
+        if not self.contains(junction_id, tissue, sample, event_type):
             return {
                 'junction': junction_id,
                 'sample': sample,
@@ -167,10 +167,10 @@ class CatInference(SpliceMapMixin):
         for tissue in tissues:
             for sample in self.samples:
                 for junction in common_junctions[tissues.index(tissue)]:
-                    if self.contains(junction, sample, tissue, event_type):
+                    if self.contains(junction, tissue, sample, event_type):
                         infer_rows.append(
-                            self.infer(junction, sample, tissue, event_type))
+                            self.infer(junction, tissue, sample, event_type))
         df = pd.DataFrame(infer_rows)
-        df = df.drop_duplicates().set_index(['junction', 'sample', 'tissue'])
+        df = df.drop_duplicates().set_index(['junction', 'tissue', 'sample'])
 
         return df

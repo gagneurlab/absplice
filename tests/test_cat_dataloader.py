@@ -1,5 +1,6 @@
 import pytest
 from splicing_outlier_prediction import CatInference
+from splicemap import SpliceCountTable as CountTable
 from conftest import ref_table5_kn_testis, ref_table3_kn_testis, \
     ref_table5_kn_lung, ref_table3_kn_lung, \
     ref_table5_kn_blood, ref_table3_kn_blood, \
@@ -23,41 +24,55 @@ def cat_dl3():
     )
 
 
-@pytest.fixture
-def cat_dl_splicemap_cat():
-    return CatInference(
-        splicemap5=[ref_table5_kn_testis, ref_table5_kn_lung],
-        splicemap3=[ref_table3_kn_testis, ref_table3_kn_lung],
-        count_cat=count_cat_file_blood,
-        splicemap_cat5=ref_table5_kn_blood,
-        splicemap_cat3=ref_table3_kn_blood,
-        name='blood',
-    )
+
+
+
+# # only save necessary junctions
+# # cat_dl[0].ct.df.loc[set.union(*cat_dl[0].common_junctions5).union(set.union(*cat_dl[0].common_junctions3))]
+# def test_save_necessary_junctions():
+    
+#     count_cat_file_lymphocytes_complete = 'tests/data/create_test_data/full_data/backup/test_count_table_cat_chrom17_lymphocytes.csv'
+#     count_cat_file_blood_complete = 'tests/data/create_test_data/full_data/backup/test_count_table_cat_chrom17_blood.csv'
+    
+#     cat_dl_complete = [
+#         CatInference(splicemap5=[ref_table5_kn_testis, ref_table5_kn_lung],
+#                      splicemap3=[ref_table3_kn_testis, ref_table3_kn_lung],
+#                      count_cat=count_cat_file_lymphocytes_complete,
+#                      name='lymphocytes'),
+#         CatInference(splicemap5=[ref_table5_kn_testis, ref_table5_kn_lung],
+#                      splicemap3=[ref_table3_kn_testis, ref_table3_kn_lung],
+#                      count_cat=count_cat_file_blood_complete,
+#                      name='blood'),
+#     ]
+    
+#     cat_dl_complete[0].ct.df.loc[set.union(*cat_dl_complete[0].common_junctions5).union(set.union(*cat_dl_complete[0].common_junctions3))].to_csv(count_cat_file_lymphocytes, index=False)
+#     cat_dl_complete[1].ct.df.loc[set.union(*cat_dl_complete[1].common_junctions5).union(set.union(*cat_dl_complete[1].common_junctions3))].to_csv(count_cat_file_blood, index=False)
+    
 
 def test_cat_dataloader_init(cat_dl):
     assert len(cat_dl) == 2
     assert [cat_dl[0].splicemaps5[i].method for i in range(len(cat_dl[0].splicemaps5))] == ['kn', 'kn']
-    assert cat_dl[0].combined_splicemap5.shape[0] == 38
+    assert cat_dl[0].combined_splicemap5.shape[0] == 6
     assert sorted([cat_dl[0].splicemaps5[i].name for i in range(len(cat_dl[0].splicemaps5))]) \
-        == sorted(['gtex-grch37-testis', 'gtex-grch37-lung'])
+        == sorted(['Testis', 'Lung'])
 
     assert [cat_dl[0].splicemaps3[i].method for i in range(len(cat_dl[0].splicemaps3))] == ['kn', 'kn']
-    assert cat_dl[0].combined_splicemap3.shape[0] == 58
+    assert cat_dl[0].combined_splicemap3.shape[0] == 5
     assert sorted([cat_dl[0].splicemaps3[i].name for i in range(len(cat_dl[0].splicemaps3))]) \
-        == sorted(['gtex-grch37-testis', 'gtex-grch37-lung'])
+        == sorted(['Testis', 'Lung'])
 
 
 def test_cat_dataloader_common(cat_dl):
-    assert len(set.union(*cat_dl[0].common_junctions5)) == 35
-    assert len(set.union(*cat_dl[0].common_junctions3)) == 41
+    assert len(set.union(*cat_dl[0].common_junctions5)) == 5
+    assert len(set.union(*cat_dl[0].common_junctions3)) == 5
 
 
 def test_cat_dataloader_common5(cat_dl5):
-    assert len(cat_dl5.common_junctions5[0]) == 22
+    assert len(cat_dl5.common_junctions5[0]) == 4
 
 
 def test_cat_dataloader_common3(cat_dl3):
-    assert len(cat_dl3.common_junctions3[0]) == 29
+    assert len(cat_dl3.common_junctions3[0]) == 4
 
 
 def test_cat_dataloader_sample_mapping():
@@ -78,142 +93,153 @@ def test_cat_dataloader_sample_mapping():
 
 
 def test_cat_dataloader_infer(cat_dl):
-    row = cat_dl[0].infer('17:41154800-41154888:+', 'NA00002', 'gtex-grch37-testis', 'psi5')
+    row = cat_dl[0].infer('17:41201211-41203079:-', 'Testis', 'NA00002', 'psi5')
     assert row =={
-        'junction': '17:41154800-41154888:+',
+        'junction': '17:41201211-41203079:-',
         'sample': 'NA00002',
-        'tissue': 'gtex-grch37-testis',
+        'tissue': 'Testis',
         'tissue_cat': 'lymphocytes',
-        'count_cat': 3936,
-        'delta_logit_psi_cat': 0.0,
-        'delta_psi_cat': 0.0,
-        'k_cat': 15772,
-        'median_n_cat': 5596.0,
-        'n_cat': 15772,
-        'psi_cat': 1.0,
-        'ref_psi_cat': 1.0}
-            
-    row = cat_dl[1].infer('17:41154800-41154888:+', 'NA00002', 'gtex-grch37-testis', 'psi5')
+        'count_cat': 50,
+        'delta_logit_psi_cat': -0.5108256237659907,
+        'delta_psi_cat': -0.12500000000000006,
+        'k_cat': 250,
+        'median_n_cat': 300.0,
+        'n_cat': 850,
+        'psi_cat': 0.2,
+        'ref_psi_cat': 0.29411764705882354}
+    
+    # ref_psi_cat is equal to ref_psi of target tissue -> delta_psi_cat is ref_psi_cat - psi_cat
+    row = cat_dl[0].infer('17:41277787-41290673:+',  'Lung', 'NA00002', 'psi5')
     assert row =={
-        'junction': '17:41154800-41154888:+',
+        'junction': '17:41277787-41290673:+',
         'sample': 'NA00002',
-        'tissue': 'gtex-grch37-testis',
+        'tissue': 'Lung',
+        'tissue_cat': 'lymphocytes',
+        'count_cat': 20,
+        'delta_logit_psi_cat': -1.6094379124341003,
+        'delta_psi_cat': -0.3333333333333333,
+        'k_cat': 300,
+        'median_n_cat': 240.0,
+        'n_cat': 600,
+        'psi_cat': 0.16666666666666666,
+        'ref_psi_cat': 0.5}
+    
+    row = cat_dl[1].infer('17:41201211-41203079:-', 'Testis', 'NA00002', 'psi5')
+    assert row =={
+        'junction': '17:41201211-41203079:-',
+        'sample': 'NA00002',
+        'tissue': 'Testis',
         'tissue_cat': 'blood',
-        'count_cat': 438,
-        'delta_logit_psi_cat': -0.3257605810262852,
-        'delta_psi_cat': -0.0037977044258790116,
-        'k_cat': 1820,
-        'median_n_cat': 1502.0,
-        'n_cat': 4820,
-        'psi_cat': 0.3045897079276773,
-        'ref_psi_cat': 0.3775933609958506}
-
-    row = cat_dl[0].infer('17:41154800-41154888:+', 'NA00002', 'gtex-grch37-lung', 'psi5')  
-    assert row =={
-        'junction': '17:41154800-41154888:+',
-        'sample': 'NA00002',
-        'tissue': 'gtex-grch37-lung',
-        'tissue_cat': 'lymphocytes',
-        'count_cat': 3936,
+        'count_cat': 7,
         'delta_logit_psi_cat': 0.0,
         'delta_psi_cat': 0.0,
-        'k_cat': 15772,
-        'median_n_cat': 5596.0,
-        'n_cat': 15772,
+        'k_cat': 14,
+        'median_n_cat': 5.0,
+        'n_cat': 14,
         'psi_cat': 1.0,
         'ref_psi_cat': 1.0}
+    
         
-    row = cat_dl[1].infer('17:41154800-41154888:+', 'NA00002', 'gtex-grch37-lung', 'psi5')
-    assert row =={'junction': '17:41154800-41154888:+',
-        'sample': 'NA00002',
-        'tissue': 'gtex-grch37-lung',
-        'count_cat': 438,
-        'psi_cat': 0.3045897079276773,
-        'ref_psi_cat': 0.3775933609958506,
-        'k_cat': 1820,
-        'n_cat': 4820,
-        'median_n_cat': 1502.0,
-        'delta_logit_psi_cat': -0.3257605810262852,
-        'delta_psi_cat': -0.08072750478621565,
-        'tissue_cat': 'blood'}
-
 def test_cat_dataloader_contains(cat_dl):
-    assert cat_dl[0].contains('17:41201917-41203079:-', 'NA00002', 'gtex-grch37-testis', 'psi5')
+    assert cat_dl[1].contains('17:41201211-41203079:-', 'Testis', 'NA00002', 'psi5')
 
 
 def test_cat_dataloader_contains_not(cat_dl):
     assert not cat_dl[0].contains(
-        '17:41201917-4120307900000:-', 'NA00002', 'gtex-grch37-testis', 'psi5')
+        '17:41201917-4120307900000:-', 'Testis', 'NA00002', 'psi5')
 
 
-def test_cat_dataloader_infer_only_one_cat(cat_dl):
-    junction_id = '17:41201917-41203079:-'
+# def test_cat_dataloader_infer_only_one_cat(cat_dl):
+#     junction_id = '17:41201917-41203079:-'
+#     sample = 'NA00002'
+#     tissue = 'Testis'
+#     event_type = 'psi5'
+
+#     row = cat_dl[0].infer(junction_id, sample, tissue, event_type)
+#     assert row == {
+#         'junction': '17:41201917-41203079:-',
+#         'sample': 'NA00002',
+#         'tissue': 'Testis',
+#         'tissue_cat': 'lymphocytes',
+#         'count_cat': 0,
+#         'delta_logit_psi_cat': 0.0,
+#         'delta_psi_cat': 1.734723475976807e-18,
+#         'k_cat': 0,
+#         'median_n_cat': 43.0,
+#         'n_cat': 166,
+#         'psi_cat': 0.0,
+#         'ref_psi_cat': 0.0
+#     }
+#     assert cat_dl[1].contains(junction_id, sample, tissue, event_type) == False
+    
+def test_cat_dataloader_infer_splicemap_cat():
+    cat_dl_splicemap_cat = CatInference(
+        splicemap5=[ref_table5_kn_testis, ref_table5_kn_lung],
+        splicemap3=[ref_table3_kn_testis, ref_table3_kn_lung],
+        count_cat=count_cat_file_blood,
+        splicemap_cat5=ref_table5_kn_blood,
+        splicemap_cat3=ref_table3_kn_blood,
+        name='blood',
+    )
+    
+    cat_dl_no_splicemap_cat = CatInference(
+        splicemap5=[ref_table5_kn_testis, ref_table5_kn_lung],
+        splicemap3=[ref_table3_kn_testis, ref_table3_kn_lung],
+        count_cat=count_cat_file_blood,
+        name='blood',
+    )
+    
+    # First junction is in count table and in splicemap (here median_n of higher stat power is used)
+    junction_id = '17:41277787-41283224:+'
     sample = 'NA00002'
-    tissue = 'gtex-grch37-testis'
+    tissue = 'Testis'
     event_type = 'psi5'
 
-    row = cat_dl[0].infer(junction_id, sample, tissue, event_type)
+    assert junction_id in set(cat_dl_splicemap_cat.splicemap5_cat.df['junctions'])
+    assert cat_dl_splicemap_cat.contains(junction_id, tissue, sample, event_type) == True
+    row = cat_dl_splicemap_cat.infer(junction_id, tissue, sample, event_type)
     assert row == {
-        'junction': '17:41201917-41203079:-',
+        'junction': '17:41277787-41283224:+',
         'sample': 'NA00002',
-        'tissue': 'gtex-grch37-testis',
-        'tissue_cat': 'lymphocytes',
-        'count_cat': 0,
-        'delta_logit_psi_cat': 0.0,
-        'delta_psi_cat': 1.734723475976807e-18,
-        'k_cat': 0,
-        'median_n_cat': 43.0,
-        'n_cat': 166,
-        'psi_cat': 0.0,
-        'ref_psi_cat': 0.0
-    }
-    assert cat_dl[1].contains(junction_id, sample, tissue, event_type) == False
-
-
-def test_cat_dataloader_infer_splicemap_cat(cat_dl_splicemap_cat):
-    junction_id = '17:41170223-41170608:-'
-    sample = 'NA00002'
-    tissue = 'gtex-grch37-testis'
-    event_type = 'psi5'
-
-    row = cat_dl_splicemap_cat.infer(junction_id, sample, tissue, event_type)
-    assert row == {
-        'junction': '17:41170223-41170608:-',
-        'sample': 'NA00002',
-        'tissue': 'gtex-grch37-testis',
+        'tissue': 'Testis',
         'tissue_cat': 'blood',
-        'count_cat': 46,
+        'count_cat': 4,
+        'delta_logit_psi_cat': -3.208825489014699,
+        'delta_psi_cat': -0.18999999999999995,
+        'k_cat': 12,
+        'median_n_cat': 12.0,
+        'n_cat': 14,
+        'psi_cat': 0.8,
+        'ref_psi_cat': 1.0
+    }
+    assert cat_dl_splicemap_cat.infer(junction_id, tissue, sample, event_type) != \
+        cat_dl_no_splicemap_cat.infer(junction_id, tissue, sample, event_type)
+    
+
+    # junction_id not in SpliceMap of CAT, but in count table of CAT and in SpliceMap of target tissue -> use median_n from count table
+    junction_id = '17:41201200-41205000:-'
+    sample = 'NA00002'
+    tissue = 'Testis'
+    event_type = 'psi5'
+    
+    assert junction_id not in set(cat_dl_splicemap_cat.splicemap5_cat.df['junctions'])
+    row = cat_dl_splicemap_cat.infer(junction_id, tissue, sample, event_type)
+    assert row == {
+        'junction': '17:41201200-41205000:-',
+        'sample': 'NA00002',
+        'tissue': 'Testis',
+        'tissue_cat': 'blood',
+        'count_cat': 100,
         'delta_logit_psi_cat': 0.0,
         'delta_psi_cat': 0.0,
-        'k_cat': 220,
-        'median_n_cat': 50.0,
-        'n_cat': 220,
+        'k_cat': 300,
+        'median_n_cat': 100.0,
+        'n_cat': 300,
         'psi_cat': 1.0,
         'ref_psi_cat': 1.0
     }
-    assert cat_dl_splicemap_cat.contains(junction_id, sample, tissue, event_type) == True
-
-    # junction_id not in SpliceMap of CAT
-    junction_id = '17:41168587-41169857:-'
-    sample = 'NA00002'
-    tissue = 'gtex-grch37-testis'
-    event_type = 'psi5'
-    
-    row = cat_dl_splicemap_cat.infer(junction_id, sample, tissue, event_type)
-    assert row == {
-        'junction': '17:41168587-41169857:-',
-        'sample': 'NA00002',
-        'tissue': 'gtex-grch37-testis',
-        'tissue_cat': 'blood',
-        'count_cat': 0,
-        'delta_logit_psi_cat': 0.0,
-        'delta_psi_cat': 1.734723475976807e-18,
-        'k_cat': 0,
-        'median_n_cat': 73.0,
-        'n_cat': 307,
-        'psi_cat': 0.0,
-        'ref_psi_cat': 0.0
-    }
+    assert cat_dl_splicemap_cat.infer(junction_id, tissue, sample, event_type) == \
+        cat_dl_no_splicemap_cat.infer(junction_id, tissue, sample, event_type)
 
 
 def test_cat_dataloader_infer_all(cat_dl):

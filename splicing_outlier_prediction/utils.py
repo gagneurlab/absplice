@@ -34,3 +34,14 @@ def clip(x, clip_threshold=0.01):
 def logit(x, clip_threshold=0.01):
     x = clip(x, clip_threshold=clip_threshold)
     return np.log(x) - np.log(1 - x)
+
+
+def normalize_gene_annotation(df, gene_map, key='gene_name', value='gene_id'):
+    if isinstance(gene_map, dict):
+        pass
+    elif isinstance(gene_map, pd.DataFrame):
+        gene_map = dict(zip(gene_map[key], gene_map[value]))
+    else:
+        TypeError("gene_mapping needs to be dictionary of pandas DataFrame")
+    df[value] = df[key].map(gene_map)
+    return df
