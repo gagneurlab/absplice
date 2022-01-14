@@ -30,7 +30,9 @@ count_cat_file_blood_complete = 'tests/data/create_test/data/full_data/backup/te
 count_cat_file_lymphocytes = 'tests/data/test_count_table_cat_chrom17_lymphocytes.csv'
 count_cat_file_blood = 'tests/data/test_count_table_cat_chrom17_blood.csv'
 
-spliceAI = 'tests/data/test_spliceAI.csv'
+mmsplice_path = 'tests/data/test_mmsplice.csv'
+spliceai_path = 'tests/data/test_spliceAI.csv'
+mmsplice_cat_path = 'tests/data/test_mmsplice_cat.csv'
 pickle_DNA = 'tests/data/model_DNA_trained_on_all_GTEx.pkl'
 pickle_DNA_CAT = 'tests/data/model_CAT_concat.pkl'
 

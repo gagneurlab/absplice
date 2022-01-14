@@ -3,14 +3,49 @@ import pandas as pd
 import numpy as np
 from kipoiseq.extractors.vcf import MultiSampleVCF
 # from kipoiseq.extractors.vcf_query import to_sample_csv
-from splicing_outlier_prediction import SpliceOutlier, SpliceOutlierDataloader, CatInference
+from splicing_outlier_prediction import SpliceOutlier, SpliceOutlierDataloader, CatInference, SplicingOutlierResult
 from splicing_outlier_prediction.ensemble import train_model_ebm
 from conftest import fasta_file, vcf_file, multi_vcf_file, multi_vcf_samples, \
     ref_table5_kn_testis, ref_table3_kn_testis,  \
     ref_table5_kn_lung, ref_table3_kn_lung, \
     combined_ref_tables5_testis_lung, combined_ref_tables3_testis_lung, \
     count_cat_file_lymphocytes,  count_cat_file_blood, \
-    spliceAI, pickle_DNA, pickle_DNA_CAT, gene_map, gene_tpm, pickle_absplice_DNA, pickle_absplice_RNA
+    spliceai_path, mmsplice_path, mmsplice_cat_path, pickle_DNA, pickle_DNA_CAT, gene_map, gene_tpm, pickle_absplice_DNA, pickle_absplice_RNA
+
+
+def test_splicing_outlier_result__init__(gene_tpm):
+    df_mmsplice = pd.read_csv(mmsplice_path)
+    df_spliceai = pd.read_csv(spliceai_path)
+    # _gene_tpm = gene_tpm[gene_tpm['tissue'] == 'Whole_Blood']
+    
+    # Initialize with DataFrame
+    sor = SplicingOutlierResult(
+        df_mmsplice=df_mmsplice, 
+        df_spliceai=df_spliceai, 
+        gene_tpm=gene_tpm
+    )
+    assert sor.df_mmsplice.shape[0] > 0
+    assert sor.df_spliceai.shape[0] > 0
+
+    # Initialize with str
+    sor2 = SplicingOutlierResult(
+        df_mmsplice=mmsplice_path, 
+        df_spliceai=spliceai_path, 
+        gene_tpm=gene_tpm
+    )
+    assert sor2.df_mmsplice.shape[0] > 0
+    assert sor2.df_spliceai.shape[0] > 0
+    
+    # Initialize with mmsplice_cat
+    sor3 = SplicingOutlierResult(
+        df_mmsplice=mmsplice_path, 
+        df_spliceai=spliceai_path, 
+        df_mmsplice_cat=mmsplice_cat_path, 
+        gene_tpm=gene_tpm
+    )
+    assert sor3.df_mmsplice.shape[0] > 0
+    assert sor3.df_spliceai.shape[0] > 0
+
 
 def test_write_sample_csv():   
     vcf = MultiSampleVCF(multi_vcf_file)
@@ -26,20 +61,20 @@ def test_tissues(outlier_results):
 def test_splicing_outlier_result_add_spliceai(outlier_dl, outlier_dl_multi, var_samples_df, outlier_model):
     # single sample vcf
     results = outlier_model.predict_on_dataloader(outlier_dl)
-    results.add_spliceai(spliceAI, gene_mapping=False)
+    results.add_spliceai(spliceai_path, gene_mapping=False)
     assert results.df_spliceai.shape[0] > 0
     assert 'delta_score' in results.df_spliceai.columns
     # multi sample vcf
     results = outlier_model.predict_on_dataloader(outlier_dl_multi)
-    results.add_spliceai(spliceAI, gene_mapping=False)
+    results.add_spliceai(spliceai_path, gene_mapping=False)
     assert results.df_spliceai.shape[0] > 0
     assert 'delta_score' in results.df_spliceai.columns
 
 
 def test_splicing_outlier_result_add_samples(outlier_dl, outlier_dl_multi, var_samples_df, outlier_model):
-    # TODO: spliceai has no samples here
+    # TODO: spliceai_path has no samples here
     results = outlier_model.predict_on_dataloader(outlier_dl_multi)
-    results.add_spliceai(spliceAI, gene_mapping=False)
+    results.add_spliceai(spliceai_path, gene_mapping=False)
     
     variants_mmsplice = set(results.df_mmsplice.set_index(['variant']).index)
     variants_spliceai = set(results.df_spliceai.set_index(['variant']).index)
@@ -92,12 +127,18 @@ def test_splicing_outlier_result_gene_mmsplice_cat(outlier_dl_multi, outlier_res
 
 def test_splicing_outlier_result_gene_spliceai(outlier_results, outlier_results_multi, gene_map, gene_tpm, var_samples_df):
     outlier_results.gene_map = gene_map
-    outlier_results.add_spliceai(spliceAI, gene_mapping=True)
+    outlier_results.add_spliceai(spliceai_path, gene_mapping=True)
+    outlier_results.df_spliceai = outlier_results.df_spliceai[
+        ~outlier_results.df_spliceai['gene_id'].isna()
+    ]
     assert sorted(set(outlier_results.gene_spliceai.index)) \
         == sorted(set(outlier_results.df_spliceai.set_index(['gene_id']).index))
 
     outlier_results_multi.gene_map = gene_map
-    outlier_results_multi.add_spliceai(spliceAI, gene_mapping=True)
+    outlier_results_multi.add_spliceai(spliceai_path, gene_mapping=True)
+    outlier_results_multi.df_spliceai = outlier_results_multi.df_spliceai[
+        ~outlier_results_multi.df_spliceai['gene_id'].isna()
+    ]
     outlier_results_multi.add_samples(var_samples_df)
     assert sorted(set(outlier_results_multi.gene_spliceai.index)) \
         == sorted(set(outlier_results_multi.df_spliceai.set_index(['gene_id', 'sample']).index))
@@ -105,9 +146,9 @@ def test_splicing_outlier_result_gene_spliceai(outlier_results, outlier_results_
     df_spliceai_gene_no_tissue = outlier_results_multi.gene_spliceai.copy()
     outlier_results_multi.gene_tpm = gene_tpm
     outlier_results_multi.df_spliceai = None
-    outlier_results_multi.add_spliceai(spliceAI, gene_mapping=True)
+    outlier_results_multi.add_spliceai(spliceai_path, gene_mapping=True)
     outlier_results_multi._add_tissue_info_to_spliceai()
-    outlier_results_multi.df_spliceai = outlier_results_multi.df_spliceai_tissue #store spliceai tissue in spliceai
+    outlier_results_multi.df_spliceai = outlier_results_multi._df_spliceai_tissue #store spliceai_path tissue in spliceai_path
     assert 'tissue' in outlier_results_multi.df_spliceai.columns
     
     assert sorted(set(outlier_results_multi.gene_spliceai.index)) \
@@ -118,7 +159,7 @@ def test_splicing_outlier_result_absplice_input_dna(outlier_dl, outlier_dl_multi
     results = outlier_model.predict_on_dataloader(outlier_dl_multi)
     results.gene_map = gene_map
     results.gene_tpm = gene_tpm
-    results.add_spliceai(spliceAI, gene_mapping=True)
+    results.add_spliceai(spliceai_path, gene_mapping=True)
     results.add_samples(var_samples_df)
     
     df_spliceai = results._add_tissue_info_to_spliceai()
@@ -126,8 +167,8 @@ def test_splicing_outlier_result_absplice_input_dna(outlier_dl, outlier_dl_multi
     indices_spliceai = df_spliceai.set_index(['variant', 'gene_id', 'tissue', 'sample']).index.unique()
     indices_all = indices_mmsplice.union(indices_spliceai)
     
-    assert results.absplice_input.shape[0] > 0
-    assert len(set(results.absplice_input.index).difference(indices_all)) == 0
+    assert results.absplice_dna_input.shape[0] > 0
+    assert len(set(results.absplice_dna_input.index).difference(indices_all)) == 0
     
     assert results.df_mmsplice_cat is None
 
@@ -135,7 +176,7 @@ def test_splicing_outlier_result_absplice_input_rna(outlier_dl, outlier_dl_multi
     results = outlier_model.predict_on_dataloader(outlier_dl_multi)
     results.gene_map = gene_map
     results.gene_tpm = gene_tpm
-    results.add_spliceai(spliceAI, gene_mapping=True)
+    results.add_spliceai(spliceai_path, gene_mapping=True)
     results.add_samples(var_samples_df)
     results.infer_cat(cat_dl)
     
@@ -144,45 +185,45 @@ def test_splicing_outlier_result_absplice_input_rna(outlier_dl, outlier_dl_multi
     indices_spliceai = df_spliceai.set_index(['variant', 'gene_id', 'tissue', 'sample']).index.unique()
     indices_all = indices_mmsplice.union(indices_spliceai)
     
-    assert results.absplice_input.shape[0] > 0
-    assert len(set(results.absplice_input.index).difference(indices_all)) == 0
+    assert results.absplice_rna_input.shape[0] > 0
+    assert len(set(results.absplice_rna_input.index).difference(indices_all)) == 0
     
     assert results.df_mmsplice_cat is not None
-    assert len(set(['delta_score', 'delta_psi', 'delta_psi_cat']).difference(results.absplice_input.columns)) == 0
+    assert len(set(['delta_score', 'delta_psi', 'delta_psi_cat']).difference(results.absplice_rna_input.columns)) == 0
 
     
 def test_splicing_outlier_result_predict_absplice_dna(outlier_dl, outlier_dl_multi, var_samples_df, outlier_model, gene_map, gene_tpm):
     results = outlier_model.predict_on_dataloader(outlier_dl_multi)
     results.gene_map = gene_map
     results.gene_tpm = gene_tpm
-    results.add_spliceai(spliceAI, gene_mapping=True)
+    results.add_spliceai(spliceai_path, gene_mapping=True)
     results.add_samples(var_samples_df)
     
-    results.predict_absplice(realm='DNA', pickle_file=pickle_absplice_DNA)
-    assert 'AbSplice_DNA' in results.absplice_input.columns
+    results.predict_absplice_dna(pickle_file=pickle_absplice_DNA)
+    assert 'AbSplice_DNA' in results.absplice_dna.columns
     
     
 def test_splicing_outlier_result_predict_absplice_rna(outlier_dl, outlier_dl_multi, var_samples_df, outlier_model, gene_map, gene_tpm, cat_dl):
     results = outlier_model.predict_on_dataloader(outlier_dl_multi)
     results.gene_map = gene_map
     results.gene_tpm = gene_tpm
-    results.add_spliceai(spliceAI, gene_mapping=True)
+    results.add_spliceai(spliceai_path, gene_mapping=True)
     results.add_samples(var_samples_df)
     results.infer_cat(cat_dl)
     
-    results.predict_absplice(realm='RNA',  pickle_file=pickle_absplice_RNA)
-    assert 'AbSplice_RNA' in results.absplice_input.columns
+    results.predict_absplice_rna(pickle_file=pickle_absplice_RNA)
+    assert 'AbSplice_RNA' in results.absplice_rna.columns
     
     
 def test_splicing_outlier_result_gene_absplice_dna(outlier_dl, outlier_dl_multi, var_samples_df, outlier_model, gene_map, gene_tpm):
     results = outlier_model.predict_on_dataloader(outlier_dl_multi)
     results.gene_map = gene_map
     results.gene_tpm = gene_tpm
-    results.add_spliceai(spliceAI, gene_mapping=True)
+    results.add_spliceai(spliceai_path, gene_mapping=True)
     results.add_samples(var_samples_df)
     
-    results.predict_absplice(realm='DNA', pickle_file=pickle_absplice_DNA)
-    assert 'variant' in results.absplice_input.index.names
+    results.predict_absplice_dna(pickle_file=pickle_absplice_DNA)
+    assert 'variant' in results.absplice_dna.index.names
     assert 'variant' not in results.gene_absplice_dna.index.names
     assert 'AbSplice_DNA' in results.gene_absplice_dna.columns
     
@@ -191,25 +232,58 @@ def test_splicing_outlier_result_gene_absplice_rna(outlier_dl, outlier_dl_multi,
     results = outlier_model.predict_on_dataloader(outlier_dl_multi)
     results.gene_map = gene_map
     results.gene_tpm = gene_tpm
-    results.add_spliceai(spliceAI, gene_mapping=True)
+    results.add_spliceai(spliceai_path, gene_mapping=True)
     results.add_samples(var_samples_df)
     results.infer_cat(cat_dl)
     
-    results.predict_absplice(realm='RNA', pickle_file=pickle_absplice_RNA)
-    assert 'variant' in results.absplice_input.index.names
+    results.predict_absplice_rna(pickle_file=pickle_absplice_RNA)
+    assert 'variant' in results.absplice_rna_input.index.names
     assert 'variant' not in results.gene_absplice_rna.index.names
     assert 'AbSplice_RNA' in results.gene_absplice_rna.columns
     
+    
+    
+def test_splicing_outlier_complete_dna(gene_map, gene_tpm, var_samples_df):
+    
+    results = SplicingOutlierResult(
+        df_mmsplice = mmsplice_path,
+        df_spliceai = spliceai_path,
+        gene_map = gene_map,
+        gene_tpm = gene_tpm,
+    )
+    
+    results.add_samples(var_samples_df)
+    results.predict_absplice_dna(pickle_file=pickle_absplice_DNA)
+    
+    assert results.absplice_dna.shape[0] > 0 
+    assert 'AbSplice_DNA' in results.absplice_dna.columns
+    
+def test_splicing_outlier_complete_rna(gene_map, gene_tpm, var_samples_df):
+    
+    results = SplicingOutlierResult(
+        df_mmsplice = mmsplice_path,
+        df_spliceai = spliceai_path,
+        df_mmsplice_cat = mmsplice_cat_path,
+        gene_map = gene_map,
+        gene_tpm = gene_tpm,
+    )
+    
+    results.add_samples(var_samples_df)
+    results.predict_absplice_rna(pickle_file=pickle_absplice_RNA)
+    
+    assert results.absplice_rna.shape[0] > 0 
+    assert 'AbSplice_RNA' in results.absplice_rna.columns
     
 def test_splicing_outlier_result__add_tissue_info_to_spliceai(outlier_dl, outlier_dl_multi, outlier_model, gene_map, gene_tpm, var_samples_df):
     results = outlier_model.predict_on_dataloader(outlier_dl_multi)
     results.gene_map = gene_map
     results.gene_tpm = gene_tpm
-    results.add_spliceai(spliceAI, gene_mapping=True)
+    results.add_spliceai(spliceai_path, gene_mapping=True)
     results.add_samples(var_samples_df)
     
     df_spliceai_tpm = results._add_tissue_info_to_spliceai()
     
+    # add tissue info without gene_tpm provided
     results.gene_tpm = None
     df_spliceai_no_tpm = results._add_tissue_info_to_spliceai()
     
@@ -219,7 +293,8 @@ def test_splicing_outlier_result__add_tissue_info_to_spliceai(outlier_dl, outlie
     spliceai_tpm_index = df_spliceai_tpm.set_index(['variant', 'gene_id', 'tissue', 'sample']).index.unique()
     spliceai_no_tpm_index = df_spliceai_no_tpm.set_index(['variant', 'gene_id', 'tissue', 'sample']).index.unique()
     
-    assert len(spliceai_tpm_index.difference(spliceai_no_tpm_index)) == 0
+    assert len(spliceai_tpm_index[~spliceai_tpm_index.get_level_values('tissue').isna()]\
+        .difference(spliceai_no_tpm_index)) == 0
     assert len(spliceai_no_tpm_index.difference(spliceai_tpm_index)) >= 0
     assert len(spliceai_tpm_index) == df_spliceai_tpm.shape[0]
     assert len(spliceai_no_tpm_index) == spliceai_no_tpm_index.shape[0]
@@ -243,44 +318,44 @@ def test_outlier_results_multi_vcf(outlier_dl_multi, outlier_model, var_samples_
         ('BRCA1', 'NA00003', 'Testis'),
     ])
 
-# def test_outlier_results_filter_samples_with_RNA_seq(outlier_results_multi, outlier_model):
-def test_outlier_results_filter_samples_with_RNA_seq(outlier_dl, outlier_dl_multi, var_samples_df, outlier_model, gene_map, gene_tpm):
-    # TODO: after filter_samples_with_RNA_seq spliceai contains tissue info (maybe remove)
-    samples_for_tissue = {
-        'Testis': ['NA00002'],
-        'Lung': ['NA00002', 'NA00003']
-    }
+# # def test_outlier_results_filter_samples_with_RNA_seq(outlier_results_multi, outlier_model):
+# def test_outlier_results_filter_samples_with_RNA_seq(outlier_dl, outlier_dl_multi, var_samples_df, outlier_model, gene_map, gene_tpm):
+#     # TODO: after filter_samples_with_RNA_seq spliceai_path contains tissue info (maybe remove)
+#     samples_for_tissue = {
+#         'Testis': ['NA00002'],
+#         'Lung': ['NA00002', 'NA00003']
+#     }
 
-    results = outlier_model.predict_on_dataloader(outlier_dl_multi)
-    results.gene_map = gene_map
-    results.gene_tpm = gene_tpm
-    results.add_spliceai(spliceAI, gene_mapping=True)
-    results.add_samples(var_samples_df)
+#     results = outlier_model.predict_on_dataloader(outlier_dl_multi)
+#     results.gene_map = gene_map
+#     results.gene_tpm = gene_tpm
+#     results.add_spliceai(spliceai_path, gene_mapping=True)
+#     results.add_samples(var_samples_df)
     
-    # results = outlier_results_multi
-    # results.add_spliceai(spliceAI, gene_mapping=False)
-    # assert results.df_mmsplice[['tissue', 'sample']].set_index('tissue').to_dict() == \
-    assert results.df_mmsplice[['tissue', 'sample']].groupby('tissue')['sample'].apply(lambda x: ';'.join(sorted(list(set(x))))).to_dict() == \
-        {
-            # 'Lung': 'NA00002;NA00003', 
-            'Testis': 'NA00002;NA00003'}
+#     # results = outlier_results_multi
+#     # results.add_spliceai(spliceai_path, gene_mapping=False)
+#     # assert results.df_mmsplice[['tissue', 'sample']].set_index('tissue').to_dict() == \
+#     assert results.df_mmsplice[['tissue', 'sample']].groupby('tissue')['sample'].apply(lambda x: ';'.join(sorted(list(set(x))))).to_dict() == \
+#         {
+#             # 'Lung': 'NA00002;NA00003', 
+#             'Testis': 'NA00002;NA00003'}
         
-    df_spliceai_tpm = results._add_tissue_info_to_spliceai()
-    assert df_spliceai_tpm[['tissue', 'sample']].groupby('tissue')['sample'].apply(lambda x: ';'.join(sorted(list(set(x))))).to_dict() == \
-        {
-            # 'Lung': 'NA00002;NA00003', 
-            'Testis': 'NA00002;NA00003'}
+#     df_spliceai_tpm = results._add_tissue_info_to_spliceai()
+#     assert df_spliceai_tpm[['tissue', 'sample']].groupby('tissue')['sample'].apply(lambda x: ';'.join(sorted(list(set(x))))).to_dict() == \
+#         {
+#             # 'Lung': 'NA00002;NA00003', 
+#             'Testis': 'NA00002;NA00003'}
 
-    results.filter_samples_with_RNA_seq(samples_for_tissue)
+#     results.filter_samples_with_RNA_seq(samples_for_tissue)
 
-    assert results.df_mmsplice[['tissue', 'sample']].groupby('tissue')['sample'].apply(lambda x: ';'.join(sorted(list(set(x))))).to_dict() == \
-        {
-            # 'Lung': 'NA00002;NA00003', 
-            'Testis': 'NA00002'}
-    assert results.df_spliceai[['tissue', 'sample']].groupby('tissue')['sample'].apply(lambda x: ';'.join(sorted(list(set(x))))).to_dict() == \
-        {
-            # 'Lung': 'NA00002;NA00003', 
-            'Testis': 'NA00002'}
+#     assert results.df_mmsplice[['tissue', 'sample']].groupby('tissue')['sample'].apply(lambda x: ';'.join(sorted(list(set(x))))).to_dict() == \
+#         {
+#             # 'Lung': 'NA00002;NA00003', 
+#             'Testis': 'NA00002'}
+#     assert results.df_spliceai[['tissue', 'sample']].groupby('tissue')['sample'].apply(lambda x: ';'.join(sorted(list(set(x))))).to_dict() == \
+#         {
+#             # 'Lung': 'NA00002;NA00003', 
+#             'Testis': 'NA00002'}
     
 
 def test_outlier_results_infer_cat(outlier_dl_multi, outlier_results, cat_dl, outlier_model, var_samples_df):
@@ -500,7 +575,7 @@ def test_outlier_results_infer_cat(outlier_dl_multi, outlier_results, cat_dl, ou
 #     }
 
 #     results = outlier_results_multi
-#     results.add_spliceai(spliceAI, gene_mapping=False)
+#     results.add_spliceai(spliceai_path, gene_mapping=False)
 #     results.add_samples(var_samples_df)
 #     results.filter_samples_with_RNA_seq(samples_for_tissue)
 #     results.infer_cat(cat_dl)
@@ -555,7 +630,7 @@ def test_outlier_results_infer_cat(outlier_dl_multi, outlier_results, cat_dl, ou
 #     ref_table5_kn_lung, ref_table3_kn_lung, \
 #     combined_ref_tables5_testis_lung, combined_ref_tables3_testis_lung, \
 #     count_cat_file_lymphocytes,  count_cat_file_blood, \
-#     spliceAI, pickle_DNA, pickle_DNA_CAT
+#     spliceai_path, pickle_DNA, pickle_DNA_CAT
     
 # from kipoiseq.extractors.vcf_query import VariantIntervalQueryable
 # from kipoiseq.dataclasses import Variant, Interval
