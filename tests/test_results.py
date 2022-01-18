@@ -63,6 +63,16 @@ def test_splicing_outlier_result__init__(gene_tpm, gene_map):
     )
     assert sor3.df_mmsplice.shape[0] > 0
     assert sor3.df_spliceai.shape[0] > 0
+    
+    # Initialize with mmsplice_cat only
+    sor = SplicingOutlierResult(
+        df_mmsplice_cat=mmsplice_cat_path
+    )
+    
+    assert sor.df_spliceai is None
+    assert sor.df_mmsplice is None
+    assert sor.df_mmsplice_cat.shape[0] > 0
+    
 
 
 def test_write_sample_csv():   

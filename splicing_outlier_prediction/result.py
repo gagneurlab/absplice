@@ -245,7 +245,7 @@ class SplicingOutlierResult:
     @property
     def gene_mmsplice_cat(self): #NOTE: max aggregate over all variants
         groupby=['gene_id', 'tissue']
-        if 'sample' in self.df_mmsplice:
+        if 'sample' in self.df_mmsplice_cat:
             groupby.append('sample')
         if self._gene_mmsplice_cat is None:
             self._gene_mmsplice_cat = self._get_maximum_effect(self.df_mmsplice_cat, groupby, score='delta_psi_cat')
