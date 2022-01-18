@@ -66,6 +66,7 @@ class SplicingOutlierResult:
             gene_tpm = self._validate_df(
                 gene_tpm, 
                 columns=['gene_id', 'tissue', 'gene_tpm'])
+            gene_tpm = gene_tpm[['gene_id', 'tissue', 'gene_tpm']]
         if gene_tpm is not None and self.df_mmsplice is not None:
             missing_tissues = set(self.df_mmsplice['tissue']).difference(set(gene_tpm['tissue']))
             if len(missing_tissues) > 0:
