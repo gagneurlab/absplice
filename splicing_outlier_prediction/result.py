@@ -209,7 +209,8 @@ class SplicingOutlierResult:
     def _get_maximum_effect(self, df, groupby, score, dropna=True):
         if not isinstance(df.index, pd.RangeIndex):
             df = df.reset_index()
-        assert len(set(groupby).difference(df.columns)) == 0
+        if len(set(groupby).difference(df.columns)) != 0:
+            raise KeyError(" %s are not in columns" % set(groupby).difference(df.columns))
         return get_abs_max_rows(df.set_index(groupby), groupby, score, dropna)
 
     @property
