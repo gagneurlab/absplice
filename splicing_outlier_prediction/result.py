@@ -12,7 +12,7 @@ class SplicingOutlierResult:
     def __init__(self, df_mmsplice=None, df_spliceai=None, df_mmsplice_cat=None, gene_map=None, gene_tpm=None):
         self.df_mmsplice = self.validate_df_mmsplice(df_mmsplice)
         self.df_mmsplice_cat = self.validate_df_mmsplice_cat(df_mmsplice_cat)
-        self.gene_map = gene_map
+        self.gene_map = self.validate_df_gene_map(gene_map)
         self.gene_tpm = self.validate_df_gene_tpm(gene_tpm)
         self.df_spliceai = self.validate_df_spliceai(df_spliceai)
         self._df_spliceai_tissue = None
@@ -62,14 +62,22 @@ class SplicingOutlierResult:
         return df_spliceai
     
     def validate_df_gene_tpm(self, gene_tpm):
-        if gene_tpm is not None and self.df_mmsplice is not None:
+        if gene_tpm is not None:
             gene_tpm = self._validate_df(
                 gene_tpm, 
                 columns=['gene_id', 'tissue', 'gene_tpm'])
+        if gene_tpm is not None and self.df_mmsplice is not None:
             missing_tissues = set(self.df_mmsplice['tissue']).difference(set(gene_tpm['tissue']))
             if len(missing_tissues) > 0:
                 raise KeyError(" %s are missing in gene_tpm" % missing_tissues)
         return gene_tpm
+    
+    def validate_df_gene_map(self, gene_map):
+        if gene_map is not None:
+            gene_map = self._validate_df(
+                gene_map, 
+                columns=['gene_id', 'gene_name'])
+        return gene_map
         
     def _contains_chr(self):
         if self.df_mmsplice is not None:
