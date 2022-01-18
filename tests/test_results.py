@@ -13,7 +13,7 @@ from conftest import fasta_file, vcf_file, multi_vcf_file, multi_vcf_samples, \
     spliceai_path, mmsplice_path, mmsplice_cat_path, pickle_DNA, pickle_DNA_CAT, gene_map, gene_tpm, pickle_absplice_DNA, pickle_absplice_RNA
 
 
-def test_splicing_outlier_result__init__(gene_tpm):
+def test_splicing_outlier_result__init__(gene_tpm, gene_map):
     df_mmsplice = pd.read_csv(mmsplice_path)
     df_spliceai = pd.read_csv(spliceai_path)
     # _gene_tpm = gene_tpm[gene_tpm['tissue'] == 'Whole_Blood']
@@ -35,6 +35,24 @@ def test_splicing_outlier_result__init__(gene_tpm):
     )
     assert sor2.df_mmsplice.shape[0] > 0
     assert sor2.df_spliceai.shape[0] > 0
+    
+    # Initialize with spliceai only
+    sor = SplicingOutlierResult(
+        df_spliceai=df_spliceai, 
+        gene_map=gene_map,
+        gene_tpm=gene_tpm
+    )
+    
+    assert sor.df_spliceai.shape[0] > 0
+    assert sor.df_mmsplice is None
+    
+    # Initialize with mmsplice only
+    sor = SplicingOutlierResult(
+        df_mmsplice=df_mmsplice
+    )
+    
+    assert sor.df_spliceai is None
+    assert sor.df_mmsplice.shape[0] > 0
     
     # Initialize with mmsplice_cat
     sor3 = SplicingOutlierResult(
@@ -295,7 +313,10 @@ def test_splicing_outlier_result__add_tissue_info_to_spliceai(outlier_dl, outlie
     
     assert len(spliceai_tpm_index[~spliceai_tpm_index.get_level_values('tissue').isna()]\
         .difference(spliceai_no_tpm_index)) == 0
-    assert len(spliceai_no_tpm_index.difference(spliceai_tpm_index)) >= 0
+    # Some gene_ids are NA, because could not be found in gene_map (e.g. FakeGene)
+    # assert len(spliceai_no_tpm_index.difference(spliceai_tpm_index)) >= 0
+    assert len(spliceai_no_tpm_index[~spliceai_no_tpm_index.get_level_values('gene_id').isna()]\
+        .difference(spliceai_tpm_index[~spliceai_tpm_index.get_level_values('gene_id').isna()])) >= 0
     assert len(spliceai_tpm_index) == df_spliceai_tpm.shape[0]
     assert len(spliceai_no_tpm_index) == spliceai_no_tpm_index.shape[0]
         

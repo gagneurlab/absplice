@@ -9,7 +9,7 @@ from splicing_outlier_prediction.cat_dataloader import CatInference
 
 class SplicingOutlierResult:
 
-    def __init__(self, df_mmsplice, df_spliceai=None, df_mmsplice_cat=None, gene_map=None, gene_tpm=None):
+    def __init__(self, df_mmsplice=None, df_spliceai=None, df_mmsplice_cat=None, gene_map=None, gene_tpm=None):
         self.df_mmsplice = self.validate_df_mmsplice(df_mmsplice)
         self.df_mmsplice_cat = self.validate_df_mmsplice_cat(df_mmsplice_cat)
         self.gene_map = gene_map
@@ -62,7 +62,7 @@ class SplicingOutlierResult:
         return df_spliceai
     
     def validate_df_gene_tpm(self, gene_tpm):
-        if gene_tpm is not None:
+        if gene_tpm is not None and self.df_mmsplice is not None:
             gene_tpm = self._validate_df(
                 gene_tpm, 
                 columns=['gene_id', 'tissue', 'gene_tpm'])
@@ -72,7 +72,10 @@ class SplicingOutlierResult:
         return gene_tpm
         
     def _contains_chr(self):
-        return 'chr' in self.df_mmsplice.junction[0] 
+        if self.df_mmsplice is not None:
+            return 'chr' in self.df_mmsplice.junction[0]
+        else:
+            return None
         
     def add_spliceai(self, df, 
                      gene_mapping=True, key='gene_name', value='gene_id'):
