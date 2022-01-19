@@ -302,8 +302,8 @@ class SplicingOutlierResult:
     
     def _predict_absplice(self, df, absplice_score, pickle_file, features, abs_features, median_n_cutoff, tpm_cutoff):
         model = pickle.load(open(pickle_file, 'rb'))
-        df['splice_site_is_expressed'] = df['median_n'] > median_n_cutoff
-        df['gene_is_expressed'] = df['gene_tpm'] > tpm_cutoff
+        df['splice_site_is_expressed'] = (df['median_n'] > median_n_cutoff).astype(int)
+        df['gene_is_expressed'] = (df['gene_tpm'] > tpm_cutoff).astype(int)
         df = df[features].fillna(0)
         if abs_features == True:
             df = np.abs(df)
