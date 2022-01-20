@@ -107,19 +107,19 @@ class SplicingOutlierResult:
         tissue independent spliceai predictions are copied for each tissue in self.df_mmsplice
         """
         df_spliceai = self.df_spliceai
-        if self.gene_tpm is not None: #only duplicate predictions for expressed genes
-            df_gene_tpm =  self.gene_tpm[
-                self.gene_tpm['tissue'].isin(self.df_mmsplice['tissue'].unique())]
-            self._df_spliceai_tissue = df_spliceai.set_index('gene_id')\
-                .join(df_gene_tpm.set_index('gene_id'))\
-                .reset_index()
-        else: #if gene tpm values not provided for tissues, duplicate all predictions
-            l = list()
-            for tissue in self.df_mmsplice['tissue'].unique():
-                _df = df_spliceai.copy()
-                _df['tissue'] = tissue
-                l.append(_df)
-            self._df_spliceai_tissue = pd.concat(l)
+        # if self.gene_tpm is not None: #only duplicate predictions for expressed genes
+        #     df_gene_tpm =  self.gene_tpm[
+        #         self.gene_tpm['tissue'].isin(self.df_mmsplice['tissue'].unique())]
+        #     self._df_spliceai_tissue = df_spliceai.set_index('gene_id')\
+        #         .join(df_gene_tpm.set_index('gene_id'))\
+        #         .reset_index()
+        # else: #if gene tpm values not provided for tissues, duplicate all predictions
+        l = list()
+        for tissue in self.df_mmsplice['tissue'].unique():
+            _df = df_spliceai.copy()
+            _df['tissue'] = tissue
+            l.append(_df)
+        self._df_spliceai_tissue = pd.concat(l)
         return self._df_spliceai_tissue
 
     def _add_samples(self, df, var_samples_df):
@@ -281,10 +281,15 @@ class SplicingOutlierResult:
             df_spliceai = self._get_maximum_effect(df_spliceai, groupby, score='delta_score', dropna=False) #dropna=False assures that also missing gene_id and genes that do not have tpm values in tissues are predicted
             cols_spliceai = ['delta_score', 'gene_name']
             cols_mmsplice = [
-                'Chromosome', 'Start', 'End', 'Strand', 'junction', 'event_type', 'splice_site',
-                'delta_logit_psi', 'delta_psi', 'ref_psi', 'k', 'n', 'median_n', 'gene_tpm', 'gene_name',
+                'Chromosome', 'Start', 'End', 'Strand', 'junction', 'event_type', 'splice_site', 'gene_name',
+                'delta_logit_psi', 'delta_psi', 'ref_psi', 'k', 'n', 'median_n',
                 'novel_junction', 'weak_site_donor', 'weak_site_acceptor']
             self._absplice_dna_input = df_mmsplice[cols_mmsplice].join(df_spliceai[cols_spliceai], how='outer', rsuffix='_spliceai')
+                
+            self._absplice_dna_input = self._absplice_dna_input.reset_index()
+            self._absplice_dna_input = self._absplice_dna_input.set_index(['gene_id', 'tissue'])\
+                                            .join(self.gene_tpm.set_index(['gene_id', 'tissue'])[['gene_tpm']])\
+                                            .reset_index().set_index(groupby)
         return self._absplice_dna_input
     
     @property

@@ -309,26 +309,31 @@ def test_splicing_outlier_result__add_tissue_info_to_spliceai(outlier_dl, outlie
     results.add_spliceai(spliceai_path, gene_mapping=True)
     results.add_samples(var_samples_df)
     
-    df_spliceai_tpm = results._add_tissue_info_to_spliceai()
+    df_spliceai_tissue = results._add_tissue_info_to_spliceai()
     
-    # add tissue info without gene_tpm provided
-    results.gene_tpm = None
-    df_spliceai_no_tpm = results._add_tissue_info_to_spliceai()
+    assert len(set(results.df_mmsplice['tissue']).difference(set(df_spliceai_tissue['tissue']))) == 0
+    assert len(set(df_spliceai_tissue['tissue'])) > 0
     
-    assert 'gene_tpm' in df_spliceai_tpm.columns
-    assert 'gene_tpm' not in df_spliceai_no_tpm.columns
+    # df_spliceai_tpm = results._add_tissue_info_to_spliceai()
     
-    spliceai_tpm_index = df_spliceai_tpm.set_index(['variant', 'gene_id', 'tissue', 'sample']).index.unique()
-    spliceai_no_tpm_index = df_spliceai_no_tpm.set_index(['variant', 'gene_id', 'tissue', 'sample']).index.unique()
+    # # add tissue info without gene_tpm provided
+    # results.gene_tpm = None
+    # df_spliceai_no_tpm = results._add_tissue_info_to_spliceai()
     
-    assert len(spliceai_tpm_index[~spliceai_tpm_index.get_level_values('tissue').isna()]\
-        .difference(spliceai_no_tpm_index)) == 0
-    # Some gene_ids are NA, because could not be found in gene_map (e.g. FakeGene)
-    # assert len(spliceai_no_tpm_index.difference(spliceai_tpm_index)) >= 0
-    assert len(spliceai_no_tpm_index[~spliceai_no_tpm_index.get_level_values('gene_id').isna()]\
-        .difference(spliceai_tpm_index[~spliceai_tpm_index.get_level_values('gene_id').isna()])) >= 0
-    assert len(spliceai_tpm_index) == df_spliceai_tpm.shape[0]
-    assert len(spliceai_no_tpm_index) == spliceai_no_tpm_index.shape[0]
+    # assert 'gene_tpm' in df_spliceai_tpm.columns
+    # assert 'gene_tpm' not in df_spliceai_no_tpm.columns
+    
+    # spliceai_tpm_index = df_spliceai_tpm.set_index(['variant', 'gene_id', 'tissue', 'sample']).index.unique()
+    # spliceai_no_tpm_index = df_spliceai_no_tpm.set_index(['variant', 'gene_id', 'tissue', 'sample']).index.unique()
+    
+    # assert len(spliceai_tpm_index[~spliceai_tpm_index.get_level_values('tissue').isna()]\
+    #     .difference(spliceai_no_tpm_index)) == 0
+    # # Some gene_ids are NA, because could not be found in gene_map (e.g. FakeGene)
+    # # assert len(spliceai_no_tpm_index.difference(spliceai_tpm_index)) >= 0
+    # assert len(spliceai_no_tpm_index[~spliceai_no_tpm_index.get_level_values('gene_id').isna()]\
+    #     .difference(spliceai_tpm_index[~spliceai_tpm_index.get_level_values('gene_id').isna()])) >= 0
+    # assert len(spliceai_tpm_index) == df_spliceai_tpm.shape[0]
+    # assert len(spliceai_no_tpm_index) == spliceai_no_tpm_index.shape[0]
         
 
 def test_outlier_results_multi_vcf(outlier_dl_multi, outlier_model, var_samples_df):
