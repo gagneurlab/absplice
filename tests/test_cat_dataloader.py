@@ -93,9 +93,11 @@ def test_cat_dataloader_sample_mapping():
 
 
 def test_cat_dataloader_infer(cat_dl):
-    row = cat_dl[0].infer('17:41201211-41203079:-', 'Testis', 'NA00002', 'psi5')
+    # cat_dl[0].splicemaps5[0].df[['junctions', 'gene_id']]
+    row = cat_dl[0].infer('17:41201211-41203079:-', 'ENSG00000012048', 'Testis', 'NA00002', 'psi5')
     assert row =={
         'junction': '17:41201211-41203079:-',
+        'gene_id': 'ENSG00000012048',
         'sample': 'NA00002',
         'tissue': 'Testis',
         'tissue_cat': 'lymphocytes',
@@ -109,9 +111,11 @@ def test_cat_dataloader_infer(cat_dl):
         'ref_psi_cat': 0.29411764705882354}
     
     # ref_psi_cat is equal to ref_psi of target tissue -> delta_psi_cat is ref_psi_cat - psi_cat
-    row = cat_dl[0].infer('17:41277787-41290673:+',  'Lung', 'NA00002', 'psi5')
+    # cat_dl[0].splicemaps5[1].df[['junctions', 'gene_id']]
+    row = cat_dl[0].infer('17:41277787-41290673:+', 'ENSG00000198496', 'Lung', 'NA00002', 'psi5')
     assert row =={
         'junction': '17:41277787-41290673:+',
+        'gene_id': 'ENSG00000198496',
         'sample': 'NA00002',
         'tissue': 'Lung',
         'tissue_cat': 'lymphocytes',
@@ -124,9 +128,11 @@ def test_cat_dataloader_infer(cat_dl):
         'psi_cat': 0.16666666666666666,
         'ref_psi_cat': 0.5}
     
-    row = cat_dl[1].infer('17:41201211-41203079:-', 'Testis', 'NA00002', 'psi5')
+    # cat_dl[1].splicemaps5[0].df[['junctions', 'gene_id']]
+    row = cat_dl[1].infer('17:41201211-41203079:-', 'ENSG00000012048', 'Testis', 'NA00002', 'psi5')
     assert row =={
         'junction': '17:41201211-41203079:-',
+        'gene_id': 'ENSG00000012048',
         'sample': 'NA00002',
         'tissue': 'Testis',
         'tissue_cat': 'blood',
@@ -141,12 +147,14 @@ def test_cat_dataloader_infer(cat_dl):
     
         
 def test_cat_dataloader_contains(cat_dl):
-    assert cat_dl[1].contains('17:41201211-41203079:-', 'Testis', 'NA00002', 'psi5')
-
+    assert cat_dl[1].contains('17:41201211-41203079:-', 'ENSG00000012048', 'Testis', 'NA00002', 'psi5')
+    
+def test_cat_dataloader_contains_not_combination(cat_dl):
+    assert not cat_dl[1].contains('17:41201211-41203079:-', 'ENSG00000198496', 'Testis', 'NA00002', 'psi5')
 
 def test_cat_dataloader_contains_not(cat_dl):
     assert not cat_dl[0].contains(
-        '17:41201917-4120307900000:-', 'Testis', 'NA00002', 'psi5')
+        '17:41201917-4120307900000:-', 'ENSG00000012048', 'Testis', 'NA00002', 'psi5')
 
 
 # def test_cat_dataloader_infer_only_one_cat(cat_dl):
@@ -172,7 +180,7 @@ def test_cat_dataloader_contains_not(cat_dl):
 #     }
 #     assert cat_dl[1].contains(junction_id, sample, tissue, event_type) == False
     
-def test_cat_dataloader_infer_splicemap_cat():
+def test_cat_dataloader_infer_splicemap_cat_with_splicemap_cat():
     cat_dl_splicemap_cat = CatInference(
         splicemap5=[ref_table5_kn_testis, ref_table5_kn_lung],
         splicemap3=[ref_table3_kn_testis, ref_table3_kn_lung],
@@ -189,17 +197,20 @@ def test_cat_dataloader_infer_splicemap_cat():
         name='blood',
     )
     
-    # First junction is in count table and in splicemap (here median_n of higher stat power is used)
+    # First junction is in count table and in splicemap (here median_n of higher stat power is used (from splicemap))
     junction_id = '17:41277787-41283224:+'
+    gene_id = 'ENSG00000198496'
+    # gene_id = 'ENSG00000012048' #not in
     sample = 'NA00002'
     tissue = 'Testis'
     event_type = 'psi5'
 
     assert junction_id in set(cat_dl_splicemap_cat.splicemap5_cat.df['junctions'])
-    assert cat_dl_splicemap_cat.contains(junction_id, tissue, sample, event_type) == True
-    row = cat_dl_splicemap_cat.infer(junction_id, tissue, sample, event_type)
+    assert cat_dl_splicemap_cat.contains(junction_id, gene_id, tissue, sample, event_type) == True
+    row = cat_dl_splicemap_cat.infer(junction_id, gene_id, tissue, sample, event_type)
     assert row == {
         'junction': '17:41277787-41283224:+',
+        'gene_id': 'ENSG00000198496',
         'sample': 'NA00002',
         'tissue': 'Testis',
         'tissue_cat': 'blood',
@@ -212,20 +223,42 @@ def test_cat_dataloader_infer_splicemap_cat():
         'psi_cat': 0.8,
         'ref_psi_cat': 1.0
     }
-    assert cat_dl_splicemap_cat.infer(junction_id, tissue, sample, event_type) != \
-        cat_dl_no_splicemap_cat.infer(junction_id, tissue, sample, event_type)
+    assert cat_dl_splicemap_cat.infer(junction_id, gene_id, tissue, sample, event_type) != \
+        cat_dl_no_splicemap_cat.infer(junction_id, gene_id, tissue, sample, event_type)
     
+
+def test_cat_dataloader_infer_splicemap_cat_with_splicemap_cat_not_in_splicemap():
+    cat_dl_splicemap_cat = CatInference(
+        splicemap5=[ref_table5_kn_testis, ref_table5_kn_lung],
+        splicemap3=[ref_table3_kn_testis, ref_table3_kn_lung],
+        count_cat=count_cat_file_blood,
+        splicemap_cat5=ref_table5_kn_blood,
+        splicemap_cat3=ref_table3_kn_blood,
+        name='blood',
+    )
+    
+    cat_dl_no_splicemap_cat = CatInference(
+        splicemap5=[ref_table5_kn_testis, ref_table5_kn_lung],
+        splicemap3=[ref_table3_kn_testis, ref_table3_kn_lung],
+        count_cat=count_cat_file_blood,
+        name='blood',
+    )
 
     # junction_id not in SpliceMap of CAT, but in count table of CAT and in SpliceMap of target tissue -> use median_n from count table
     junction_id = '17:41201200-41205000:-'
+    gene_id = 'ENSG00000012048'
     sample = 'NA00002'
     tissue = 'Testis'
     event_type = 'psi5'
     
     assert junction_id not in set(cat_dl_splicemap_cat.splicemap5_cat.df['junctions'])
-    row = cat_dl_splicemap_cat.infer(junction_id, tissue, sample, event_type)
+    assert cat_dl_splicemap_cat.contains(junction_id, gene_id, tissue, sample, event_type) == True
+    # _df = cat_dl_splicemap_cat.splicemaps5[cat_dl_splicemap_cat.tissues5.index(tissue)].df
+    # _df[['junctions', 'gene_id']]
+    row = cat_dl_splicemap_cat.infer(junction_id, gene_id, tissue, sample, event_type)
     assert row == {
         'junction': '17:41201200-41205000:-',
+        'gene_id': 'ENSG00000012048',
         'sample': 'NA00002',
         'tissue': 'Testis',
         'tissue_cat': 'blood',
@@ -238,21 +271,21 @@ def test_cat_dataloader_infer_splicemap_cat():
         'psi_cat': 1.0,
         'ref_psi_cat': 1.0
     }
-    assert cat_dl_splicemap_cat.infer(junction_id, tissue, sample, event_type) == \
-        cat_dl_no_splicemap_cat.infer(junction_id, tissue, sample, event_type)
+    assert cat_dl_splicemap_cat.infer(junction_id, gene_id, tissue, sample, event_type) == \
+        cat_dl_no_splicemap_cat.infer(junction_id, gene_id, tissue, sample, event_type)
 
 
-def test_cat_dataloader_infer_all(cat_dl):
+# def test_cat_dataloader_infer_all(cat_dl):
 
-    df = cat_dl[0].infer_all('psi5')
+#     df = cat_dl[0].infer_all('psi5')
 
-    common_junctions = [i for sublist in cat_dl[0].common_junctions5 for i in sublist]
-    assert len(set(common_junctions)) == len(set(df.index.get_level_values('junction')))
+#     common_junctions = [i for sublist in cat_dl[0].common_junctions5 for i in sublist]
+#     assert len(set(common_junctions)) == len(set(df.index.get_level_values('junction')))
 
-    tissues = cat_dl[0].tissues5
-    assert len(set(tissues)) == len(set(df.index.get_level_values('tissue')))
+#     tissues = cat_dl[0].tissues5
+#     assert len(set(tissues)) == len(set(df.index.get_level_values('tissue')))
 
-    samples = cat_dl[0].samples
-    assert len(set(samples)) == len(set(df.index.get_level_values('sample')))
+#     samples = cat_dl[0].samples
+#     assert len(set(samples)) == len(set(df.index.get_level_values('sample')))
 
-    assert df.shape[0] <= len(set(common_junctions)) * len(set(tissues)) * len(set(samples))
+#     assert df.shape[0] <= len(set(common_junctions)) * len(set(tissues)) * len(set(samples))
