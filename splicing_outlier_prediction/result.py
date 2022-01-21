@@ -218,7 +218,7 @@ class SplicingOutlierResult:
         # df = df.drop_duplicates().set_index(['junction', 'tissue', 'sample'])
         # self._junction can contain multiple cats (junction, tissue, sample) is not unique index
         df = df.set_index(['junction', 'tissue', 'sample'])
-        assert df.shape[0] == len(df.set_index('tissue_cat', append=True).index.unique())
+        # assert df.shape[0] == len(df.set_index('tissue_cat', append=True).index.unique())
         self.df_mmsplice_cat = self.junction.join(df)
         self.df_mmsplice_cat = self.df_mmsplice_cat[~self.df_mmsplice_cat['tissue_cat'].isna()]
         # self._splice_site = None
