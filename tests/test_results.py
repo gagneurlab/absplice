@@ -400,7 +400,7 @@ def test_outlier_results_infer_cat(outlier_dl_multi, outlier_results, cat_dl, ou
     results.add_samples(var_samples_df)
     results.infer_cat(cat_dl)
 
-    assert sorted(results.junction.columns.tolist()) == sorted([
+    assert sorted(results.df_mmsplice_cat.columns.tolist()) == sorted([
         'event_type', 'variant', 'Chromosome', 'Start', 'End', 'Strand',
         'events', 'splice_site', 'ref_psi', 'k', 'n', 'median_n',
         'novel_junction', 'weak_site_acceptor', 'weak_site_donor',
@@ -423,7 +423,7 @@ def test_outlier_results_infer_cat(outlier_dl_multi, outlier_results, cat_dl, ou
     #     'tissue_cat', 'count_cat', 'psi_cat', 'ref_psi_cat', 'k_cat', 'n_cat', 'median_n_cat',
     #     'delta_logit_psi_cat', 'delta_psi_cat'])
 
-    assert results.junction.loc[(
+    assert results.df_mmsplice_cat.loc[(
         '17:41201211-41203079:-',  'Testis', 'NA00002',)] is not None
 
 
