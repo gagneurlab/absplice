@@ -193,25 +193,25 @@ class SplicingOutlierResult:
         for cat in cat_inference:
             assert self.contains_chr == cat.contains_chr
             
-            common_junctions = set.union(*cat.common_junctions3)\
-                        .union(set.union(*cat.common_junctions5))
-            df_common_junctions = self.junction[
-                self.junction.index.get_level_values('junction').isin(common_junctions)]
-            assert df_common_junctions.shape[0] > 0
-            print(set(df_common_junctions.index.get_level_values('junction')))
-            rows = df_common_junctions.iterrows()
+            # common_junctions = set.union(*cat.common_junctions3)\
+            #             .union(set.union(*cat.common_junctions5))
+            # df_common_junctions = self.junction[
+            #     self.junction.index.get_level_values('junction').isin(common_junctions)]
+            # assert df_common_junctions.shape[0] > 0
+            # print(set(df_common_junctions.index.get_level_values('junction')))
+            # rows = df_common_junctions.iterrows()
             
-            # rows = self.junction.iterrows()
+            rows = self.junction.iterrows()
             if progress:
-                rows = tqdm(rows, total=df_common_junctions.shape[0])
-                # rows = tqdm(rows, total=self.junction.shape[0])
+                # rows = tqdm(rows, total=df_common_junctions.shape[0])
+                rows = tqdm(rows, total=self.junction.shape[0])
             for (junction, tissue, sample), row in rows:
                 if cat.contains(junction, tissue, sample, row['event_type']):
                     infer_rows.append(
                         cat.infer(junction, tissue, sample, row['event_type']))
         df = pd.DataFrame(infer_rows)
         assert df.shape[0] > 0
-        assert len(set(df_common_junctions.index.get_level_values('junction')).difference(set(df['junction']))) == 0
+        # assert len(set(df_common_junctions.index.get_level_values('junction')).difference(set(df['junction']))) == 0
         # print(f'before drop duplicates: df.shape = {df.shape}')
         # df = df.loc[df.astype(str).drop_duplicates().index].set_index(['junction', 'tissue', 'sample'])
         # print(f'after drop duplicates: df.shape = {df.shape}')
