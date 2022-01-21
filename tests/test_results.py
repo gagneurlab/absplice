@@ -13,6 +13,78 @@ from conftest import fasta_file, vcf_file, multi_vcf_file, multi_vcf_samples, \
     spliceai_path, mmsplice_path, mmsplice_cat_path, pickle_DNA, pickle_DNA_CAT, gene_map, gene_tpm, pickle_absplice_DNA, pickle_absplice_RNA
 
 
+
+def test_real_data():
+    dir_path = '/home/wagnern/Projects/gitlab_gagneurlab/splicing-outlier-prediction/tests/data/test_real_data/'
+    count_table_path = dir_path + 'count_table_all_updated_no_chr.csv'
+    splicemap3_path = dir_path + 'Prokisch_Fibroblasts_splicemap_psi3_method=kn_event_filter=median_cutoff.csv'
+    splicemap5_path = dir_path + 'Prokisch_Fibroblasts_splicemap_psi5_method=kn_event_filter=median_cutoff.csv'
+    var_samples_path = dir_path + 'EXT_WAR_001_vcf_annotation.csv'
+    mmsplice_splicemap_path = dir_path + 'EXT_WAR_001_mmsplice_splicemap_event_filter=median_cutoff.csv'
+    df = pd.read_csv(mmsplice_splicemap_path)
+    df_samples = pd.read_csv(var_samples_path)
+    
+    from splicemap.splice_map import SpliceMap
+    sm = SpliceMap.read_csv(splicemap5_path)
+    print('hello')
+    cat_dl = CatInference(
+        splicemap5=splicemap5_path,
+        splicemap3=splicemap3_path,
+        count_cat=count_table_path,
+        name='Prokisch_Fibroblasts'
+    )
+
+    result = SplicingOutlierResult(
+        df_mmsplice = mmsplice_splicemap_path,
+    )
+
+    result.add_samples(pd.read_csv(var_samples_path))
+
+    result.infer_cat(cat_dl, progress=True)
+    
+    result.df_mmsplice_cat.shape[0] > 0
+    '10:135215749-135216195:+' in result.df_mmsplice_cat.index.get_level_values('junction')
+    
+    
+    # overlapping genes: 
+#                                       gene_id
+# junctions                                
+# 10:135215749-135216195:+  ENSG00000254536
+# 10:135215749-135216195:+  ENSG00000148824
+
+
+def test_splicing_outlier_result__init__absplice_dna_input(gene_tpm, gene_map):
+    # Initialize with mmsplice_cat
+    sor_absplice_dna = SplicingOutlierResult(
+        df_mmsplice=mmsplice_path, 
+        df_spliceai=spliceai_path, 
+        gene_tpm=gene_tpm,
+        gene_map=gene_map
+    )
+    df_absplice_dna_input = sor_absplice_dna.absplice_dna_input
+    sor = SplicingOutlierResult(
+        df_absplice_dna_input=df_absplice_dna_input
+    )
+    assert sor.absplice_dna_input.shape[0] > 0
+    
+def test_splicing_outlier_result__init__absplice_rna_input(gene_tpm, gene_map):
+    # Initialize with mmsplice_cat
+    sor_absplice_rna = SplicingOutlierResult(
+        df_mmsplice=mmsplice_path, 
+        df_spliceai=spliceai_path, 
+        df_mmsplice_cat=mmsplice_cat_path, 
+        gene_tpm=gene_tpm,
+        gene_map=gene_map
+    )
+    df_absplice_rna_input = sor_absplice_rna.absplice_rna_input
+    sor = SplicingOutlierResult(
+        df_absplice_rna_input=df_absplice_rna_input
+    )
+    assert sor.absplice_rna_input.shape[0] > 0
+    
+    
+
+
 def test_splicing_outlier_result__init__(gene_tpm, gene_map):
     df_mmsplice = pd.read_csv(mmsplice_path)
     df_spliceai = pd.read_csv(spliceai_path)
@@ -73,6 +145,9 @@ def test_splicing_outlier_result__init__(gene_tpm, gene_map):
     assert sor.df_mmsplice is None
     assert sor.df_mmsplice_cat.shape[0] > 0
     
+    
+    
+    
 
 
 def test_write_sample_csv():   
@@ -125,7 +200,7 @@ def test_splicing_outlier_result_psi(outlier_results):
 
 def test_splicing_outlier_result_splice_site(outlier_results):
     assert sorted(outlier_results.splice_site.index) \
-        == sorted(set(outlier_results.df_mmsplice.set_index(['splice_site', 'tissue']).index))
+        == sorted(set(outlier_results.df_mmsplice.set_index(['splice_site', 'gene_id', 'tissue']).index))
 
 
 def test_splicing_outlier_result_gene_mmsplice(outlier_results, outlier_results_multi):
@@ -269,8 +344,7 @@ def test_splicing_outlier_result_gene_absplice_rna(outlier_dl, outlier_dl_multi,
     assert 'variant' not in results.gene_absplice_rna.index.names
     assert 'AbSplice_RNA' in results.gene_absplice_rna.columns
     
-    
-    
+      
 def test_splicing_outlier_complete_dna(gene_map, gene_tpm, var_samples_df):
     
     results = SplicingOutlierResult(
@@ -404,7 +478,7 @@ def test_outlier_results_infer_cat(outlier_dl_multi, outlier_results, cat_dl, ou
         'event_type', 'variant', 'Chromosome', 'Start', 'End', 'Strand',
         'events', 'splice_site', 'ref_psi', 'k', 'n', 'median_n',
         'novel_junction', 'weak_site_acceptor', 'weak_site_donor',
-        'gene_id', 'gene_name', 'transcript_id', 'gene_type', 'gene_tpm',
+        'gene_name', 'transcript_id', 'gene_type', 'gene_tpm',
         'delta_psi', 'delta_logit_psi',
         'ref_acceptorIntron', 'ref_acceptor', 'ref_exon', 'ref_donor', 'ref_donorIntron',
         'alt_acceptorIntron', 'alt_acceptor', 'alt_exon', 'alt_donor', 'alt_donorIntron',
@@ -424,234 +498,8 @@ def test_outlier_results_infer_cat(outlier_dl_multi, outlier_results, cat_dl, ou
     #     'delta_logit_psi_cat', 'delta_psi_cat'])
 
     assert results.df_mmsplice_cat.loc[(
-        '17:41201211-41203079:-',  'Testis', 'NA00002',)] is not None
+        '17:41201211-41203079:-', 'ENSG00000012048', 'Testis', 'NA00002',)] is not None
 
-
-# def test_outlier_results_cat_concat(outlier_results_multi, cat_dl, outlier_model):
-
-#     results = outlier_results_multi
-#     results.infer_cat(cat_dl)
-
-#     # assert len(results.gene_mmsplice.loc[list(set(results.gene_mmsplice[['delta_psi', 'delta_psi_cat', 'tissue_cat']].index))[0]]
-#     #            ['delta_psi_cat'].values) > 1
-
-#     # TODO: test fails, when removing outlier_results as argument, and not taking np.abs of gene_cat_concat. why is outlier_results changing outcome?
-#     # assert np.abs(results.gene_mmsplice.loc[list(set(results.gene_mmsplice[['delta_psi', 'delta_psi_cat', 'tissue_cat']].index))[0]]
-#     #               ['delta_psi_cat'].values).max() == \
-#     #     np.abs(results.gene_cat_concat.loc[list(set(results.gene_mmsplice[['delta_psi', 'delta_psi_cat', 'tissue_cat']].index))[0]]
-#     #            ['delta_psi_cat'])
-#     assert np.abs(results.gene_mmsplice.loc[list(set(results.gene_mmsplice[['delta_psi', 'delta_psi_cat', 'tissue_cat']].index))[0]]
-#                   ['delta_psi_cat']).max() == \
-#         np.abs(results.gene_cat_concat.loc[list(set(results.gene_mmsplice[['delta_psi', 'delta_psi_cat', 'tissue_cat']].index))[0]]
-#                ['delta_psi_cat'])
-
-#     assert sorted(results.junction_cat_concat.columns.tolist()) == sorted([
-#         'splice_site', 'event_type', 'variant',   'Chromosome', 'Start', 'End', 'Strand',
-#         'events', 'ref_psi', 'k', 'n', 'median_n',
-#         'novel_junction', 'weak_site_acceptor', 'weak_site_donor',
-#         'gene_id', 'gene_name', 'transcript_id', 'gene_type',
-#         'delta_psi', 'delta_logit_psi',
-#         'ref_acceptorIntron', 'ref_acceptor', 'ref_exon', 'ref_donor', 'ref_donorIntron',
-#         'alt_acceptorIntron', 'alt_acceptor', 'alt_exon', 'alt_donor', 'alt_donorIntron',
-#         'tissue_cat', 'count_cat', 'psi_cat', 'ref_psi_cat', 'k_cat', 'n_cat', 'median_n_cat',
-#         'delta_logit_psi_cat', 'delta_psi_cat'])
-
-#     assert sorted(results.splice_site_cat_concat.columns.tolist()) == sorted([
-#         'junction', 'event_type', 'variant',   'Chromosome', 'Start', 'End', 'Strand',
-#         'events', 'ref_psi', 'k', 'n', 'median_n',
-#         'novel_junction', 'weak_site_acceptor', 'weak_site_donor',
-#         'gene_id', 'gene_name', 'transcript_id', 'gene_type',
-#         'delta_psi', 'delta_logit_psi',
-#         'ref_acceptorIntron', 'ref_acceptor', 'ref_exon', 'ref_donor', 'ref_donorIntron',
-#         'alt_acceptorIntron', 'alt_acceptor', 'alt_exon', 'alt_donor', 'alt_donorIntron',
-#         'tissue_cat', 'count_cat', 'psi_cat', 'ref_psi_cat', 'k_cat', 'n_cat', 'median_n_cat',
-#         'delta_logit_psi_cat', 'delta_psi_cat'])
-
-#     assert sorted(results.gene_cat_concat.columns.tolist()) == sorted([
-#         'junction', 'event_type', 'variant',   'Chromosome', 'Start', 'End', 'Strand',
-#         'events', 'splice_site', 'ref_psi', 'k', 'n', 'median_n',
-#         'novel_junction', 'weak_site_acceptor', 'weak_site_donor',
-#         'gene_id', 'transcript_id', 'gene_type',
-#         'delta_psi', 'delta_logit_psi',
-#         'ref_acceptorIntron', 'ref_acceptor', 'ref_exon', 'ref_donor', 'ref_donorIntron',
-#         'alt_acceptorIntron', 'alt_acceptor', 'alt_exon', 'alt_donor', 'alt_donorIntron',
-#         'tissue_cat', 'count_cat', 'psi_cat', 'ref_psi_cat', 'k_cat', 'n_cat', 'median_n_cat',
-#         'delta_logit_psi_cat', 'delta_psi_cat'])
-
-#     assert results.junction_cat_concat.loc[(
-#         '17:41201211-41203079:-', 'NA00002', 'Testis')] is not None
-
-#     assert results.splice_site_cat_concat.loc[(
-#         '17:41203079:-', 'NA00002', 'Testis')] is not None
-
-#     assert results.gene_cat_concat.loc[(
-#         'BRCA1', 'NA00002', 'Testis')] is not None
-
-#     results._gene_cat_concat = None
-
-#     # results._gene_mmsplice = pd.concat([results._gene_mmsplice.iloc[0:1], results._gene_mmsplice])
-#     # cat_cols = [x for x in results._gene_mmsplice.columns if 'cat' in x]
-#     # for i in cat_cols:
-#     #     results._gene_mmsplice.iloc[0, results._gene_mmsplice.columns.get_loc(i)] = np.NaN
-#     # r = results._gene_mmsplice.reset_index()
-#     # r.iloc[0, r.columns.get_loc('gene_name')] = 'BRCA1'
-#     # r.iloc[0, r.columns.get_loc('sample')] = 'NA00005'
-#     # r.iloc[0, r.columns.get_loc('tissue')] = 'Lung'
-#     # results._gene_mmsplice = r.set_index(['gene_name', 'sample', 'tissue'])
-#     results._junction = pd.concat([results._junction.iloc[0:1], results._junction])
-#     cat_cols = [x for x in results._junction.columns if 'cat' in x]
-#     for i in cat_cols:
-#         results._junction.iloc[0, results._junction.columns.get_loc(i)] = np.NaN
-#     r = results._junction.reset_index()
-#     r.iloc[0, r.columns.get_loc('gene_name')] = 'BRCA1'
-#     r.iloc[0, r.columns.get_loc('sample')] = 'NA00005'
-#     r.iloc[0, r.columns.get_loc('tissue')] = 'Lung'
-#     results._junction = r.set_index(['junction', 'sample', 'tissue'])
-#     results._gene_mmsplice = r.set_index(['gene_name', 'sample', 'tissue'])
-
-#     assert results.gene_mmsplice.loc[(
-#         'BRCA1', 'NA00005', 'Lung')] is not None
-#     assert results.gene_cat_concat.loc[(
-#         'BRCA1', 'NA00005', 'Lung')] is not None
-
-
-# def test_outlier_results_cat_features(outlier_results_multi, cat_dl):
-
-#     results = outlier_results_multi
-#     results.infer_cat(cat_dl)
-#     results.gene_cat_features
-
-#     # assert np.array_equal(results.gene_mmsplice[results.gene_mmsplice['tissue_cat'] == 'blood']['delta_psi_cat'].values,
-#     #                       results._gene_cat_features['delta_psi_blood'].values)
-
-#     # assert np.array_equal(results.gene_mmsplice[results.gene_mmsplice['tissue_cat'] == 'lymphocytes']['delta_psi_cat'].values,
-#     #                       results._gene_cat_features['delta_psi_lymphocytes'].values)
-
-#     assert sorted(results.junction_cat_features.columns.tolist()) == sorted([
-#         'splice_site', 'event_type', 'variant',   'Chromosome', 'Start', 'End', 'Strand',
-#         'events', 'ref_psi', 'k', 'n', 'median_n',
-#         'novel_junction', 'weak_site_acceptor', 'weak_site_donor',
-#         'gene_id', 'gene_name', 'transcript_id', 'gene_type',
-#         'delta_psi', 'delta_logit_psi',
-#         'ref_acceptorIntron', 'ref_acceptor', 'ref_exon', 'ref_donor', 'ref_donorIntron',
-#         'alt_acceptorIntron', 'alt_acceptor', 'alt_exon', 'alt_donor', 'alt_donorIntron',
-#         'count_blood', 'psi_blood', 'ref_psi_blood', 'k_blood', 'n_blood', 'median_n_blood',
-#         'delta_logit_psi_blood', 'delta_psi_blood',
-#         'count_lymphocytes', 'psi_lymphocytes', 'ref_psi_lymphocytes', 'k_lymphocytes', 'n_lymphocytes', 'median_n_lymphocytes',
-#         'delta_logit_psi_lymphocytes', 'delta_psi_lymphocytes'])
-
-#     assert sorted(results.splice_site_cat_features.columns.tolist()) == sorted([
-#         'junction', 'event_type', 'variant',   'Chromosome', 'Start', 'End', 'Strand',
-#         'events', 'ref_psi', 'k', 'n', 'median_n',
-#         'novel_junction', 'weak_site_acceptor', 'weak_site_donor',
-#         'gene_id', 'gene_name', 'transcript_id', 'gene_type',
-#         'delta_psi', 'delta_logit_psi',
-#         'ref_acceptorIntron', 'ref_acceptor', 'ref_exon', 'ref_donor', 'ref_donorIntron',
-#         'alt_acceptorIntron', 'alt_acceptor', 'alt_exon', 'alt_donor', 'alt_donorIntron',
-#         'count_blood', 'psi_blood', 'ref_psi_blood', 'k_blood', 'n_blood', 'median_n_blood',
-#         'delta_logit_psi_blood', 'delta_psi_blood',
-#         'count_lymphocytes', 'psi_lymphocytes', 'ref_psi_lymphocytes', 'k_lymphocytes', 'n_lymphocytes', 'median_n_lymphocytes',
-#         'delta_logit_psi_lymphocytes', 'delta_psi_lymphocytes'])
-
-#     assert sorted(results.gene_cat_features.columns.tolist()) == sorted([
-#         'junction', 'event_type', 'variant',   'Chromosome', 'Start', 'End', 'Strand',
-#         'events', 'splice_site', 'ref_psi', 'k', 'n', 'median_n',
-#         'novel_junction', 'weak_site_acceptor', 'weak_site_donor',
-#         'gene_id', 'transcript_id', 'gene_type',
-#         'delta_psi', 'delta_logit_psi',
-#         'ref_acceptorIntron', 'ref_acceptor', 'ref_exon', 'ref_donor', 'ref_donorIntron',
-#         'alt_acceptorIntron', 'alt_acceptor', 'alt_exon', 'alt_donor', 'alt_donorIntron',
-#         'count_blood', 'psi_blood', 'ref_psi_blood', 'k_blood', 'n_blood', 'median_n_blood',
-#         'delta_logit_psi_blood', 'delta_psi_blood',
-#         'count_lymphocytes', 'psi_lymphocytes', 'ref_psi_lymphocytes', 'k_lymphocytes', 'n_lymphocytes', 'median_n_lymphocytes',
-#         'delta_logit_psi_lymphocytes', 'delta_psi_lymphocytes'])
-
-#     assert results.junction_cat_features.loc[(
-#         '17:41201211-41203079:-', 'NA00002', 'Testis')] is not None
-
-#     assert results.splice_site_cat_features.loc[(
-#         '17:41203079:-', 'NA00002', 'Testis')] is not None
-
-#     assert results.gene_cat_features.loc[(
-#         'BRCA1', 'NA00002', 'Testis')] is not None
-
-#     results._gene_cat_features = None
-#     results._gene_mmsplice = None
-
-#     # results._gene_mmsplice = pd.concat([results._gene_mmsplice.iloc[0:1], results._gene_mmsplice])
-#     # cat_cols = [x for x in results._gene_mmsplice.columns if 'cat' in x]
-#     # for i in cat_cols:
-#     #     results._gene_mmsplice.iloc[0, results._gene_mmsplice.columns.get_loc(i)] = np.NaN
-#     # r = results._gene_mmsplice.reset_index()
-#     # r.iloc[0, r.columns.get_loc('gene_name')] = 'BRCA1'
-#     # r.iloc[0, r.columns.get_loc('sample')] = 'NA00005'
-#     # r.iloc[0, r.columns.get_loc('tissue')] = 'Lung'
-#     # results._gene_mmsplice = r.set_index(['gene_name', 'sample', 'tissue'])
-#     results._junction = pd.concat([results._junction.iloc[0:1], results._junction])
-#     cat_cols = [x for x in results._junction.columns if 'cat' in x]
-#     for i in cat_cols:
-#         results._junction.iloc[0, results._junction.columns.get_loc(i)] = np.NaN
-#     r = results._junction.reset_index()
-#     r.iloc[0, r.columns.get_loc('gene_name')] = 'BRCA1'
-#     r.iloc[0, r.columns.get_loc('sample')] = 'NA00005'
-#     r.iloc[0, r.columns.get_loc('tissue')] = 'Lung'
-#     results._junction = r.set_index(['junction', 'sample', 'tissue'])
-
-#     assert results.gene_mmsplice.loc[(
-#         'BRCA1', 'NA00005', 'Lung')] is not None
-#     assert results.gene_cat_features.loc[(
-#         'BRCA1', 'NA00005', 'Lung')] is not None
-
-
-# def test_splicing_outlier_result_infer_cat_add_spliceai(outlier_results_multi, cat_dl, var_samples_df):
-    
-#     samples_for_tissue = {
-#         'Testis': ['NA00002'],
-#         'Lung': ['NA00002', 'NA00003']
-#     }
-
-#     results = outlier_results_multi
-#     results.add_spliceai(spliceai_path, gene_mapping=False)
-#     results.add_samples(var_samples_df)
-#     results.filter_samples_with_RNA_seq(samples_for_tissue)
-#     results.infer_cat(cat_dl)
-    
-#     # assert results.df_mmsplice_cat contains only valid tissue, sample combinations
-
-#     # assert sorted(results.gene_mmsplice.columns.tolist()) == sorted([
-#     #     'junction', 'event_type', 'variant', 'Chromosome', 'Start', 'End', 'Strand',
-#     #     'events', 'splice_site', 'ref_psi', 'k', 'n', 'median_n',
-#     #     'novel_junction', 'weak_site_acceptor', 'weak_site_donor',
-#     #     'gene_id', 'transcript_id', 'gene_type',  
-#     #     'delta_psi', 'delta_logit_psi',
-#     #     'ref_acceptorIntron', 'ref_acceptor', 'ref_exon', 'ref_donor', 'ref_donorIntron',
-#     #     'alt_acceptorIntron', 'alt_acceptor', 'alt_exon', 'alt_donor', 'alt_donorIntron',
-#     #     'tissue_cat', 'count_cat', 'psi_cat', 'ref_psi_cat',
-#     #     'k_cat', 'n_cat', 'median_n_cat', 'delta_logit_psi_cat', 'delta_psi_cat',
-#     #     'index', 'variant_spliceAI',
-#     #     'delta_score', 'acceptor_gain', 'acceptor_loss', 'donor_gain',
-#     #     'donor_loss', 'acceptor_gain_position', 'acceptor_loss_positiin',
-#     #     'donor_gain_position', 'donor_loss_position', 'GQ',
-#     #     'DP_ALT'
-#     # ])
-
-#     # assert sorted(results.gene_cat_concat.columns.tolist()) == sorted([
-#     #     'junction', 'event_type', 'variant', 'Chromosome', 'Start', 'End', 'Strand',
-#     #     'events', 'splice_site', 'ref_psi', 'k', 'n', 'median_n',
-#     #     'novel_junction', 'weak_site_acceptor', 'weak_site_donor',
-#     #     'gene_id', 'transcript_id', 'gene_type',  
-#     #     'delta_psi', 'delta_logit_psi',
-#     #     'ref_acceptorIntron', 'ref_acceptor', 'ref_exon', 'ref_donor', 'ref_donorIntron',
-#     #     'alt_acceptorIntron', 'alt_acceptor', 'alt_exon', 'alt_donor', 'alt_donorIntron',
-#     #     'tissue_cat', 'count_cat', 'psi_cat', 'ref_psi_cat',
-#     #     'k_cat', 'n_cat', 'median_n_cat', 'delta_logit_psi_cat', 'delta_psi_cat',
-#     #     'index', 'variant_spliceAI',
-#     #     'delta_score', 'acceptor_gain', 'acceptor_loss', 'donor_gain',
-#     #     'donor_loss', 'acceptor_gain_position', 'acceptor_loss_positiin',
-#     #     'donor_gain_position', 'donor_loss_position', 'GQ',
-#     #     'DP_ALT'
-#     # ])
-    
     
 # # DEBUG
 # import pytest

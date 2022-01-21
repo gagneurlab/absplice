@@ -9,7 +9,15 @@ from splicing_outlier_prediction.cat_dataloader import CatInference
 
 class SplicingOutlierResult:
 
-    def __init__(self, df_mmsplice=None, df_spliceai=None, df_mmsplice_cat=None, gene_map=None, gene_tpm=None):
+    def __init__(self, 
+                 df_mmsplice=None, 
+                 df_spliceai=None, 
+                 df_mmsplice_cat=None, 
+                 gene_map=None, 
+                 gene_tpm=None,
+                 df_absplice_dna_input=None,
+                 df_absplice_rna_input=None,
+                 ):
         self.df_mmsplice = self.validate_df_mmsplice(df_mmsplice)
         self.df_mmsplice_cat = self.validate_df_mmsplice_cat(df_mmsplice_cat)
         self.gene_map = self.validate_df_gene_map(gene_map)
@@ -22,8 +30,8 @@ class SplicingOutlierResult:
         self._gene_mmsplice = None
         self._gene_mmsplice_cat = None
         self._gene_spliceai = None
-        self._absplice_dna_input = None
-        self._absplice_rna_input = None
+        self._absplice_dna_input = self.validate_absplice_dna_input(df_absplice_dna_input)
+        self._absplice_rna_input = self.validate_absplice_rna_input(df_absplice_rna_input)
         self._absplice_dna = None
         self._absplice_rna = None
         self._gene_absplice_dna = None
@@ -32,6 +40,10 @@ class SplicingOutlierResult:
     def _validate_df(self, df, columns):
         if not isinstance(df, pd.DataFrame):
             df = read_csv(df)
+        # if not isinstance(df.index, pd.RangeIndex):
+        df = df.reset_index()
+        if 'index' in df.columns:
+            df = df.drop(columns='index')
         assert pd.Series(columns).isin(df.columns).all()
         return df
     
@@ -41,6 +53,15 @@ class SplicingOutlierResult:
                 df_mmsplice, 
                 columns=['variant', 'gene_id', 'tissue', 
                          'delta_psi', 'ref_psi', 'median_n', 'gene_tpm'])
+            df_mmsplice = df_mmsplice.astype({
+                'variant': pd.StringDtype(),
+                'gene_id': pd.StringDtype(),
+                'tissue': pd.StringDtype(),
+                'delta_psi': 'float64',
+                'ref_psi': 'float64',
+                'median_n': 'float64',
+                'gene_tpm': 'float64'
+            })
         return df_mmsplice
     
     def validate_df_mmsplice_cat(self, df_mmsplice_cat):
@@ -50,6 +71,17 @@ class SplicingOutlierResult:
                 columns=['variant', 'gene_id', 'tissue', 
                          'delta_psi', 'ref_psi', 'median_n', 'gene_tpm', 
                          'tissue_cat', 'delta_psi_cat'])
+            df_mmsplice_cat = df_mmsplice_cat.astype({
+                'variant': pd.StringDtype(),
+                'gene_id': pd.StringDtype(),
+                'tissue': pd.StringDtype(),
+                'delta_psi': 'float64',
+                'ref_psi': 'float64',
+                'median_n': 'float64',
+                'gene_tpm': 'float64',
+                'tissue_cat': pd.StringDtype(),
+                'delta_psi_cat': 'float64'
+            })
         return df_mmsplice_cat
     
     def validate_df_spliceai(self, df_spliceai):
@@ -57,8 +89,16 @@ class SplicingOutlierResult:
             df_spliceai = self._validate_df(
                 df_spliceai, 
                 columns=['variant', 'gene_name', 'delta_score'])
+            df_spliceai = df_spliceai.astype({
+                'variant': pd.StringDtype(),
+                'gene_name': pd.StringDtype(),
+                'delta_score': 'float64'
+            })
             if self.gene_map is not None:
-                df_spliceai = normalize_gene_annotation(df_spliceai, self.gene_map, key='gene_name', value='gene_id') 
+                df_spliceai = normalize_gene_annotation(df_spliceai, self.gene_map, key='gene_name', value='gene_id')
+                df_spliceai = df_spliceai.astype({
+                    'gene_id': pd.StringDtype()
+                })
         return df_spliceai
     
     def validate_df_gene_tpm(self, gene_tpm):
@@ -67,10 +107,15 @@ class SplicingOutlierResult:
                 gene_tpm, 
                 columns=['gene_id', 'tissue', 'gene_tpm'])
             gene_tpm = gene_tpm[['gene_id', 'tissue', 'gene_tpm']]
+            gene_tpm = gene_tpm.astype({
+                'gene_id': pd.StringDtype(),
+                'tissue': pd.StringDtype(),
+                'gene_tpm': 'float64'
+            })
         if gene_tpm is not None and self.df_mmsplice is not None:
             missing_tissues = set(self.df_mmsplice['tissue']).difference(set(gene_tpm['tissue']))
             if len(missing_tissues) > 0:
-                raise KeyError(" %s are missing in gene_tpm" % missing_tissues)
+                raise KeyError(" %s are missing in gene_tpm" % missing_tissues) 
         return gene_tpm
     
     def validate_df_gene_map(self, gene_map):
@@ -78,7 +123,103 @@ class SplicingOutlierResult:
             gene_map = self._validate_df(
                 gene_map, 
                 columns=['gene_id', 'gene_name'])
+            gene_map = gene_map.astype({
+                'gene_id': pd.StringDtype(),
+                'gene_name': pd.StringDtype()
+            })
         return gene_map
+    
+    def validate_absplice_dna_input(self, df_absplice_dna_input):
+        if df_absplice_dna_input is not None:
+            df_absplice_dna_input = self._validate_df(
+                df_absplice_dna_input,
+                columns=[
+                    'variant', 'gene_id', 'tissue', 'gene_name', 'gene_name_spliceai', 'gene_tpm',
+                    'Chromosome', 'Start', 'End', 'Strand', 'junction', 'event_type', 'splice_site', 
+                     'delta_score', 'delta_logit_psi', 'delta_psi', 'ref_psi', 'k', 'n', 'median_n', 
+                     'novel_junction', 'weak_site_donor', 'weak_site_acceptor'      
+                ])
+            df_absplice_dna_input = df_absplice_dna_input.astype({
+                'variant': pd.StringDtype(),
+                'gene_id': pd.StringDtype(),
+                'tissue': pd.StringDtype(),
+                'Chromosome': pd.StringDtype(),
+                'Start': 'Int64',
+                'End': 'Int64',
+                'Strand': pd.StringDtype(),
+                'junction': pd.StringDtype(),
+                'event_type': pd.StringDtype(),
+                'splice_site': pd.StringDtype(),
+                'gene_name': pd.StringDtype(),
+                'delta_logit_psi':'float64',
+                'delta_psi': 'float64',
+                'ref_psi': 'float64',
+                'k': 'Int64',
+                'n': 'Int64',
+                'median_n': 'float64',
+                'novel_junction': pd.BooleanDtype(),
+                'weak_site_donor': pd.BooleanDtype(),
+                'weak_site_acceptor': pd.BooleanDtype(),
+                'delta_score': 'float64', 
+                'gene_name': pd.StringDtype(),
+                'gene_name_spliceai': pd.StringDtype(),
+                'gene_tpm': 'float64'
+            }) 
+            if 'sample' in df_absplice_dna_input.columns:
+                df_absplice_dna_input = df_absplice_dna_input.astype({
+                'sample': pd.StringDtype()})
+        return df_absplice_dna_input
+    
+    def validate_absplice_rna_input(self, df_absplice_rna_input):
+        if df_absplice_rna_input is not None:
+            df_absplice_rna_input = self._validate_df(
+                df_absplice_rna_input,
+                columns=[
+                    'variant', 'gene_id', 'tissue', 'gene_name', 'gene_name_spliceai', 'gene_tpm',
+                    'Chromosome', 'Start', 'End', 'Strand', 'junction', 'event_type', 'splice_site', 
+                     'delta_score', 'delta_logit_psi', 'delta_psi', 'ref_psi', 'k', 'n', 'median_n', 
+                     'novel_junction', 'weak_site_donor', 'weak_site_acceptor',
+                     'tissue_cat', 'k_cat', 'n_cat', 'median_n_cat', 'psi_cat', 'ref_psi_cat',
+                     'delta_logit_psi_cat', 'delta_psi_cat'    
+                ])
+            df_absplice_rna_input = df_absplice_rna_input.astype({
+                'variant': pd.StringDtype(),
+                'gene_id': pd.StringDtype(),
+                'tissue': pd.StringDtype(),
+                'Chromosome': pd.StringDtype(),
+                'Start': 'Int64',
+                'End': 'Int64',
+                'Strand': pd.StringDtype(),
+                'junction': pd.StringDtype(),
+                'event_type': pd.StringDtype(),
+                'splice_site': pd.StringDtype(),
+                'gene_name': pd.StringDtype(),
+                'delta_logit_psi':'float64',
+                'delta_psi': 'float64',
+                'ref_psi': 'float64',
+                'k': 'Int64',
+                'n': 'Int64',
+                'median_n': 'float64',
+                'novel_junction': pd.BooleanDtype(),
+                'weak_site_donor': pd.BooleanDtype(),
+                'weak_site_acceptor': pd.BooleanDtype(),
+                'delta_score': 'float64', 
+                'gene_name': pd.StringDtype(),
+                'gene_name_spliceai': pd.StringDtype(),
+                'gene_tpm': 'float64',
+                'tissue_cat':  pd.StringDtype(),
+                'k_cat': 'Int64',
+                'n_cat': 'Int64',
+                'median_n_cat': 'float64',
+                'psi_cat': 'float64',
+                'ref_psi_cat': 'float64',
+                'delta_logit_psi_cat': 'float64',
+                'delta_psi_cat': 'float64',  
+            }) 
+            if 'sample' in df_absplice_rna_input.columns:
+                df_absplice_rna_input = df_absplice_rna_input.astype({
+                'sample': pd.StringDtype()})
+        return df_absplice_rna_input
         
     def _contains_chr(self):
         if self.df_mmsplice is not None:
@@ -193,36 +334,31 @@ class SplicingOutlierResult:
         for cat in cat_inference:
             assert self.contains_chr == cat.contains_chr
             
-            # common_junctions = set.union(*cat.common_junctions3)\
-            #             .union(set.union(*cat.common_junctions5))
-            # df_common_junctions = self.junction[
-            #     self.junction.index.get_level_values('junction').isin(common_junctions)]
-            # assert df_common_junctions.shape[0] > 0
-            # print(set(df_common_junctions.index.get_level_values('junction')))
-            # rows = df_common_junctions.iterrows()
+            common_junctions = set.union(*cat.common_junctions3)\
+                        .union(set.union(*cat.common_junctions5))
+            df_common_junctions = self.junction[
+                self.junction.index.get_level_values('junction').isin(common_junctions)]
+            assert df_common_junctions.shape[0] > 0
+            print(set(df_common_junctions.index.get_level_values('junction')))
             
-            rows = self.junction.iterrows()
+            rows = df_common_junctions.iterrows()
+            # rows = self.junction.iterrows()
+
             if progress:
-                # rows = tqdm(rows, total=df_common_junctions.shape[0])
-                rows = tqdm(rows, total=self.junction.shape[0])
-            for (junction, tissue, sample), row in rows:
-                if cat.contains(junction, tissue, sample, row['event_type']):
+                rows = tqdm(rows, total=df_common_junctions.shape[0])
+                # rows = tqdm(rows, total=self.junction.shape[0])
+            for (junction, gene_id, tissue, sample), row in rows:
+                if cat.contains(junction, gene_id, tissue, sample, row['event_type']):
                     infer_rows.append(
-                        cat.infer(junction, tissue, sample, row['event_type']))
+                        cat.infer(junction, gene_id, tissue, sample, row['event_type']))
         df = pd.DataFrame(infer_rows)
         assert df.shape[0] > 0
         # assert len(set(df_common_junctions.index.get_level_values('junction')).difference(set(df['junction']))) == 0
-        # print(f'before drop duplicates: df.shape = {df.shape}')
-        # df = df.loc[df.astype(str).drop_duplicates().index].set_index(['junction', 'tissue', 'sample'])
-        # print(f'after drop duplicates: df.shape = {df.shape}')
-        # df = df.drop_duplicates().set_index(['junction', 'tissue', 'sample'])
-        # self._junction can contain multiple cats (junction, tissue, sample) is not unique index
-        df = df.set_index(['junction', 'tissue', 'sample'])
+        # self._junction can contain multiple cats (junction, gene_id, tissue, sample) is not unique index
+        df = df.set_index(['junction', 'gene_id', 'tissue', 'sample'])
         # assert df.shape[0] == len(df.set_index('tissue_cat', append=True).index.unique())
         self.df_mmsplice_cat = self.junction.join(df)
         self.df_mmsplice_cat = self.df_mmsplice_cat[~self.df_mmsplice_cat['tissue_cat'].isna()]
-        # self._splice_site = None
-        # self._gene = None
         
     def _get_maximum_effect(self, df, groupby, score, dropna=True):
         if not isinstance(df.index, pd.RangeIndex):
@@ -241,7 +377,7 @@ class SplicingOutlierResult:
     
     @property
     def junction(self): #NOTE: max aggregate over all variants
-        groupby=['junction', 'event_type', 'tissue']
+        groupby=['junction', 'gene_id', 'event_type', 'tissue']
         if 'sample' in self.df_mmsplice:
             groupby.append('sample')
         if self._junction is None:
@@ -251,7 +387,7 @@ class SplicingOutlierResult:
 
     @property
     def splice_site(self): #NOTE: max aggregate over all variants
-        groupby=['splice_site', 'event_type', 'tissue']
+        groupby=['splice_site', 'gene_id', 'event_type', 'tissue']
         if 'sample' in self.df_mmsplice:
             groupby.append('sample')
         if self._splice_site is None:
@@ -289,10 +425,10 @@ class SplicingOutlierResult:
 
     @property
     def absplice_dna_input(self):
-        groupby=['variant', 'gene_id', 'tissue']
-        if 'sample' in self.df_mmsplice and 'sample' in self.df_spliceai:
-            groupby.append('sample')
         if self._absplice_dna_input is None: 
+            groupby=['variant', 'gene_id', 'tissue']
+            if 'sample' in self.df_mmsplice and 'sample' in self.df_spliceai:
+                groupby.append('sample')
             df_spliceai = self._add_tissue_info_to_spliceai() # add tissue info to spliceai
             df_mmsplice = self._get_maximum_effect(self.df_mmsplice, groupby, score='delta_psi')
             df_spliceai = self._get_maximum_effect(df_spliceai, groupby, score='delta_score', dropna=False) #dropna=False assures that also missing gene_id and genes that do not have tpm values in tissues are predicted
@@ -311,10 +447,10 @@ class SplicingOutlierResult:
     
     @property
     def absplice_rna_input(self):
-        groupby=['variant', 'gene_id', 'tissue']
-        if 'sample' in self.df_mmsplice and 'sample' in self.df_spliceai:
-            groupby.append('sample')
         if self._absplice_rna_input is None: 
+            groupby=['variant', 'gene_id', 'tissue']
+            if 'sample' in self.df_mmsplice and 'sample' in self.df_spliceai:
+                groupby.append('sample')
             df_mmsplice_cat = self._get_maximum_effect(self.df_mmsplice_cat, groupby, score='delta_psi_cat') 
             cols_mmsplice_cat = [
                 'junction', 'delta_psi', 'ref_psi', 'median_n', 
