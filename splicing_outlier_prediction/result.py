@@ -197,6 +197,7 @@ class SplicingOutlierResult:
             df_common_junctions = self.junction[
                 self.junction.index.get_level_values('junction').isin(common_junctions)]
             assert df_common_junctions.shape[0] > 0
+            print(set(df_common_junctions.index.get_level_values('junction')))
             rows = df_common_junctions.iterrows()
             
             # rows = self.junction.iterrows()
