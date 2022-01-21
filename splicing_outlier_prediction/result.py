@@ -123,6 +123,7 @@ class SplicingOutlierResult:
         return self._df_spliceai_tissue
 
     def _add_samples(self, df, var_samples_df):
+        var_samples_df['sample'] = var_samples_df['sample'].astype(str)
         var_samples_df = var_samples_df[['variant', 'sample']] \
             .drop_duplicates()
         df = df.set_index('variant') \
