@@ -339,7 +339,7 @@ class SplicingOutlierResult:
         if 'sample' in self.df_mmsplice_cat:
             groupby.append('sample')
         if self._gene_mmsplice_cat is None:
-            self._df_mmsplice_cat = self.df_mmsplice_cat[self.df_mmsplice_cat['count_cat'] > 0] #TODO: remove this (is already fixed in cat_infer, was temp fix for already computed results)
+            self.df_mmsplice_cat = self.df_mmsplice_cat[self.df_mmsplice_cat['count_cat'] > 0] #TODO: remove this (is already fixed in cat_infer, was temp fix for already computed results)
             self._gene_mmsplice_cat = self._get_maximum_effect(self.df_mmsplice_cat, groupby, score='delta_psi_cat')
         return self._gene_mmsplice_cat
 
@@ -380,7 +380,7 @@ class SplicingOutlierResult:
             groupby=['variant', 'gene_id', 'tissue', 'sample']
             if not pd.Series(groupby).isin(self._absplice_dna_input.index.names).all():
                 self._absplice_dna_input = self._absplice_dna_input.set_index(groupby)
-            self._df_mmsplice_cat = self.df_mmsplice_cat[self.df_mmsplice_cat['count_cat'] > 0] #TODO: remove this (is already fixed in cat_infer, was temp fix for already computed results)
+            self.df_mmsplice_cat = self.df_mmsplice_cat[self.df_mmsplice_cat['count_cat'] > 0] #TODO: remove this (is already fixed in cat_infer, was temp fix for already computed results)
             df_mmsplice_cat = self._get_maximum_effect(self.df_mmsplice_cat, groupby, score='delta_psi_cat') 
             cols_mmsplice_cat = [
                 'junction', 'delta_psi', 'ref_psi', 'median_n', 
