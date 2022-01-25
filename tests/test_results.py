@@ -375,6 +375,42 @@ def test_splicing_outlier_complete_rna(gene_map, gene_tpm, var_samples_df):
     
     assert results.absplice_rna.shape[0] > 0 
     assert 'AbSplice_RNA' in results.absplice_rna.columns
+     
+     
+def test_splicing_outlier_complete_dna_init(gene_map, gene_tpm, var_samples_df):
+    
+    results = SplicingOutlierResult(
+        df_mmsplice = mmsplice_path,
+        df_spliceai = spliceai_path,
+        gene_map = gene_map,
+        gene_tpm = gene_tpm,
+    )
+    
+    results.add_samples(var_samples_df)
+    df_absplice_dna_input = results.absplice_dna_input
+    
+    results_init = SplicingOutlierResult(
+        df_absplice_dna_input = df_absplice_dna_input
+    )
+    assert results_init.absplice_dna_input.shape[0] > 0
+    
+def test_splicing_outlier_complete_rna_init(gene_map, gene_tpm, var_samples_df):
+    
+    results = SplicingOutlierResult(
+        df_mmsplice = mmsplice_path,
+        df_spliceai = spliceai_path,
+        gene_map = gene_map,
+        gene_tpm = gene_tpm,
+    )
+    
+    results.add_samples(var_samples_df)
+    df_absplice_dna_input = results.absplice_dna_input
+    
+    results_init = SplicingOutlierResult(
+        df_absplice_dna_input = df_absplice_dna_input,
+        df_mmsplice_cat = mmsplice_cat_path,
+    )
+    assert results_init.absplice_rna_input.shape[0] > 0
     
 def test_splicing_outlier_result__add_tissue_info_to_spliceai(outlier_dl, outlier_dl_multi, outlier_model, gene_map, gene_tpm, var_samples_df):
     results = outlier_model.predict_on_dataloader(outlier_dl_multi)

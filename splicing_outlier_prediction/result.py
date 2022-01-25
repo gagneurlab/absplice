@@ -375,7 +375,8 @@ class SplicingOutlierResult:
     def absplice_rna_input(self):
         if self._absplice_rna_input is None: 
             groupby=['variant', 'gene_id', 'tissue', 'sample']
-            assert 'sample' in self.absplice_dna_input
+            if not pd.Series(groupby).isin(self._absplice_dna_input.index.names).all():
+                self._absplice_dna_input = self._absplice_dna_input.set_index(groupby)
             df_mmsplice_cat = self._get_maximum_effect(self.df_mmsplice_cat, groupby, score='delta_psi_cat') 
             cols_mmsplice_cat = [
                 'junction', 'delta_psi', 'ref_psi', 'median_n', 
