@@ -156,7 +156,8 @@ class CatInference(SpliceMapMixin):
                 delta_logit_psi_cat, ref_psi_target, clip_threshold=clip_threshold),
             'tissue_cat': tissue_cat
         }
-        assert pd.DataFrame(result_infer, index=[0]).shape[0] == 1
+        # assert pd.DataFrame(result_infer, index=[0]).shape[0] == 1
+        
         result_infer = pd.DataFrame(result_infer, index=[0]).astype({
             'junction': pd.StringDtype(),
             'gene_id': pd.StringDtype(),
