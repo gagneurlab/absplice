@@ -42,6 +42,8 @@ dtype_columns = {
     'ref_psi_cat': 'float64',
     'delta_logit_psi_cat': 'float64',
     'delta_psi_cat': 'float64',
+    'AbSplice_DNA': 'float64',
+    'AbSplice_RNA': 'float64',
 }
 
 class SplicingOutlierResult:
@@ -52,9 +54,11 @@ class SplicingOutlierResult:
                  df_mmsplice_cat=None, 
                  gene_map=None, 
                  gene_tpm=None,
+                 df_var_samples = None,
                  df_absplice_dna_input=None,
                  df_absplice_rna_input=None,
-                 df_var_samples = None,
+                 df_absplice_dna = None,
+                 df_absplice_rna = None,
                  ):
         self.df_var_samples = self.validate_df_var_samples(df_var_samples)
         self.df_mmsplice = self.validate_df_mmsplice(df_mmsplice)
@@ -62,12 +66,12 @@ class SplicingOutlierResult:
         self.gene_map = self.validate_df_gene_map(gene_map)
         self.gene_tpm = self.validate_df_gene_tpm(gene_tpm)
         self.df_spliceai = self.validate_df_spliceai(df_spliceai)
-        self.contains_chr = self._contains_chr()
-        self._df_spliceai_tissue = None
         self._absplice_dna_input = self.validate_absplice_dna_input(df_absplice_dna_input)
         self._absplice_rna_input = self.validate_absplice_rna_input(df_absplice_rna_input)
-        self._absplice_dna = None
-        self._absplice_rna = None
+        self._absplice_dna = self.validate_absplice_dna(df_absplice_dna)
+        self._absplice_rna = self.validate_absplice_rna(df_absplice_rna)
+        self.contains_chr = self._contains_chr()
+        self._df_spliceai_tissue = None
         self._junction = None
         self._splice_site = None
         self._gene_mmsplice = None
@@ -170,6 +174,10 @@ class SplicingOutlierResult:
                      'novel_junction', 'weak_site_donor', 'weak_site_acceptor'      
                 ])
             df_absplice_dna_input = self._validate_dtype(df_absplice_dna_input)
+            groupby=['variant', 'gene_id', 'tissue']
+            if 'sample' in df_absplice_dna_input:
+                groupby.append('sample')
+            df_absplice_dna_input = df_absplice_dna_input.set_index(groupby)
         return df_absplice_dna_input
     
     def validate_absplice_rna_input(self, df_absplice_rna_input):
@@ -177,7 +185,7 @@ class SplicingOutlierResult:
             df_absplice_rna_input = self._validate_df(
                 df_absplice_rna_input,
                 columns=[
-                    'variant', 'gene_id', 'tissue', 'gene_name', 'gene_name_spliceai', 'gene_tpm',
+                    'variant', 'gene_id', 'tissue', 'sample', 'gene_name', 'gene_name_spliceai', 'gene_tpm',
                     'Chromosome', 'Start', 'End', 'Strand', 'junction', 'event_type', 'splice_site', 
                      'delta_score', 'delta_logit_psi', 'delta_psi', 'ref_psi', 'k', 'n', 'median_n', 
                      'novel_junction', 'weak_site_donor', 'weak_site_acceptor',
@@ -185,8 +193,35 @@ class SplicingOutlierResult:
                      'delta_logit_psi_cat', 'delta_psi_cat'    
                 ])
             df_absplice_rna_input = self._validate_dtype(df_absplice_rna_input)
+            groupby=['variant', 'gene_id', 'tissue', 'sample']
+            df_absplice_rna_input = df_absplice_rna_input.set_index(groupby)
         return df_absplice_rna_input
-        
+    
+    def validate_absplice_dna(self, df_absplice_dna):
+        if df_absplice_dna is not None:
+            df_absplice_dna = self._validate_df(
+                df_absplice_dna,
+                columns=[
+                    'variant', 'gene_id', 'tissue', 'delta_psi', 'delta_score', 
+                    'gene_is_expressed', 'splice_site_is_expressed', 'ref_psi', 'delta_logit_psi',
+                    'AbSplice_DNA'      
+                ])
+            df_absplice_dna = self._validate_dtype(df_absplice_dna)
+        return df_absplice_dna
+    
+    def validate_absplice_rna(self, df_absplice_rna):
+        if df_absplice_rna is not None:
+            df_absplice_rna = self._validate_df(
+                df_absplice_rna,
+                columns=[
+                    'variant', 'gene_id', 'tissue', 'delta_psi', 'delta_score', 
+                    'gene_is_expressed', 'splice_site_is_expressed', 'ref_psi', 'delta_logit_psi',
+                    'delta_psi_cat', 'count_cat', 'psi_cat', 'ref_psi_cat',
+                    'AbSplice_RNA'
+                ])
+            df_absplice_rna = self._validate_dtype(df_absplice_rna)
+        return df_absplice_rna
+    
     def _contains_chr(self):
         if self.df_mmsplice is not None:
             return 'chr' in self.df_mmsplice.junction[0]
@@ -354,7 +389,7 @@ class SplicingOutlierResult:
         if 'sample' in self.df_spliceai:
             groupby.append('sample')
         if self._gene_spliceai is None:
-            self._gene_spliceai = self._get_maximum_effect(self.df_spliceai, groupby, score='delta_score')
+            self._gene_spliceai = self._get_maximum_effect(self.df_spliceai, groupby, score='delta_score') #dropna=False ?
         return self._gene_spliceai
     
     @property
@@ -379,7 +414,7 @@ class SplicingOutlierResult:
         if 'sample' in self.df_spliceai:
             groupby.append('sample')
         if self._variant_spliceai is None:
-            self._variant_spliceai = self._get_maximum_effect(self.df_spliceai, groupby, score='delta_score')
+            self._variant_spliceai = self._get_maximum_effect(self.df_spliceai, groupby, score='delta_score') #dropna=False ?
         return self._variant_spliceai
 
     @property
