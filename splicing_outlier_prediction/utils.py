@@ -40,25 +40,31 @@ def logit(x, clip_threshold=0.01):
 def normalize_gene_annotation(df, gene_map, key='gene_name', value='gene_id'):
     if isinstance(gene_map, dict):
         pass
+    elif isinstance(gene_map, pathlib.PosixPath) or isinstance(gene_map, str):
+        gene_map = read_csv(gene_map)
+        gene_map = dict(zip(gene_map[key], gene_map[value]))
     elif isinstance(gene_map, pd.DataFrame):
         gene_map = dict(zip(gene_map[key], gene_map[value]))
     else:
-        TypeError("gene_mapping needs to be dictionary of pandas DataFrame")
+        TypeError("gene_mapping needs to be dictionary, pandas DataFrame or path")
     df[value] = df[key].map(gene_map)
     return df
 
 
 def read_csv(path, **kwargs):
-    if not isinstance(path, pathlib.PosixPath):
-        path = pathlib.Path(path)
-    if path.suffix.lower() == '.csv':
-        return pd.read_csv(path, **kwargs)
-    elif path.suffix.lower() == '.tsv':
-        return pd.read_csv(path, sep='\t', **kwargs)
-    elif path.suffix.lower() == '.parquet':
-        return pd.read_parquet(path, **kwargs)
+    if isinstance(path, pd.DataFrame):
+        return path
     else:
-        raise ValueError("unknown file ending.")
+        if not isinstance(path, pathlib.PosixPath):
+            path = pathlib.Path(path)
+        if path.suffix.lower() == '.csv':
+            return pd.read_csv(path, **kwargs)
+        elif path.suffix.lower() == '.tsv':
+            return pd.read_csv(path, sep='\t', **kwargs)
+        elif path.suffix.lower() == '.parquet':
+            return pd.read_parquet(path, **kwargs)
+        else:
+            raise ValueError("unknown file ending.")
     
     
 def filter_samples_with_RNA_seq(df, samples_for_tissue):
@@ -70,3 +76,10 @@ def filter_samples_with_RNA_seq(df, samples_for_tissue):
         df_with_RNA = df[(df['tissue'] == tissue) & (df['sample'].isin(samples))]
         l.append(df_with_RNA)
     return pd.concat(l)
+
+
+def inject_new_row(df, new_row_dict):
+    new_row = pd.DataFrame(df[-1:].values, columns=df.columns)
+    for k,v in new_row_dict.items():
+        new_row[k] = v
+    return df.append(new_row)
