@@ -2,7 +2,7 @@ import pytest
 from splicing_outlier_prediction import SpliceOutlierDataloader
 from conftest import fasta_file, vcf_file, multi_vcf_file, \
     ref_table5_kn_testis, ref_table3_kn_testis, ref_table5_kn_lung, ref_table3_kn_lung, \
-     count_cat_file_lymphocytes, combined_ref_tables5_testis_lung, combined_ref_tables3_testis_lung
+     count_cat_file_lymphocytes
 
 
 @pytest.fixture

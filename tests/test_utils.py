@@ -22,7 +22,7 @@ def test_get_max_rows():
 
 
 # def test_outlier_results_filter_samples_with_RNA_seq(outlier_results_multi, outlier_model):
-def test_outlier_results_filter_samples_with_RNA_seq(var_samples_df, outlier_model, gene_map, gene_tpm):
+def test_outlier_results_filter_samples_with_RNA_seq(df_var_samples, outlier_model, gene_map, gene_tpm):
     samples_for_tissue = {
         'Testis': ['NA00002'],
         'Lung': ['NA00002', 'NA00003']
@@ -35,7 +35,7 @@ def test_outlier_results_filter_samples_with_RNA_seq(var_samples_df, outlier_mod
         gene_tpm=gene_tpm
     )
 
-    results.add_samples(var_samples_df)
+    results.add_samples(df_var_samples)
 
     assert results.df_mmsplice[['tissue', 'sample']].groupby('tissue')['sample'].apply(lambda x: ';'.join(sorted(list(set(x))))).to_dict() == \
         {
