@@ -12,6 +12,7 @@ dtype_columns = {
     'variant': pd.StringDtype(),
     'gene_id': pd.StringDtype(),
     'tissue': pd.StringDtype(),
+    'sample': pd.StringDtype(),
     'Chromosome': pd.StringDtype(),
     'Start': 'Int64',
     'End': 'Int64',
@@ -53,30 +54,36 @@ class SplicingOutlierResult:
                  gene_tpm=None,
                  df_absplice_dna_input=None,
                  df_absplice_rna_input=None,
+                 df_var_samples = None,
                  ):
+        self.df_var_samples = self.validate_df_var_samples(df_var_samples)
         self.df_mmsplice = self.validate_df_mmsplice(df_mmsplice)
         self.df_mmsplice_cat = self.validate_df_mmsplice_cat(df_mmsplice_cat)
         self.gene_map = self.validate_df_gene_map(gene_map)
         self.gene_tpm = self.validate_df_gene_tpm(gene_tpm)
         self.df_spliceai = self.validate_df_spliceai(df_spliceai)
-        self._df_spliceai_tissue = None
         self.contains_chr = self._contains_chr()
+        self._df_spliceai_tissue = None
+        self._absplice_dna_input = self.validate_absplice_dna_input(df_absplice_dna_input)
+        self._absplice_rna_input = self.validate_absplice_rna_input(df_absplice_rna_input)
+        self._absplice_dna = None
+        self._absplice_rna = None
         self._junction = None
         self._splice_site = None
         self._gene_mmsplice = None
         self._gene_mmsplice_cat = None
         self._gene_spliceai = None
-        self._absplice_dna_input = self.validate_absplice_dna_input(df_absplice_dna_input)
-        self._absplice_rna_input = self.validate_absplice_rna_input(df_absplice_rna_input)
-        self._absplice_dna = None
-        self._absplice_rna = None
         self._gene_absplice_dna = None
         self._gene_absplice_rna = None
-    
+        self._variant_mmsplice = None
+        self._variant_mmsplice_cat = None
+        self._variant_spliceai = None
+        self._variant_absplice_dna = None
+        self._variant_absplice_rna = None
+        
     def _validate_df(self, df, columns):
         if not isinstance(df, pd.DataFrame):
             df = read_csv(df)
-        # if not isinstance(df.index, pd.RangeIndex):
         df = df.reset_index()
         if 'index' in df.columns:
             df = df.drop(columns='index')
@@ -96,6 +103,8 @@ class SplicingOutlierResult:
                 columns=['variant', 'gene_id', 'tissue', 
                          'delta_psi', 'ref_psi', 'median_n', 'gene_tpm'])
             df_mmsplice = self._validate_dtype(df_mmsplice)
+            if self.df_var_samples is not None:
+                df_mmsplice = self._add_samples(df_mmsplice)
         return df_mmsplice
     
     def validate_df_mmsplice_cat(self, df_mmsplice_cat):
@@ -116,7 +125,18 @@ class SplicingOutlierResult:
             if self.gene_map is not None:
                 df_spliceai = normalize_gene_annotation(df_spliceai, self.gene_map, key='gene_name', value='gene_id')
             df_spliceai = self._validate_dtype(df_spliceai)
+            if self.df_var_samples is not None:
+                df_spliceai = self._add_samples(df_spliceai)
         return df_spliceai
+    
+    def validate_df_var_samples(self, df_var_samples):
+        if df_var_samples is not None:
+            df_var_samples = self._validate_df(
+                df_var_samples, 
+                columns=['variant', 'sample'])
+            df_var_samples = self._validate_dtype(df_var_samples)
+            df_var_samples = df_var_samples[['variant', 'sample']].drop_duplicates()  
+        return df_var_samples
     
     def validate_df_gene_tpm(self, gene_tpm):
         if gene_tpm is not None:
@@ -174,18 +194,19 @@ class SplicingOutlierResult:
             return None
         
     def add_spliceai(self, df, 
-                     gene_mapping=True, key='gene_name', value='gene_id'):
+                     gene_map=None, key='gene_name', value='gene_id'):
         """
         Includes spliceai predictions into results.
 
         Args:
           df: path to csv or dataframe of spliceai predictions
+          gene_map: dict or dataframe to map gene_name to gene_id (many to one mapping)
         """
-        if type(df) == str:
-            df = pd.read_csv(df)
-        self.df_spliceai = df
-        if gene_mapping:
-            self.df_spliceai = normalize_gene_annotation(self.df_spliceai, self.gene_map, key, value)
+        if self.df_spliceai is None:
+            df = read_csv(df)
+            self.df_spliceai = self.validate_df_spliceai(df)
+            if 'gene_id' not in self.df_spliceai:
+                self.df_spliceai = normalize_gene_annotation(self.df_spliceai, gene_map, key, value)
     
     def _add_tissue_info_to_spliceai(self):
         """
@@ -209,36 +230,25 @@ class SplicingOutlierResult:
         self._df_spliceai_tissue = pd.concat(l)
         return self._df_spliceai_tissue
 
-    def _add_samples(self, df, var_samples_df):
-        var_samples_df['sample'] = var_samples_df['sample'].astype(str)
-        var_samples_df = var_samples_df[['variant', 'sample']] \
-            .drop_duplicates()
+    def _add_samples(self, df):
         df = df.set_index('variant') \
-            .join(var_samples_df.set_index('variant'),
+            .join(self.df_var_samples.set_index('variant'),
                   how='inner') \
             .reset_index()
         return df
 
-    def add_samples(self, var_samples_df):
+    def add_samples(self, df_var_samples):
         '''
-        var_samples_df: dataframe with variant and sample columns 
+        df_var_samples: dataframe with variant and sample columns 
         (e.g. output of 'to_sample_csv' from kipoiseq.extractors.vcf_query)
         '''
+        self.df_var_samples = self.validate_df_var_samples(df_var_samples)
         if self.df_mmsplice is not None:
             if 'sample' not in self.df_mmsplice.columns:
-                self.df_mmsplice = self._add_samples(self.df_mmsplice, var_samples_df)
+                self.df_mmsplice = self._add_samples(self.df_mmsplice)
         if self.df_spliceai is not None:
             if 'sample' not in self.df_spliceai.columns:
-                self.df_spliceai = self._add_samples(self.df_spliceai, var_samples_df)
-            
-    @staticmethod
-    def _explode(df, col='samples', new_name=None):
-        if new_name == None:
-            new_name = col
-        df = df.copy()
-        df[col] = df[col].str.split(';').map(
-            set, na_action='ignore').map(list, na_action='ignore')
-        return df.rename(columns={col: new_name}).explode(new_name)
+                self.df_spliceai = self._add_samples(self.df_spliceai)
 
     def infer_cat(self, cat_inference, progress=False):
         """
@@ -283,11 +293,10 @@ class SplicingOutlierResult:
         self.df_mmsplice_cat = self.junction.join(df)
         self.df_mmsplice_cat = self.df_mmsplice_cat[
             (~self.df_mmsplice_cat['tissue_cat'].isna())
-            & (self.df_mmsplice_cat['count_cat'] > 0)]
+            # & (self.df_mmsplice_cat['count_cat'] > 0) #it could also be deactivation, and count_cat == 0
+        ]
         
     def _get_maximum_effect(self, df, groupby, score, dropna=True):
-        # if not isinstance(df.index, pd.RangeIndex):
-        #     df = df.reset_index() 
         df = df.reset_index()
         if 'index' in df.columns:
             df = df.drop(columns='index')
@@ -329,17 +338,13 @@ class SplicingOutlierResult:
         if 'sample' in self.df_mmsplice:
             groupby.append('sample')
         if self._gene_mmsplice is None:
-            # TODO: if cat infer was called, add it to gene level aggregation
             self._gene_mmsplice = self._get_maximum_effect(self.df_mmsplice, groupby, score='delta_psi')
         return self._gene_mmsplice
     
     @property
     def gene_mmsplice_cat(self): #NOTE: max aggregate over all variants
-        groupby=['gene_id', 'tissue']
-        if 'sample' in self.df_mmsplice_cat:
-            groupby.append('sample')
+        groupby=['gene_id', 'tissue', 'sample']
         if self._gene_mmsplice_cat is None:
-            self.df_mmsplice_cat = self.df_mmsplice_cat[self.df_mmsplice_cat['count_cat'] > 0] #TODO: remove this (is already fixed in cat_infer, was temp fix for already computed results)
             self._gene_mmsplice_cat = self._get_maximum_effect(self.df_mmsplice_cat, groupby, score='delta_psi_cat')
         return self._gene_mmsplice_cat
 
@@ -351,6 +356,31 @@ class SplicingOutlierResult:
         if self._gene_spliceai is None:
             self._gene_spliceai = self._get_maximum_effect(self.df_spliceai, groupby, score='delta_score')
         return self._gene_spliceai
+    
+    @property
+    def variant_mmsplice(self): #NOTE: max aggregate for variant on each gene
+        groupby=['variant', 'gene_id', 'tissue']
+        if 'sample' in self.df_mmsplice:
+            groupby.append('sample')
+        if self._variant_mmsplice is None:
+            self._variant_mmsplice = self._get_maximum_effect(self.df_mmsplice, groupby, score='delta_psi')
+        return self._variant_mmsplice
+    
+    @property
+    def variant_mmsplice_cat(self): #NOTE: max aggregate over all variants
+        groupby=['variant', 'gene_id', 'tissue', 'sample']
+        if self._variant_mmsplice_cat is None:
+            self._variant_mmsplice_cat = self._get_maximum_effect(self.df_mmsplice_cat, groupby, score='delta_psi_cat')
+        return self._variant_mmsplice_cat
+    
+    @property
+    def variant_spliceai(self): #NOTE: max aggregate for variant on each gene
+        groupby=['variant', 'gene_id']
+        if 'sample' in self.df_spliceai:
+            groupby.append('sample')
+        if self._variant_spliceai is None:
+            self._variant_spliceai = self._get_maximum_effect(self.df_spliceai, groupby, score='delta_score')
+        return self._variant_spliceai
 
     @property
     def absplice_dna_input(self):
@@ -359,7 +389,7 @@ class SplicingOutlierResult:
             if 'sample' in self.df_mmsplice and 'sample' in self.df_spliceai:
                 groupby.append('sample')
             df_spliceai = self._add_tissue_info_to_spliceai() # add tissue info to spliceai
-            df_mmsplice = self._get_maximum_effect(self.df_mmsplice, groupby, score='delta_psi')
+            df_mmsplice = self._get_maximum_effect(self.df_mmsplice, groupby, score='delta_psi') #this is the same as 'variant_mmsplice'
             df_spliceai = self._get_maximum_effect(df_spliceai, groupby, score='delta_score', dropna=False) #dropna=False assures that also missing gene_id and genes that do not have tpm values in tissues are predicted
             cols_spliceai = ['delta_score', 'gene_name']
             cols_mmsplice = [
@@ -378,9 +408,8 @@ class SplicingOutlierResult:
     def absplice_rna_input(self):
         if self._absplice_rna_input is None: 
             groupby=['variant', 'gene_id', 'tissue', 'sample']
-            if not pd.Series(groupby).isin(self._absplice_dna_input.index.names).all():
-                self._absplice_dna_input = self._absplice_dna_input.set_index(groupby)
-            self.df_mmsplice_cat = self.df_mmsplice_cat[self.df_mmsplice_cat['count_cat'] > 0] #TODO: remove this (is already fixed in cat_infer, was temp fix for already computed results)
+            if not pd.Series(groupby).isin(self.absplice_dna_input.index.names).all():
+                self._absplice_dna_input = self.absplice_dna_input.set_index(groupby)
             df_mmsplice_cat = self._get_maximum_effect(self.df_mmsplice_cat, groupby, score='delta_psi_cat') 
             cols_mmsplice_cat = [
                 'junction', 'delta_psi', 'ref_psi', 'median_n', 
@@ -393,7 +422,7 @@ class SplicingOutlierResult:
         df['splice_site_is_expressed'] = (df['median_n'] > median_n_cutoff).astype(int)
         df['gene_is_expressed'] = (df['gene_tpm'] > tpm_cutoff).astype(int)
         df = df[features].fillna(0)
-        if abs_features == True:
+        if abs_features:
             df = np.abs(df)
         df[absplice_score] = model.predict_proba(df)[:, 1]
         return df
@@ -445,12 +474,26 @@ class SplicingOutlierResult:
     
     @property
     def gene_absplice_rna(self): #NOTE: max aggregate over all variants
-        groupby=['gene_id', 'tissue']
-        if 'sample' in self.absplice_rna.reset_index():
-            groupby.append('sample')
+        groupby=['gene_id', 'tissue', 'sample']
         if self._gene_absplice_rna is None:
             self._gene_absplice_rna = self._get_maximum_effect(self.absplice_rna, groupby, score='AbSplice_RNA')
         return self._gene_absplice_rna
+    
+    @property
+    def variant_absplice_dna(self): #NOTE: max aggregate for variant on each gene
+        groupby=['variant', 'gene_id', 'tissue']
+        if 'sample' in self.absplice_dna.reset_index():
+            groupby.append('sample')
+        if self._variant_absplice_dna is None:
+            self._variant_absplice_dna = self._get_maximum_effect(self.absplice_dna, groupby, score='AbSplice_DNA')
+        return self._variant_absplice_dna
+    
+    @property
+    def variant_absplice_rna(self): #NOTE: max aggregate for variant on each gene
+        groupby=['variant', 'gene_id', 'tissue', 'sample']
+        if self._variant_absplice_rna is None:
+            self._variant_absplice_rna = self._get_maximum_effect(self.absplice_rna, groupby, score='AbSplice_RNA')
+        return self._variant_absplice_rna
     
     @staticmethod
     def _add_maf(df, population, default=-1):
@@ -475,17 +518,38 @@ class SplicingOutlierResult:
         df_spliceai = self.df_spliceai
 
         if max_num_sample:
-            df_mmsplice = self._filter_private(df_mmsplice, max_num_sample)
+            if df_mmsplice is not None:
+                df_mmsplice = self._filter_private(df_mmsplice, max_num_sample)
             if df_spliceai is not None:
                 df_spliceai = self._filter_private(df_spliceai, max_num_sample)
 
         if population:
-            df_mmsplice = self._add_filter_maf(df_mmsplice, population, maf_cutoff, default)
+            if df_mmsplice is not None:
+                df_mmsplice = self._add_filter_maf(
+                    df_mmsplice, population, maf_cutoff, default)
             if df_spliceai is not None:
                 df_spliceai = self._add_filter_maf(
                     df_spliceai, population, maf_cutoff, default)
 
-        return SplicingOutlierResult(df_mmsplice, df_spliceai)
+        return SplicingOutlierResult(
+            df_mmsplice = df_mmsplice, 
+            df_spliceai = df_spliceai
+            )
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     # def _filter_samples_with_RNA_seq(self, df, samples_for_tissue):
     #     l = list()
