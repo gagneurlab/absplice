@@ -1,3 +1,5 @@
+import resource
+from pkg_resources import resource_filename
 from tqdm import tqdm
 import pandas as pd
 import numpy as np
@@ -7,6 +9,10 @@ import pathlib
 from splicing_outlier_prediction.utils import get_abs_max_rows, normalize_gene_annotation, read_csv
 from splicing_outlier_prediction.cat_dataloader import CatInference
 
+GENE_MAP = resource_filename('splicing_outlier_prediction', 'precomputed/gene_mapping_hg19.tsv')
+GENE_TPM_GTEx = resource_filename('splicing_outlier_prediction', 'precomputed/gene_tissue_tpm.csv')
+ABSPLICE_DNA = resource_filename('splicing_outlier_prediction', 'precomputed/AbSplice_DNA_trained_on_all_GTEx.pkl')
+ABSPLICE_RNA = resource_filename('splicing_outlier_prediction', 'precomputed/AbSplice_RNA_trained_on_all_GTEx.pkl')
 
 dtype_columns = {
     'variant': pd.StringDtype(),
@@ -149,6 +155,10 @@ class SplicingOutlierResult:
                 columns=['gene_id', 'tissue', 'gene_tpm'])
             gene_tpm = gene_tpm[['gene_id', 'tissue', 'gene_tpm']]
             gene_tpm = self._validate_dtype(gene_tpm)
+        else:
+            gene_tpm = self._validate_df(
+                GENE_TPM_GTEx,
+                columns=['gene_id', 'tissue', 'gene_tpm'])
         if gene_tpm is not None and self.df_mmsplice is not None:
             missing_tissues = set(self.df_mmsplice['tissue']).difference(set(gene_tpm['tissue']))
             if len(missing_tissues) > 0:
@@ -161,6 +171,10 @@ class SplicingOutlierResult:
                 gene_map, 
                 columns=['gene_id', 'gene_name'])
             gene_map = self._validate_dtype(gene_map) 
+        else:
+            gene_map = self._validate_df(
+                GENE_MAP, 
+                columns=['gene_id', 'gene_name'])
         return gene_map
     
     def validate_absplice_dna_input(self, df_absplice_dna_input):
@@ -462,12 +476,13 @@ class SplicingOutlierResult:
         df[absplice_score] = model.predict_proba(df)[:, 1]
         return df
         
-    def predict_absplice_dna(self, pickle_file=None, abs_features=True, median_n_cutoff=0, tpm_cutoff=1):
-        features = ['delta_psi', 'delta_score',
-                    'gene_is_expressed', 'splice_site_is_expressed',
-                    'ref_psi', 'delta_logit_psi']
-        if pickle_file == None:
-            pickle_file = pickle_absplice_DNA
+    def predict_absplice_dna(self, pickle_file=None, features=None, abs_features=True, median_n_cutoff=0, tpm_cutoff=1):
+        if features is None:
+            features = ['delta_psi', 'delta_score',
+                        'gene_is_expressed', 'splice_site_is_expressed',
+                        'ref_psi', 'delta_logit_psi']
+        if pickle_file is None:
+            pickle_file = ABSPLICE_DNA
             
         self.absplice_dna = self._predict_absplice(
             df=self.absplice_dna_input,
@@ -479,14 +494,15 @@ class SplicingOutlierResult:
             tpm_cutoff=tpm_cutoff)
         return self.absplice_dna
     
-    def predict_absplice_rna(self, pickle_file=None, abs_features=True, median_n_cutoff=0, tpm_cutoff=1):
-        features = ['delta_psi', 'delta_score', 
-                    'gene_is_expressed', 'splice_site_is_expressed', 
-                    'ref_psi', 'delta_logit_psi',
-                    'delta_psi_cat', 'count_cat',
-                    'psi_cat', 'ref_psi_cat']
-        if pickle_file == None:
-            pickle_file = pickle_absplice_RNA
+    def predict_absplice_rna(self, pickle_file=None, features=None, abs_features=True, median_n_cutoff=0, tpm_cutoff=1):
+        if features is None:
+            features = ['delta_psi', 'delta_score', 
+                        'gene_is_expressed', 'splice_site_is_expressed', 
+                        'ref_psi', 'delta_logit_psi',
+                        'delta_psi_cat', 'count_cat',
+                        'psi_cat', 'ref_psi_cat']
+        if pickle_file is None:
+            pickle_file = ABSPLICE_RNA
             
         self.absplice_rna = self._predict_absplice(
             df=self.absplice_rna_input,

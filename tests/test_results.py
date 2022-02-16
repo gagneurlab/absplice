@@ -223,5 +223,25 @@ def test_splicing_outlier_result_variant_mmsplice_max_effect():
         'variant': '1:1:T>C',
         'delta_psi': 1.0})
     assert 'test_gene' in sor.variant_mmsplice.index.get_level_values('gene_id').values
+    
+    
+def test_splicing_outlier_result_predict_absplice_dna():
+    sor = SplicingOutlierResult(
+        df_mmsplice=mmsplice_path, 
+        df_spliceai=spliceai_path,
+    )
+    sor.predict_absplice_dna()
+    assert 'AbSplice_DNA' in sor.absplice_dna.columns
+    
+    
+def test_splicing_outlier_result_predict_absplice_rna():
+    sor = SplicingOutlierResult(
+        df_mmsplice=mmsplice_path, 
+        df_spliceai=spliceai_path,
+        df_mmsplice_cat=mmsplice_cat_path,
+        df_var_samples=var_samples_path
+    )
+    sor.predict_absplice_rna()
+    assert 'AbSplice_RNA' in sor.absplice_rna.columns
 
     
