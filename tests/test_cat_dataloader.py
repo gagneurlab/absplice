@@ -24,9 +24,6 @@ def cat_dl3():
     )
 
 
-
-
-
 # # only save necessary junctions
 # # cat_dl[0].ct.df.loc[set.union(*cat_dl[0].common_junctions5).union(set.union(*cat_dl[0].common_junctions3))]
 # def test_save_necessary_junctions():
@@ -92,6 +89,39 @@ def test_cat_dataloader_sample_mapping():
         == sorted(list({'new_name1', 'new_name2', 'new_name3'}))
 
 
+def test_cat_dataloader_common(cat_dl):
+    assert ('17:41201211-41203079:-', 'ENSG00000012048', 'Testis') \
+        in set(cat_dl[1].common5.set_index(['junctions', 'gene_id', 'tissue']).index)
+    
+    assert not ('17:41201211-41203079:-', 'ENSG00000198496', 'Testis') \
+        in set(cat_dl[1].common5.set_index(['junctions', 'gene_id', 'tissue']).index)
+    
+    assert not ('17:41201917-4120307900000:-', 'ENSG00000012048', 'Testis') \
+        in set(cat_dl[0].common5.set_index(['junctions', 'gene_id', 'tissue']).index)
+    
+    # psi5
+    for i in range(len(cat_dl)):
+        df_common = cat_dl[i].common5
+        for j in range(len(cat_dl[i].tissues5)):
+            assert sorted(set(df_common[df_common['tissue'] == cat_dl[i].tissues5[j]]['junctions'])) \
+                == sorted(set(cat_dl[i].common_junctions5[j]))
+                
+            _df = cat_dl[i].splicemaps5[j].df             
+            assert sorted(set(df_common[df_common['tissue'] == cat_dl[i].tissues5[j]].set_index(['junctions', 'gene_id']).index)) \
+                == sorted(set(_df[_df['junctions'].isin(cat_dl[i].common_junctions5[j])].set_index(['junctions', 'gene_id']).index))
+       
+    # psi3         
+    for i in range(len(cat_dl)):
+        df_common = cat_dl[i].common3
+        for j in range(len(cat_dl[i].tissues3)):
+            assert sorted(set(df_common[df_common['tissue'] == cat_dl[i].tissues3[j]]['junctions'])) \
+                == sorted(set(cat_dl[i].common_junctions3[j]))
+                
+            _df = cat_dl[i].splicemaps3[j].df             
+            assert sorted(set(df_common[df_common['tissue'] == cat_dl[i].tissues3[j]].set_index(['junctions', 'gene_id']).index)) \
+                == sorted(set(_df[_df['junctions'].isin(cat_dl[i].common_junctions3[j])].set_index(['junctions', 'gene_id']).index))
+    
+                
 def test_cat_dataloader_infer(cat_dl):
     # cat_dl[0].splicemaps5[0].df[['junctions', 'gene_id']]
     row = cat_dl[0].infer('17:41201211-41203079:-', 'ENSG00000012048', 'Testis', 'NA00002', 'psi5')
@@ -144,18 +174,12 @@ def test_cat_dataloader_infer(cat_dl):
         'n_cat': 14,
         'psi_cat': 1.0,
         'ref_psi_cat': 1.0}
-    
-        
+
+
 def test_cat_dataloader_contains(cat_dl):
-    assert cat_dl[1].contains('17:41201211-41203079:-', 'ENSG00000012048', 'Testis', 'NA00002', 'psi5')
+    assert cat_dl[0].contains('NA00001')
+    assert not cat_dl[0].contains('NA00005')
     
-def test_cat_dataloader_contains_not_combination(cat_dl):
-    assert not cat_dl[1].contains('17:41201211-41203079:-', 'ENSG00000198496', 'Testis', 'NA00002', 'psi5')
-
-def test_cat_dataloader_contains_not(cat_dl):
-    assert not cat_dl[0].contains(
-        '17:41201917-4120307900000:-', 'ENSG00000012048', 'Testis', 'NA00002', 'psi5')
-
 
 # def test_cat_dataloader_infer_only_one_cat(cat_dl):
 #     junction_id = '17:41201917-41203079:-'
@@ -206,7 +230,7 @@ def test_cat_dataloader_infer_splicemap_cat_with_splicemap_cat():
     event_type = 'psi5'
 
     assert junction_id in set(cat_dl_splicemap_cat.splicemap5_cat.df['junctions'])
-    assert cat_dl_splicemap_cat.contains(junction_id, gene_id, tissue, sample, event_type) == True
+    assert cat_dl_splicemap_cat.contains(sample) == True
     row = cat_dl_splicemap_cat.infer(junction_id, gene_id, tissue, sample, event_type)
     assert row == {
         'junction': '17:41277787-41283224:+',
@@ -252,7 +276,7 @@ def test_cat_dataloader_infer_splicemap_cat_with_splicemap_cat_not_in_splicemap(
     event_type = 'psi5'
     
     assert junction_id not in set(cat_dl_splicemap_cat.splicemap5_cat.df['junctions'])
-    assert cat_dl_splicemap_cat.contains(junction_id, gene_id, tissue, sample, event_type) == True
+    assert cat_dl_splicemap_cat.contains(sample) == True
     # _df = cat_dl_splicemap_cat.splicemaps5[cat_dl_splicemap_cat.tissues5.index(tissue)].df
     # _df[['junctions', 'gene_id']]
     row = cat_dl_splicemap_cat.infer(junction_id, gene_id, tissue, sample, event_type)

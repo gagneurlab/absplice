@@ -29,6 +29,7 @@ class CatInference(SpliceMapMixin):
             self.tissues5 = [sm.name for sm in self.splicemaps5]
             self.common_junctions5 = [set(sm5.df['junctions'])\
                 .intersection(self.ct.junctions) for sm5 in self.splicemaps5]
+            self.common5 = self._get_common5()
             self.ct_cat5 = self.ct.filter_event5(list(set.union(*self.common_junctions5)))
             if splicemap_cat5 is not None:
                 self.splicemap_cat5_provided = True
@@ -38,6 +39,7 @@ class CatInference(SpliceMapMixin):
             self.tissues3 = [sm.name for sm in self.splicemaps3]
             self.common_junctions3 = [set(sm3.df['junctions'])\
                 .intersection(self.ct.junctions) for sm3 in self.splicemaps3]
+            self.common3 = self._get_common3()
             self.ct_cat3 = self.ct.filter_event3(list(set.union(*self.common_junctions3)))
             if splicemap_cat3 is not None:
                 self.splicemap_cat3_provided = True
@@ -57,50 +59,40 @@ class CatInference(SpliceMapMixin):
                 ' be path to cat SpliceCountTable files'
                 ' or `SpliceCountTable` object')
             
+    def _get_common5(self):
+        common_index = list()
+        for i in range(len(self.tissues5)):
+            common_junctions = self.common_junctions5[i]
+            df = self.splicemaps5[i].df
+            df = df[df['junctions'].isin(common_junctions)]
+            df['tissue'] = self.tissues5[i]
+            df['event_type'] = 'psi5'
+            df = df[['junctions', 'gene_id', 'tissue', 'event_type']]
+            common_index.append(df)
+        return pd.concat(common_index)
+    
+    def _get_common3(self):
+        common_index = list()
+        for i in range(len(self.tissues3)):
+            common_junctions = self.common_junctions3[i]
+            df = self.splicemaps3[i].df
+            df = df[df['junctions'].isin(common_junctions)]
+            df['tissue'] = self.tissues3[i]
+            df['event_type'] = 'psi3'
+            df = df[['junctions', 'gene_id', 'tissue', 'event_type']]
+            common_index.append(df)
+        return pd.concat(common_index)
+             
     def _contains_chr(self):
         return 'chr' in self.ct.junctions[0]
 
     def _update_samples(self, sample_mapping):
         self.ct.update_samples(sample_mapping)
 
-    def contains(self, junction_id, gene_id, tissue, sample, event_type):
-        if sample not in self.samples:
-            return False
-        else:
-            if event_type == 'psi5':
-                df = self.splicemaps5[self.tissues5.index(tissue)].df
-                if tissue not in self.tissues5:
-                    raise ValueError('"CatInference and MMSplice+SpliceMap should use the same SpliceMaps"')
-                else:
-                    return (df[(df['junctions'] == junction_id) & (df['gene_id'] == gene_id)].shape[0] > 0) \
-                        and (junction_id in self.common_junctions5[self.tissues5.index(tissue)])
-            elif event_type == 'psi3':
-                df = self.splicemaps3[self.tissues3.index(tissue)].df
-                if tissue not in self.tissues5:
-                    raise ValueError('"CatInference and MMSplice+SpliceMap should use the same SpliceMaps"')
-                else:
-                    return (df[(df['junctions'] == junction_id) & (df['gene_id'] == gene_id)].shape[0] > 0) \
-                        and (junction_id in self.common_junctions3[self.tissues3.index(tissue)])
-            else:
-                raise ValueError('"event_type" should be "psi5" or "psi3"')
+    def contains(self, sample):
+        return sample in self.samples
 
     def infer(self, junction_id, gene_id, tissue, sample, event_type, clip_threshold=0.01):
-        if not self.contains(junction_id, gene_id, tissue, sample, event_type):
-            return {
-                'junction': junction_id,
-                'gene_id': gene_id,
-                'sample': sample,
-                'tissue': tissue,
-                'count_cat': None,
-                'psi_cat': None,
-                'ref_psi_cat': None,
-                'k_cat': None,
-                'n_cat': None,
-                'delta_logit_psi_cat': None,
-                'delta_psi_cat': None,
-                'tissue_cat': self.ct.name
-            }
-
         splicemap_cat_provided = False
 
         if event_type == 'psi5':

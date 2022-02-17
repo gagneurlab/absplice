@@ -316,27 +316,25 @@ class SplicingOutlierResult:
         for cat in cat_inference:
             assert self.contains_chr == cat.contains_chr
             
-            common_junctions = set.union(*cat.common_junctions3)\
-                        .union(set.union(*cat.common_junctions5))
-            df_common_junctions = self.junction[
-                self.junction.index.get_level_values('junction').isin(common_junctions)]
-            assert df_common_junctions.shape[0] > 0
-            # print(set(df_common_junctions.index.get_level_values('junction')))
+            df_common_cat = pd.concat([cat.common5, cat.common3]).drop_duplicates()
+            common_cat_idx = set(df_common_cat\
+                .set_index(['junctions', 'gene_id', 'tissue', 'event_type']).index)
+            df_common = self.junction.reset_index()\
+                .set_index(['junction', 'gene_id', 'tissue', 'event_type'])
+            common_idx = set(df_common.index).intersection(common_cat_idx)
+            df_common = df_common.loc[common_idx]\
+                .set_index('sample', append=True)
             
-            rows = df_common_junctions.iterrows()
-            # rows = self.junction.iterrows()
-
+            rows = df_common.iterrows()
             if progress:
-                rows = tqdm(rows, total=df_common_junctions.shape[0])
-                # rows = tqdm(rows, total=self.junction.shape[0])
-            for (junction, gene_id, tissue, sample), row in rows:
-                if cat.contains(junction, gene_id, tissue, sample, row['event_type']):
+                rows = tqdm(rows, total=df_common.shape[0])
+            for (junction, gene_id, tissue, event_type, sample), row in rows:
+                if cat.contains(sample):
                     infer_rows.append(
-                        cat.infer(junction, gene_id, tissue, sample, row['event_type']))
+                        cat.infer(junction, gene_id, tissue, sample, event_type))
+                    
         df = pd.DataFrame(infer_rows)
         assert df.shape[0] > 0
-        # assert len(set(df_common_junctions.index.get_level_values('junction')).difference(set(df['junction']))) == 0
-        # self._junction can contain multiple cats (junction, gene_id, tissue, sample) is not unique index
         df = df.set_index(['junction', 'gene_id', 'tissue', 'sample'])
         # assert df.shape[0] == len(df.set_index('tissue_cat', append=True).index.unique())
         self.df_mmsplice_cat = self.junction.join(df)
@@ -391,8 +389,8 @@ class SplicingOutlierResult:
         return self._gene_mmsplice
     
     @property
-    def gene_mmsplice_cat(self): #NOTE: max aggregate over all variants
-        groupby=['gene_id', 'tissue', 'sample']
+    def gene_mmsplice_cat(self): #NOTE: max aggregate over all variants (and all CAT tissues)
+        groupby=['gene_id', 'tissue', 'sample'] #if wanted add tissue_cat in groupby
         if self._gene_mmsplice_cat is None:
             self._gene_mmsplice_cat = self._get_maximum_effect(self.df_mmsplice_cat, groupby, score='delta_psi_cat')
         return self._gene_mmsplice_cat
@@ -416,8 +414,8 @@ class SplicingOutlierResult:
         return self._variant_mmsplice
     
     @property
-    def variant_mmsplice_cat(self): #NOTE: max aggregate over all variants
-        groupby=['variant', 'gene_id', 'tissue', 'sample']
+    def variant_mmsplice_cat(self): #NOTE: max aggregate for variant on each gene (over all CAT tissues)
+        groupby=['variant', 'gene_id', 'tissue', 'sample'] #if wanted add tissue_cat in groupby
         if self._variant_mmsplice_cat is None:
             self._variant_mmsplice_cat = self._get_maximum_effect(self.df_mmsplice_cat, groupby, score='delta_psi_cat')
         return self._variant_mmsplice_cat
