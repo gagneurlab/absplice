@@ -340,7 +340,6 @@ class SplicingOutlierResult:
         self.df_mmsplice_cat = self.junction.join(df)
         self.df_mmsplice_cat = self.df_mmsplice_cat[
             (~self.df_mmsplice_cat['tissue_cat'].isna())
-            # & (self.df_mmsplice_cat['count_cat'] > 0) #it could also be deactivation, and count_cat == 0
         ]
         
     def _get_maximum_effect(self, df, groupby, score, dropna=True):

@@ -10,7 +10,7 @@ from conftest import fasta_file, vcf_file, multi_vcf_file, \
     ref_table5_kn_lung, ref_table3_kn_lung, \
     count_cat_file_lymphocytes,  count_cat_file_blood, \
     spliceai_path, mmsplice_path, mmsplice_cat_path, \
-    gene_map_path, var_samples_path, gene_tpm_path, pickle_absplice_DNA, pickle_absplice_RNA
+    gene_tpm_path, gene_map_path, var_samples_path, gene_tpm_path, pickle_absplice_DNA, pickle_absplice_RNA
 
 
 
@@ -23,6 +23,10 @@ def test_real_data():
     mmsplice_splicemap_path = dir_path + 'EXT_WAR_001_mmsplice_splicemap_event_filter=median_cutoff.csv'
     df = pd.read_csv(mmsplice_splicemap_path)
     df_samples = pd.read_csv(var_samples_path)
+    df_gene_tpm = pd.read_csv(gene_tpm_path)
+    _df = df_gene_tpm[df_gene_tpm['tissue'] == 'Cells_Cultured_fibroblasts']
+    _df = _df.replace({'Cells_Cultured_fibroblasts': 'Prokisch_Fibroblasts'})
+    df_gene_tpm = pd.concat([df_gene_tpm, _df])
     
     from splicemap.splice_map import SpliceMap
     sm = SpliceMap.read_csv(splicemap5_path)
@@ -36,6 +40,7 @@ def test_real_data():
 
     result = SplicingOutlierResult(
         df_mmsplice = mmsplice_splicemap_path,
+        gene_tpm = df_gene_tpm,
     )
 
     result.add_samples(pd.read_csv(var_samples_path))
@@ -317,7 +322,7 @@ def test_splicing_outlier_result_predict_absplice_dna(outlier_dl, outlier_dl_mul
     results.add_spliceai(spliceai_path, gene_map_path)
     results.add_samples(df_var_samples)
     
-    results.predict_absplice_dna(pickle_file=pickle_absplice_DNA)
+    results.predict_absplice_dna()
     assert 'AbSplice_DNA' in results.absplice_dna.columns
     
     
@@ -329,7 +334,7 @@ def test_splicing_outlier_result_predict_absplice_rna(outlier_dl, outlier_dl_mul
     results.add_samples(df_var_samples)
     results.infer_cat(cat_dl)
     
-    results.predict_absplice_rna(pickle_file=pickle_absplice_RNA)
+    results.predict_absplice_rna()
     assert 'AbSplice_RNA' in results.absplice_rna.columns
     
     
@@ -340,7 +345,7 @@ def test_splicing_outlier_result_gene_absplice_dna(outlier_dl, outlier_dl_multi,
     results.add_spliceai(spliceai_path, gene_map_path)
     results.add_samples(df_var_samples)
     
-    results.predict_absplice_dna(pickle_file=pickle_absplice_DNA)
+    results.predict_absplice_dna()
     assert 'variant' in results.absplice_dna.index.names
     assert 'variant' not in results.gene_absplice_dna.index.names
     assert 'AbSplice_DNA' in results.gene_absplice_dna.columns
@@ -354,7 +359,7 @@ def test_splicing_outlier_result_gene_absplice_rna(outlier_dl, outlier_dl_multi,
     results.add_samples(df_var_samples)
     results.infer_cat(cat_dl)
     
-    results.predict_absplice_rna(pickle_file=pickle_absplice_RNA)
+    results.predict_absplice_rna()
     assert 'variant' in results.absplice_rna_input.index.names
     assert 'variant' not in results.gene_absplice_rna.index.names
     assert 'AbSplice_RNA' in results.gene_absplice_rna.columns
@@ -370,7 +375,7 @@ def test_splicing_outlier_complete_dna(gene_map, gene_tpm, df_var_samples):
     )
     
     results.add_samples(df_var_samples)
-    results.predict_absplice_dna(pickle_file=pickle_absplice_DNA)
+    results.predict_absplice_dna()
     
     assert results.absplice_dna.shape[0] > 0 
     assert 'AbSplice_DNA' in results.absplice_dna.columns
@@ -386,7 +391,7 @@ def test_splicing_outlier_complete_rna(gene_map, gene_tpm, df_var_samples):
     )
     
     results.add_samples(df_var_samples)
-    results.predict_absplice_rna(pickle_file=pickle_absplice_RNA)
+    results.predict_absplice_rna()
     
     assert results.absplice_rna.shape[0] > 0 
     assert 'AbSplice_RNA' in results.absplice_rna.columns
