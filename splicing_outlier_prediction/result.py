@@ -330,9 +330,9 @@ class SplicingOutlierResult:
 
             cols_shared = ['junction', 'gene_id', 'tissue', 'event_type']
             common_cat_idx = set(pd.concat([cat.common5, cat.common3])
-                                 .set_index(cols_shared).index)
+                                 .set_index(['junctions', 'gene_id', 'tissue', 'event_type']).index)
 
-            df_common = self.junction.reset_index().set_index(cols_shared)
+            df_common = self.junction.reset_index().set_index(['junction', 'gene_id', 'tissue', 'event_type'])
 
             common_idx = set(df_common.index).intersection(common_cat_idx)
             df_common = df_common.loc[common_idx] \
