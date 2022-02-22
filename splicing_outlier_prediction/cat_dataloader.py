@@ -32,11 +32,12 @@ class CatInference(SpliceMapMixin):
 
         if self.combined_splicemap5 is not None:
             self.tissues5 = [sm.name for sm in self.splicemaps5]
+            self.splicemap5_dict = self._splicemap5_list_to_dict()
             self.common_junctions5 = [
                 set(sm5.df['junctions']).intersection(self.ct.junctions)
                 for sm5 in self.splicemaps5
             ]
-            # get junctin, gene, tissue, event info per tissue as list
+            # get junction, gene, tissue, event info per tissue as list
             self.common5 = self._get_common5()
             self.ct_cat5 = self.ct.filter_event5(
                 list(set.union(*self.common_junctions5)))
@@ -50,11 +51,12 @@ class CatInference(SpliceMapMixin):
 
         if self.combined_splicemap3 is not None:
             self.tissues3 = [sm.name for sm in self.splicemaps3]
+            self.splicemap3_dict = self._splicemap3_list_to_dict()
             self.common_junctions3 = [
                 set(sm3.df['junctions']).intersection(self.ct.junctions)
                 for sm3 in self.splicemaps3
             ]
-            # get junctin, gene, tissue, event info per tissue as list
+            # get junction, gene, tissue, event info per tissue as list
             self.common3 = self._get_common3()
             self.ct_cat3 = self.ct.filter_event3(
                 list(set.union(*self.common_junctions3)))
@@ -77,6 +79,18 @@ class CatInference(SpliceMapMixin):
                 '`count_cat` argument should'
                 ' be path to cat SpliceCountTable files'
                 ' or `SpliceCountTable` object')
+
+    def _splicemap3_list_to_dict(self):
+        self.splicemap3_dict = dict()
+        for tissue in self.tissues3:
+            self.splicemap3_dict[tissue] = self.splicemaps3[self.tissues3.index(tissue)].df\
+                .set_index(['junctions', 'gene_id'])
+                
+    def _splicemap5_list_to_dict(self):
+        self.splicemap5_dict = dict()
+        for tissue in self.tissues5:
+            self.splicemap5_dict[tissue] = self.splicemaps5[self.tissues5.index(tissue)].df\
+                .set_index(['junctions', 'gene_id'])
 
     def _get_common5(self):
         common_index = list()
@@ -125,9 +139,7 @@ class CatInference(SpliceMapMixin):
                     ['junctions', 'gene_id'])
 
             tissue_cat = ct_cat.name
-            # TO SPEED UP: move init, splicemap5 is dict
-            splicemap_target_df = self.splicemaps5[self.tissues5.index(tissue)] \
-                .df.set_index(['junctions', 'gene_id'])
+            splicemap_target_df = self.splicemap5_dict[tissue]
 
         elif event_type == 'psi3':
             ct_cat = self.ct_cat3
@@ -140,9 +152,7 @@ class CatInference(SpliceMapMixin):
                     ['junctions', 'gene_id'])
 
             tissue_cat = ct_cat.name
-            # TO SPEED UP: move init, splicemap5 is dict
-            splicemap_target_df = self.splicemaps3[self.tissues3.index(tissue)] \
-                .df.set_index(['junctions', 'gene_id'])
+            splicemap_target_df = self.splicemap3_dict[tissue]
         else:
             raise ValueError('Site should be "psi5" or "psi3"')
 
