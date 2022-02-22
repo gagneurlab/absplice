@@ -85,12 +85,14 @@ class CatInference(SpliceMapMixin):
         for tissue in self.tissues3:
             self.splicemap3_dict[tissue] = self.splicemaps3[self.tissues3.index(tissue)].df\
                 .set_index(['junctions', 'gene_id'])
+        return self.splicemap3_dict
                 
     def _splicemap5_list_to_dict(self):
         self.splicemap5_dict = dict()
         for tissue in self.tissues5:
             self.splicemap5_dict[tissue] = self.splicemaps5[self.tissues5.index(tissue)].df\
                 .set_index(['junctions', 'gene_id'])
+        return self.splicemap5_dict
 
     def _get_common5(self):
         common_index = list()
