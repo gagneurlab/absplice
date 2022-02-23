@@ -226,9 +226,10 @@ class SplicingOutlierResult:
             df_absplice_dna = self._validate_df(
                 df_absplice_dna,
                 columns=[
-                    'variant', 'gene_id', 'tissue', 'delta_psi', 'delta_score',
-                    'gene_is_expressed', 'splice_site_is_expressed', 'ref_psi', 'delta_logit_psi',
-                    'AbSplice_DNA'
+                    # 'variant', 'gene_id', 'tissue', 'delta_psi', 'delta_score',
+                    # 'gene_is_expressed', 'splice_site_is_expressed', 'ref_psi', 'delta_logit_psi',
+                    # 'AbSplice_DNA'
+                    'gene_id', 'tissue', 'delta_psi', 'delta_score', 'AbSplice_DNA'
                 ])
             df_absplice_dna = self._validate_dtype(df_absplice_dna)
         return df_absplice_dna
@@ -238,10 +239,11 @@ class SplicingOutlierResult:
             df_absplice_rna = self._validate_df(
                 df_absplice_rna,
                 columns=[
-                    'variant', 'gene_id', 'tissue', 'delta_psi', 'delta_score',
-                    'gene_is_expressed', 'splice_site_is_expressed', 'ref_psi', 'delta_logit_psi',
-                    'delta_psi_cat', 'count_cat', 'psi_cat', 'ref_psi_cat',
-                    'AbSplice_RNA'
+                    # 'variant', 'gene_id', 'tissue', 'delta_psi', 'delta_score',
+                    # 'gene_is_expressed', 'splice_site_is_expressed', 'ref_psi', 'delta_logit_psi',
+                    # 'delta_psi_cat', 'count_cat', 'psi_cat', 'ref_psi_cat',
+                    # 'AbSplice_RNA'
+                    'gene_id', 'tissue', 'delta_psi', 'delta_score', 'AbSplice_RNA'
                 ])
             df_absplice_rna = self._validate_dtype(df_absplice_rna)
         return df_absplice_rna
