@@ -519,7 +519,7 @@ class SplicingOutlierResult:
         if pickle_file is None:
             pickle_file = ABSPLICE_DNA
 
-        self.absplice_dna = self._predict_absplice(
+        self._absplice_dna = self._predict_absplice(
             df=self.absplice_dna_input,
             absplice_score='AbSplice_DNA',
             pickle_file=pickle_file,
@@ -527,7 +527,7 @@ class SplicingOutlierResult:
             abs_features=abs_features,
             median_n_cutoff=median_n_cutoff,
             tpm_cutoff=tpm_cutoff)
-        return self.absplice_dna
+        return self._absplice_dna
 
     def predict_absplice_rna(self, pickle_file=None, features=None, abs_features=True, median_n_cutoff=0, tpm_cutoff=1):
         if features is None:
@@ -539,7 +539,7 @@ class SplicingOutlierResult:
         if pickle_file is None:
             pickle_file = ABSPLICE_RNA
 
-        self.absplice_rna = self._predict_absplice(
+        self._absplice_rna = self._predict_absplice(
             df=self.absplice_rna_input,
             absplice_score='AbSplice_RNA',
             pickle_file=pickle_file,
@@ -547,16 +547,16 @@ class SplicingOutlierResult:
             abs_features=abs_features,
             median_n_cutoff=median_n_cutoff,
             tpm_cutoff=tpm_cutoff)
-        return self.absplice_rna
+        return self._absplice_rna
 
     @property
     def gene_absplice_dna(self):  # NOTE: max aggregate over all variants
         groupby = ['gene_id', 'tissue']
-        if 'sample' in self.absplice_dna.reset_index():
+        if 'sample' in self._absplice_dna.reset_index():
             groupby.append('sample')
         if self._gene_absplice_dna is None:
             self._gene_absplice_dna = self._get_maximum_effect(
-                self.absplice_dna, groupby, score='AbSplice_DNA')
+                self._absplice_dna, groupby, score='AbSplice_DNA')
         return self._gene_absplice_dna
 
     @property
@@ -564,18 +564,18 @@ class SplicingOutlierResult:
         groupby = ['gene_id', 'tissue', 'sample']
         if self._gene_absplice_rna is None:
             self._gene_absplice_rna = self._get_maximum_effect(
-                self.absplice_rna, groupby, score='AbSplice_RNA')
+                self._absplice_rna, groupby, score='AbSplice_RNA')
         return self._gene_absplice_rna
 
     @property
     # NOTE: max aggregate for variant on each gene
     def variant_absplice_dna(self):
         groupby = ['variant', 'gene_id', 'tissue']
-        if 'sample' in self.absplice_dna.reset_index():
+        if 'sample' in self._absplice_dna.reset_index():
             groupby.append('sample')
         if self._variant_absplice_dna is None:
             self._variant_absplice_dna = self._get_maximum_effect(
-                self.absplice_dna, groupby, score='AbSplice_DNA')
+                self._absplice_dna, groupby, score='AbSplice_DNA')
         return self._variant_absplice_dna
 
     @property
@@ -584,7 +584,7 @@ class SplicingOutlierResult:
         groupby = ['variant', 'gene_id', 'tissue', 'sample']
         if self._variant_absplice_rna is None:
             self._variant_absplice_rna = self._get_maximum_effect(
-                self.absplice_rna, groupby, score='AbSplice_RNA')
+                self._absplice_rna, groupby, score='AbSplice_RNA')
         return self._variant_absplice_rna
 
     @staticmethod

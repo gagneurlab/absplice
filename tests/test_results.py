@@ -231,7 +231,7 @@ def test_splicing_outlier_result_predict_absplice_dna():
         df_spliceai=spliceai_path,
     )
     sor.predict_absplice_dna()
-    assert 'AbSplice_DNA' in sor.absplice_dna.columns
+    assert 'AbSplice_DNA' in sor._absplice_dna.columns
     
     
 def test_splicing_outlier_result_predict_absplice_rna():
@@ -242,6 +242,6 @@ def test_splicing_outlier_result_predict_absplice_rna():
         df_var_samples=var_samples_path
     )
     sor.predict_absplice_rna()
-    assert 'AbSplice_RNA' in sor.absplice_rna.columns
+    assert 'AbSplice_RNA' in sor._absplice_rna.columns
 
     
