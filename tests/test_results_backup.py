@@ -323,7 +323,7 @@ def test_splicing_outlier_result_predict_absplice_dna(outlier_dl, outlier_dl_mul
     results.add_samples(df_var_samples)
     
     results.predict_absplice_dna()
-    assert 'AbSplice_DNA' in results.absplice_dna.columns
+    assert 'AbSplice_DNA' in results._absplice_dna.columns
     
     
 def test_splicing_outlier_result_predict_absplice_rna(outlier_dl, outlier_dl_multi, df_var_samples, outlier_model, gene_map, gene_tpm, cat_dl):
@@ -335,7 +335,7 @@ def test_splicing_outlier_result_predict_absplice_rna(outlier_dl, outlier_dl_mul
     results.infer_cat(cat_dl)
     
     results.predict_absplice_rna()
-    assert 'AbSplice_RNA' in results.absplice_rna.columns
+    assert 'AbSplice_RNA' in results._absplice_rna.columns
     
     
 def test_splicing_outlier_result_gene_absplice_dna(outlier_dl, outlier_dl_multi, df_var_samples, outlier_model, gene_map, gene_tpm):
@@ -346,7 +346,7 @@ def test_splicing_outlier_result_gene_absplice_dna(outlier_dl, outlier_dl_multi,
     results.add_samples(df_var_samples)
     
     results.predict_absplice_dna()
-    assert 'variant' in results.absplice_dna.index.names
+    assert 'variant' in results._absplice_dna.index.names
     assert 'variant' not in results.gene_absplice_dna.index.names
     assert 'AbSplice_DNA' in results.gene_absplice_dna.columns
     
@@ -377,8 +377,8 @@ def test_splicing_outlier_complete_dna(gene_map, gene_tpm, df_var_samples):
     results.add_samples(df_var_samples)
     results.predict_absplice_dna()
     
-    assert results.absplice_dna.shape[0] > 0 
-    assert 'AbSplice_DNA' in results.absplice_dna.columns
+    assert results._absplice_dna.shape[0] > 0 
+    assert 'AbSplice_DNA' in results._absplice_dna.columns
     
 def test_splicing_outlier_complete_rna(gene_map, gene_tpm, df_var_samples):
     
@@ -393,8 +393,8 @@ def test_splicing_outlier_complete_rna(gene_map, gene_tpm, df_var_samples):
     results.add_samples(df_var_samples)
     results.predict_absplice_rna()
     
-    assert results.absplice_rna.shape[0] > 0 
-    assert 'AbSplice_RNA' in results.absplice_rna.columns
+    assert results._absplice_rna.shape[0] > 0 
+    assert 'AbSplice_RNA' in results._absplice_rna.columns
      
      
 def test_splicing_outlier_complete_dna_init(gene_map, gene_tpm, df_var_samples):

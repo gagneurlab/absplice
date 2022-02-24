@@ -132,6 +132,9 @@ class SplicingOutlierResult:
                          'delta_psi', 'ref_psi', 'median_n', 'gene_tpm',
                          'tissue_cat', 'delta_psi_cat'])
             df_mmsplice_cat = self._validate_dtype(df_mmsplice_cat)
+            df_mmsplice_cat = df_mmsplice_cat[
+                ~df_mmsplice_cat['delta_psi_cat'].isna()
+            ]
         return df_mmsplice_cat
 
     def validate_df_spliceai(self, df_spliceai):
@@ -356,6 +359,7 @@ class SplicingOutlierResult:
         self.df_mmsplice_cat = self.junction.join(df)
         self.df_mmsplice_cat = self.df_mmsplice_cat[
             (~self.df_mmsplice_cat['tissue_cat'].isna())
+            & (~self.df_mmsplice_cat['delta_psi_cat'].isna())
         ]
 
     def _get_maximum_effect(self, df, groupby, score, dropna=True):
