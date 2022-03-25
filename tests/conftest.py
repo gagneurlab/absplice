@@ -1,5 +1,6 @@
 import pytest
 import pandas as pd
+import tempfile
 from splicing_outlier_prediction import SplicingOutlierResult, \
     SpliceOutlierDataloader, SpliceOutlier, CatInference
 
@@ -116,6 +117,31 @@ def mmsplice_splicemap_cols():
         'delta_logit_psi', 'delta_psi',
         'ref_acceptorIntron', 'ref_acceptor', 'ref_exon', 'ref_donor', 'ref_donorIntron',
         'alt_acceptorIntron', 'alt_acceptor', 'alt_exon', 'alt_donor', 'alt_donorIntron'])
+    
+    
+    
+    
+variants = [
+    "chr3:193360794:C:['A']"
+]
+
+def parse_vcf_id(vcf_id):
+    return vcf_id.replace("'", '').replace('[', '').replace(']', '').split(':')
+
+@pytest.fixture
+def vcf_path():
+    with tempfile.NamedTemporaryFile('w') as temp_vcf:
+        temp_vcf.write('##fileformat=VCFv4.0\n')
+        temp_vcf.write('##contig=<ID=13,length=115169878>\n')
+        temp_vcf.write('##contig=<ID=17,length=81195210>\n')
+        temp_vcf.write('#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n')
+
+        for v in variants:
+            temp_vcf.write('%s\t%s\t1\t%s\t%s\t.\t.\t.\n'
+                           % tuple(parse_vcf_id(v)))
+
+        temp_vcf.flush()
+        yield temp_vcf.name
 
 
 
