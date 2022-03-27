@@ -1,68 +1,13 @@
-import itertools
 from tqdm import tqdm
 import pandas as pd
-from kipoi.data import SampleIterator
 try:
     from mmsplice import MMSplice
-    from mmsplice.junction_dataloader import JunctionPSI5VCFDataloader, \
-        JunctionPSI3VCFDataloader
-    from mmsplice.utils import encodeDNA, df_batch_writer, \
-        delta_logit_PSI_to_delta_PSI
+    from mmsplice.utils import df_batch_writer, df_batch_writer_parquet, delta_logit_PSI_to_delta_PSI
 except ImportError:
     pass
-from splicing_outlier_prediction.dataloader import RefTableMixin
 from splicing_outlier_prediction.result import SplicingOutlierResult
-
-
-class SpliceOutlierDataloader(RefTableMixin, SampleIterator):
-
-    def __init__(self, fasta_file, vcf_file, ref_table5=None, ref_table3=None, **kwargs):
-        super().__init__(ref_table5, ref_table3, **kwargs)
-        import mmsplice
-        self.fasta_file = fasta_file
-        self.vcf_file = vcf_file
-        self._generator = iter([])
-
-        if self.ref_table5:
-            self.dl5 = JunctionPSI5VCFDataloader(
-                ref_table5, fasta_file, vcf_file, encode=False, **kwargs)
-            self._generator = itertools.chain(
-                self._generator,
-                self._iter_dl(self.dl5, self.ref_table5, event_type='psi5'))
-
-        if self.ref_table3:
-            self.dl3 = JunctionPSI3VCFDataloader(
-                ref_table3, fasta_file, vcf_file, encode=False, **kwargs)
-            self._generator = itertools.chain(
-                self._generator,
-                self._iter_dl(self.dl3, self.ref_table3, event_type='psi3'))
-
-    def _iter_dl(self, dl, ref_table, event_type):
-        for row in dl:
-            junction_id = row['metadata']['exon']['junction']
-            ref_row = ref_table.df.loc[junction_id]
-            row['metadata']['junction'] = dict()
-            row['metadata']['junction']['junction'] = ref_row.name
-            row['metadata']['junction']['event_type'] = event_type
-            row['metadata']['junction'].update(ref_row.to_dict())
-            yield row
-
-    def __next__(self):
-        return next(self._generator)
-
-    def __iter__(self):
-        return self
-
-    def batch_iter(self, batch_size=32, **kwargs):
-        for batch in super().batch_iter(batch_size, **kwargs):
-            batch['inputs']['seq'] = self._encode_batch_seq(
-                batch['inputs']['seq'])
-            batch['inputs']['mut_seq'] = self._encode_batch_seq(
-                batch['inputs']['mut_seq'])
-            yield batch
-
-    def _encode_batch_seq(self, batch):
-        return {k: encodeDNA(v.tolist()) for k, v in batch.items()}
+from pathlib import Path
+import pathlib
 
 
 class SpliceOutlier:
@@ -72,21 +17,48 @@ class SpliceOutlier:
         self.mmsplice = MMSplice()
         self.clip_threshold = clip_threshold
 
-    def predict_on_batch(self, batch):
-        columns = [
-            'samples', 'maf', 'genotype', 'GQ', 'DP_ALT',
-            *batch['metadata']['junction'].keys()
-        ]
+    def _add_delta_psi_single_ref(self, df, splicemap):
+        df_splicemap = splicemap.df
+
+        core_cols = ['junctions', 'Chromosome', 'Start', 'End', 'Strand']
+        cols_splicemap = df_splicemap.columns.difference(core_cols, False)
+        df_splicemap = df_splicemap.rename(columns={'junctions': 'junction'}) \
+            .set_index('junction')[cols_splicemap]
+
+        df = df[df.columns.difference(cols_splicemap, False)] \
+            .set_index('junction')
+
+        df_joined = df.join(df_splicemap, how='inner').reset_index()
+
+        delta_psi = delta_logit_PSI_to_delta_PSI(
+            df_joined['delta_logit_psi'],
+            df_joined['ref_psi'],
+            clip_threshold=self.clip_threshold or 0.01
+        )
+        df_joined.insert(8, 'delta_psi', delta_psi)
+        df_joined.insert(3, 'tissue', splicemap.name)
+        return df_joined
+
+    def _add_delta_event(self, df, splicemaps, event_type):
+        df = df[df['event_type'] == event_type]
+        return pd.concat(
+            self._add_delta_psi_single_ref(df, splicemap)
+            for splicemap in splicemaps
+        )
+
+    def _add_delta_psi(self, df, dl):
+        return pd.concat([
+            self._add_delta_event(df, dl.splicemaps5, 'psi5'),
+            self._add_delta_event(df, dl.splicemaps3, 'psi3')
+        ])
+
+    def predict_on_batch(self, batch, dataloader):
+        columns = batch['metadata']['junction'].keys()
         df = self.mmsplice._predict_batch(batch, columns)
         del df['exons']
         df = df.rename(columns={'ID': 'variant'})
-        delta_psi = delta_logit_PSI_to_delta_PSI(
-            df['delta_logit_psi'],
-            df['ref_psi'],
-            clip_threshold=self.clip_threshold or 0.01
-        )
-        df.insert(18, 'delta_psi', delta_psi)
-        return df
+        df_with_delta_psi = self._add_delta_psi(df, dataloader)
+        return df_with_delta_psi
 
     def _predict_on_dataloader(self, dataloader,
                                batch_size=512, progress=True):
@@ -95,7 +67,7 @@ class SpliceOutlier:
             dt_iter = tqdm(dt_iter)
 
         for batch in dt_iter:
-            yield self.predict_on_batch(batch)
+            yield self.predict_on_batch(batch, dataloader)
 
     def predict_on_dataloader(self, dataloader, batch_size=512, progress=True):
         return SplicingOutlierResult(pd.concat(
@@ -105,6 +77,11 @@ class SpliceOutlier:
                 progress=progress)
         ))
 
-    def predict_save(self, dataloader, output_csv,
+    def predict_save(self, dataloader, output_path,
                      batch_size=512, progress=True):
-        df_batch_writer(self._predict_on_dataloader(dataloader), output_csv)
+        if not isinstance(output_path, pathlib.PosixPath):
+            output_path = Path(output_path)
+        if output_path.suffix.lower() == '.csv':
+            df_batch_writer(self._predict_on_dataloader(dataloader), output_path)
+        elif output_path.suffix.lower() == '.parquet':
+            df_batch_writer_parquet(self._predict_on_dataloader(dataloader), output_path)

@@ -1,26 +1,61 @@
 import pytest
 from splicing_outlier_prediction import SpliceOutlierDataloader
-from conftest import ref_table5_kn_file, ref_table3_kn_file, fasta_file, vcf_file, multi_vcf_file, count_cat_file
+from conftest import fasta_file, vcf_file, multi_vcf_file, \
+    ref_table5_kn_testis, ref_table3_kn_testis, ref_table5_kn_lung, ref_table3_kn_lung, \
+     count_cat_file_lymphocytes
 
 
 @pytest.fixture
 def outlier_dl5():
     return SpliceOutlierDataloader(
-        fasta_file, vcf_file, ref_table5=ref_table5_kn_file)
+        fasta_file, vcf_file,
+        splicemap5=[
+            ref_table5_kn_testis,
+            ref_table5_kn_lung
+        ])
 
 
 @pytest.fixture
 def outlier_dl3():
     return SpliceOutlierDataloader(
-        fasta_file, vcf_file, ref_table3=ref_table3_kn_file)
+        fasta_file, vcf_file, splicemap3=ref_table3_kn_testis)
 
 
 def test_splicing_outlier_dataloader_init(outlier_dl):
-    assert outlier_dl.ref_table5.method == 'kn'
-    assert outlier_dl.ref_table5.df.shape[0] == 26
+    # splicemap5
+    assert outlier_dl.combined_splicemap5.shape[0] == 6
 
-    assert outlier_dl.ref_table3.method == 'kn'
-    assert outlier_dl.ref_table3.df.shape[0] == 28
+    assert outlier_dl.splicemaps5[0].name == 'Testis'
+    assert outlier_dl.splicemaps5[1].name == 'Lung'
+
+    assert sorted(
+        set(outlier_dl.splicemaps5[0].df['junctions']).union(
+            set(outlier_dl.splicemaps5[1].df['junctions'])
+        )
+    ) == sorted(set(outlier_dl.combined_splicemap5.index))
+
+    # splicemap3
+    assert outlier_dl.combined_splicemap3.shape[0] == 5
+
+    assert outlier_dl.splicemaps3[0].name == 'Testis'
+    assert outlier_dl.splicemaps3[1].name == 'Lung'
+
+    assert sorted(
+        set(outlier_dl.splicemaps3[0].df['junctions']).union(
+            set(outlier_dl.splicemaps3[1].df['junctions'])
+        )
+    ) == sorted(set(outlier_dl.combined_splicemap3.index))
+
+
+def test_splicing_outlier_dataloader_init_dl3(outlier_dl3):
+    # psi 5
+    assert outlier_dl3.combined_splicemap5 is None
+    # psi 3
+    assert outlier_dl3.combined_splicemap3.shape[0] == 4
+    assert outlier_dl3.splicemaps3[0].name == 'Testis'
+
+    assert sorted(set(outlier_dl3.splicemaps3[0].df['junctions'])) \
+        == sorted(set(outlier_dl3.combined_splicemap3.index))
 
 
 def test_splicing_outlier_dataloader_iter(outlier_dl):
@@ -40,14 +75,13 @@ def test_splicing_outlier_dataloader_next(outlier_dl):
 
     junction = rows[0]['metadata']['junction']
     variant = rows[0]['metadata']['variant']
-    assert junction['junction'] == '17:41197819-41199659:-'
-    assert variant['annotation'] == '17:41197805:ACATCTGCC>A'
+    # assert junction['junction'] == '17:41201211-41203079:-'
+    assert junction['junction'] == '17:41201200-41205000:-'
+    assert variant['annotation'] == '17:41201201:TTC>CA'
     assert junction['event_type'] == 'psi5'
-    assert junction['ref_psi'] == 1
 
     junction = rows[-1]['metadata']['junction']
     variant = rows[-1]['metadata']['variant']
-    assert junction['junction'] == '17:41246877-41251791:-'
-    assert variant['annotation'] == '17:41251886:A>G'
+    assert junction['junction'] == '17:41267796-41276033:-'
+    assert variant['annotation'] == '17:41276032:T>A'
     assert junction['event_type'] == 'psi3'
-    assert junction['ref_psi'] == 0.20666666666666667

@@ -1,0 +1,20 @@
+
+fasta:
+  url: http://ftp.ensembl.org/pub/release-105/fasta/homo_sapiens/dna/Homo_sapiens.GRCh38.dna.chromosome.17.fa.gz
+  file: Homo_sapiens.GRCh38.dna.chromosome.17.fa
+
+clinvar:
+  url: https://ftp.ncbi.nlm.nih.gov/pub/clinvar/vcf_GRCh38/clinvar_20220320.vcf.gz
+  vcf: clinvar_20220320.vcf.gz
+  vcf_tbi: clinvar_20220320.vcf.gz.tbi
+
+  region: 17:43044295-43170245
+  vcf_subset: clinvar_subset.vcf.gz
+
+splicemap_dir: ../splicing_outlier_prediction/precomputed/splicemap_gtex_v8/
+
+splicing_pred:
+  mmsplice_splicemap: mmsplice_splicemap.csv
+  spliceai: spliceai.csv
+  spliceai_vcf: spliceai.vcf
+  absplice_dna: absplice_dna.csv

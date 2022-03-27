@@ -1,25 +1,144 @@
 import pytest
-from splicing_outlier_prediction import SpliceOutlierDataloader, CatInference
-
+import pandas as pd
+import tempfile
+from splicing_outlier_prediction import SplicingOutlierResult, \
+    SpliceOutlierDataloader, SpliceOutlier, CatInference
+from splicing_outlier_prediction.result import SplicingOutlierResult, \
+    GENE_MAP, GENE_TPM_GTEx
 
 vcf_file = 'tests/data/test.vcf.gz'
 multi_vcf_file = 'tests/data/multi_test.vcf.gz'
+var_samples_path = 'tests/data/multi_test.vcf_samples.csv'
 fasta_file = 'tests/data/hg19.nochr.chr17.fa'
-ref_table5_kn_file = 'tests/data/test_lymphocytes_ref_table5_kn.csv'
-ref_table3_kn_file = 'tests/data/test_lymphocytes_ref_table3_kn.csv'
-count_cat_file = 'tests/data/test_count_table_cat_chrom17.csv'
-spliceai_db_path = 'tests/data/spliceAI.db'
 
+ref_table5_kn_testis = 'tests/data/Testis_splicemap_psi5_method=kn_event_filter=median_cutoff.csv.gz'
+ref_table3_kn_testis = 'tests/data/Testis_splicemap_psi3_method=kn_event_filter=median_cutoff.csv.gz'
+ref_table5_kn_lung = 'tests/data/Lung_splicemap_psi5_method=kn_event_filter=median_cutoff.csv.gz'
+ref_table3_kn_lung = 'tests/data/Lung_splicemap_psi3_method=kn_event_filter=median_cutoff.csv.gz'
+ref_table5_kn_blood = 'tests/data/Cells_Cultured_fibroblasts_splicemap_psi5_method=kn_event_filter=median_cutoff.csv.gz'
+ref_table3_kn_blood = 'tests/data/Cells_Cultured_fibroblasts_splicemap_psi3_method=kn_event_filter=median_cutoff.csv.gz'
+
+count_cat_file_lymphocytes_complete = 'tests/data/create_test/data/full_data/backup/test_count_table_cat_chrom17_lymphocytes.csv'
+count_cat_file_blood_complete = 'tests/data/create_test/data/full_data/backup/test_count_table_cat_chrom17_blood.csv'
+count_cat_file_lymphocytes = 'tests/data/test_count_table_cat_chrom17_lymphocytes.csv'
+count_cat_file_blood = 'tests/data/test_count_table_cat_chrom17_blood.csv'
+
+mmsplice_path = 'tests/data/test_mmsplice.csv'
+spliceai_path = 'tests/data/test_spliceAI.csv'
+mmsplice_cat_path = 'tests/data/test_mmsplice_cat.csv'
+
+@pytest.fixture
+def df_var_samples():
+    return pd.read_csv(var_samples_path)
+
+@pytest.fixture
+def df_mmsplice():
+    return pd.read_csv(mmsplice_path)
+
+@pytest.fixture
+def df_spliceai():
+    return pd.read_csv(spliceai_path)
+
+@pytest.fixture
+def df_mmsplice_cat():
+    return pd.read_csv(mmsplice_cat_path)
 
 @pytest.fixture
 def outlier_dl():
     return SpliceOutlierDataloader(
         fasta_file, vcf_file,
-        ref_table5=ref_table5_kn_file, ref_table3=ref_table3_kn_file)
+        splicemap5=[ref_table5_kn_testis, ref_table5_kn_lung],
+        splicemap3=[ref_table3_kn_testis, ref_table3_kn_lung])
 
+@pytest.fixture
+def outlier_dl_multi():
+    return SpliceOutlierDataloader(
+        fasta_file, multi_vcf_file,
+        splicemap5=[ref_table5_kn_testis, ref_table5_kn_lung],
+        splicemap3=[ref_table3_kn_testis, ref_table3_kn_lung]
+    )
 
 @pytest.fixture
 def cat_dl():
-    return CatInference(ref_table5=ref_table5_kn_file,
-                        ref_table3=ref_table3_kn_file,
-                        count_cat=count_cat_file)
+    return [
+        CatInference(splicemap5=[ref_table5_kn_testis, ref_table5_kn_lung],
+                     splicemap3=[ref_table3_kn_testis, ref_table3_kn_lung],
+                     count_cat=count_cat_file_lymphocytes,
+                     name='lymphocytes'),
+        CatInference(splicemap5=[ref_table5_kn_testis, ref_table5_kn_lung],
+                     splicemap3=[ref_table3_kn_testis, ref_table3_kn_lung],
+                     count_cat=count_cat_file_blood,
+                     name='blood'),
+    ]
+
+@pytest.fixture
+def outlier_model():
+    return SpliceOutlier()
+
+@pytest.fixture
+def outlier_results(outlier_model, outlier_dl):
+    return outlier_model.predict_on_dataloader(outlier_dl)
+
+@pytest.fixture
+def outlier_results_multi(outlier_model, outlier_dl_multi, df_var_samples):
+    results = outlier_model.predict_on_dataloader(outlier_dl_multi)
+    results.add_samples(df_var_samples)
+    return results
+
+@pytest.fixture
+def gene_map():
+    return pd.read_csv(GENE_MAP, sep='\t')
+
+@pytest.fixture
+def gene_tpm():
+    return pd.read_csv(GENE_TPM_GTEx)
+
+@pytest.fixture
+def outlier_results_complete(outlier_model, outlier_dl_multi, df_spliceai, gene_map, df_var_samples):
+    results = outlier_model.predict_on_dataloader(outlier_dl_multi)
+    results.add_spliceai(df_spliceai, gene_map)
+    results.add_samples(df_var_samples)
+    return results
+
+
+@pytest.fixture
+def mmsplice_splicemap_cols():
+    return sorted([
+        'variant', 'junction', 'tissue', 'event_type',
+        'Chromosome', 'Start', 'End', 'Strand',
+        'events', 'splice_site', 'ref_psi', 'k', 'n', 'median_n',
+        'novel_junction', 'weak_site_donor', 'weak_site_acceptor',
+        'gene_id', 'gene_name', 'transcript_id', 'gene_type', 'gene_tpm',
+        'delta_logit_psi', 'delta_psi',
+        'ref_acceptorIntron', 'ref_acceptor', 'ref_exon', 'ref_donor', 'ref_donorIntron',
+        'alt_acceptorIntron', 'alt_acceptor', 'alt_exon', 'alt_donor', 'alt_donorIntron'])
+    
+    
+    
+    
+variants = [
+    "chr3:193360794:C:['A']"
+]
+
+def parse_vcf_id(vcf_id):
+    return vcf_id.replace("'", '').replace('[', '').replace(']', '').split(':')
+
+@pytest.fixture
+def vcf_path():
+    with tempfile.NamedTemporaryFile('w') as temp_vcf:
+        temp_vcf.write('##fileformat=VCFv4.0\n')
+        temp_vcf.write('##contig=<ID=13,length=115169878>\n')
+        temp_vcf.write('##contig=<ID=17,length=81195210>\n')
+        temp_vcf.write('#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n')
+
+        for v in variants:
+            temp_vcf.write('%s\t%s\t1\t%s\t%s\t.\t.\t.\n'
+                           % tuple(parse_vcf_id(v)))
+
+        temp_vcf.flush()
+        yield temp_vcf.name
+
+
+
+
+     

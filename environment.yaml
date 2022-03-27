@@ -1,0 +1,18 @@
+name: absplice
+channels:
+  - defaults
+  - conda-forge
+  - bioconda
+dependencies:
+  - python >= 3.8
+  - cython
+  - tensorflow
+  - spliceai
+  - snakemake
+  - rocksdb
+  - python-rocksdb
+  - pytest
+  - tabix
+  - pip:
+    - mmsplice
+    - interpret
