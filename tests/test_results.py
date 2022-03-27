@@ -6,8 +6,10 @@ from kipoiseq.extractors.vcf import MultiSampleVCF
 from splicing_outlier_prediction import SpliceOutlier, SpliceOutlierDataloader, CatInference, SplicingOutlierResult
 from splicing_outlier_prediction.ensemble import train_model_ebm
 from splicing_outlier_prediction.utils import inject_new_row
-from conftest import df_mmsplice_cat, multi_vcf_file, pickle_absplice_DNA, pickle_absplice_RNA, \
-    mmsplice_path, spliceai_path, mmsplice_cat_path, gene_map_path, gene_tpm_path, var_samples_path
+from splicing_outlier_prediction.result import GENE_MAP, GENE_TPM_GTEx
+from conftest import df_mmsplice_cat, multi_vcf_file, \
+    mmsplice_path, spliceai_path, mmsplice_cat_path, var_samples_path, \
+        fasta_file, ref_table5_kn_testis, ref_table5_kn_lung, ref_table3_kn_testis, ref_table3_kn_lung
     
 def test_splicing_outlier_result__init__mmsplice_only(df_mmsplice):
     # initialize with pd.DataFrame
@@ -60,8 +62,8 @@ def test_splicing_outlier_result__init__absplice_dna_input():
     sor_absplice_dna = SplicingOutlierResult(
         df_mmsplice=mmsplice_path, 
         df_spliceai=spliceai_path, 
-        gene_tpm=gene_tpm_path,
-        gene_map=gene_map_path
+        gene_tpm=GENE_TPM_GTEx,
+        gene_map=GENE_MAP
     )
     df_absplice_dna_input = sor_absplice_dna.absplice_dna_input
     
@@ -77,8 +79,8 @@ def test_splicing_outlier_result__init__absplice_rna_input():
         df_mmsplice=mmsplice_path, 
         df_spliceai=spliceai_path, 
         df_mmsplice_cat=mmsplice_cat_path, 
-        gene_tpm=gene_tpm_path,
-        gene_map=gene_map_path,
+        gene_tpm=GENE_TPM_GTEx,
+        gene_map=GENE_MAP,
         df_var_samples=var_samples_path
     )
     df_absplice_rna_input = sor_absplice_rna.absplice_rna_input
@@ -101,7 +103,7 @@ def test_splicing_outlier_result_add_samples():
     sor = SplicingOutlierResult(
         df_mmsplice = mmsplice_path,
         df_spliceai = spliceai_path,
-        gene_map = gene_map_path
+        gene_map = GENE_MAP
     )
     assert 'sample' not in sor.df_mmsplice.columns
     assert 'sample' not in sor.df_spliceai.columns

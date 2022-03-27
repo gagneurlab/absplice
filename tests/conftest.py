@@ -3,20 +3,20 @@ import pandas as pd
 import tempfile
 from splicing_outlier_prediction import SplicingOutlierResult, \
     SpliceOutlierDataloader, SpliceOutlier, CatInference
+from splicing_outlier_prediction.result import SplicingOutlierResult, \
+    GENE_MAP, GENE_TPM_GTEx
 
 vcf_file = 'tests/data/test.vcf.gz'
 multi_vcf_file = 'tests/data/multi_test.vcf.gz'
 var_samples_path = 'tests/data/multi_test.vcf_samples.csv'
 fasta_file = 'tests/data/hg19.nochr.chr17.fa'
-gene_map_path = 'tests/data/gene_mapping_hg19.tsv'
-gene_tpm_path = 'tests/data/gene_tissue_tpm.csv'
 
-ref_table5_kn_testis = 'tests/data/Testis_splicemap_psi5_method=kn_event_filter=median_cutoff.csv'
-ref_table3_kn_testis = 'tests/data/Testis_splicemap_psi3_method=kn_event_filter=median_cutoff.csv'
-ref_table5_kn_lung = 'tests/data/Lung_splicemap_psi5_method=kn_event_filter=median_cutoff.csv'
-ref_table3_kn_lung = 'tests/data/Lung_splicemap_psi3_method=kn_event_filter=median_cutoff.csv'
-ref_table5_kn_blood = 'tests/data/Cells_Cultured_fibroblasts_splicemap_psi5_method=kn_event_filter=median_cutoff.csv'
-ref_table3_kn_blood = 'tests/data/Cells_Cultured_fibroblasts_splicemap_psi3_method=kn_event_filter=median_cutoff.csv'
+ref_table5_kn_testis = 'tests/data/Testis_splicemap_psi5_method=kn_event_filter=median_cutoff.csv.gz'
+ref_table3_kn_testis = 'tests/data/Testis_splicemap_psi3_method=kn_event_filter=median_cutoff.csv.gz'
+ref_table5_kn_lung = 'tests/data/Lung_splicemap_psi5_method=kn_event_filter=median_cutoff.csv.gz'
+ref_table3_kn_lung = 'tests/data/Lung_splicemap_psi3_method=kn_event_filter=median_cutoff.csv.gz'
+ref_table5_kn_blood = 'tests/data/Cells_Cultured_fibroblasts_splicemap_psi5_method=kn_event_filter=median_cutoff.csv.gz'
+ref_table3_kn_blood = 'tests/data/Cells_Cultured_fibroblasts_splicemap_psi3_method=kn_event_filter=median_cutoff.csv.gz'
 
 count_cat_file_lymphocytes_complete = 'tests/data/create_test/data/full_data/backup/test_count_table_cat_chrom17_lymphocytes.csv'
 count_cat_file_blood_complete = 'tests/data/create_test/data/full_data/backup/test_count_table_cat_chrom17_blood.csv'
@@ -26,11 +26,6 @@ count_cat_file_blood = 'tests/data/test_count_table_cat_chrom17_blood.csv'
 mmsplice_path = 'tests/data/test_mmsplice.csv'
 spliceai_path = 'tests/data/test_spliceAI.csv'
 mmsplice_cat_path = 'tests/data/test_mmsplice_cat.csv'
-pickle_DNA = 'tests/data/model_DNA_trained_on_all_GTEx.pkl'
-pickle_DNA_CAT = 'tests/data/model_CAT_concat.pkl'
-
-pickle_absplice_DNA = 'tests/data/AbSplice_DNA_trained_on_all_GTEx.pkl'
-pickle_absplice_RNA = 'tests/data/AbSplice_RNA_trained_on_all_GTEx.pkl'
 
 @pytest.fixture
 def df_var_samples():
@@ -92,11 +87,11 @@ def outlier_results_multi(outlier_model, outlier_dl_multi, df_var_samples):
 
 @pytest.fixture
 def gene_map():
-    return pd.read_csv(gene_map_path, sep='\t')
+    return pd.read_csv(GENE_MAP, sep='\t')
 
 @pytest.fixture
 def gene_tpm():
-    return pd.read_csv(gene_tpm_path)
+    return pd.read_csv(GENE_TPM_GTEx)
 
 @pytest.fixture
 def outlier_results_complete(outlier_model, outlier_dl_multi, df_spliceai, gene_map, df_var_samples):

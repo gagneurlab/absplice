@@ -7,7 +7,7 @@ from conftest import fasta_file, multi_vcf_file, \
     ref_table5_kn_testis, ref_table3_kn_testis,  \
     ref_table5_kn_lung, ref_table3_kn_lung, \
     count_cat_file_lymphocytes,  count_cat_file_blood, \
-    spliceai_path, pickle_DNA, pickle_DNA_CAT, mmsplice_splicemap_cols
+    spliceai_path
 
 
 def test_splicing_outlier_on_batch(outlier_model, outlier_dl, mmsplice_splicemap_cols):
@@ -22,11 +22,6 @@ def test_splicing_outlier_predict_on_dataloader(outlier_model, outlier_dl, mmspl
     assert sorted(results.df_mmsplice.columns.tolist()) == mmsplice_splicemap_cols
 
 
-# def test_splicing_outlier_predict_on_dataloader_correct_tissue(outlier_model, outlier_dl):
-#     results = outlier_model.predict_on_dataloader(outlier_dl)
-#     assert False not in results.df.apply(lambda x: x['event_type'] in x['tissue'], axis=1)
-
-
 def test_splicing_outlier_predict_save(outlier_model, outlier_dl, tmp_path, mmsplice_splicemap_cols):
     # output_csv = '/home/wagnern/Projects/pred.csv'
     output_csv = tmp_path / 'test_mmsplice.csv'
@@ -35,11 +30,7 @@ def test_splicing_outlier_predict_save(outlier_model, outlier_dl, tmp_path, mmsp
     assert sorted(df.columns.tolist()) == mmsplice_splicemap_cols
 
 
-
-from conftest import outlier_dl_multi, outlier_model
-
 def test_multi_sample_predict(outlier_dl_multi, outlier_model):
-
     results = outlier_model.predict_on_dataloader(outlier_dl_multi)
     print(results.df_mmsplice.shape)
     

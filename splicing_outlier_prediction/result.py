@@ -14,9 +14,9 @@ GENE_MAP = resource_filename(
 GENE_TPM_GTEx = resource_filename(
     'splicing_outlier_prediction', 'precomputed/gene_tissue_tpm.csv')
 ABSPLICE_DNA = resource_filename(
-    'splicing_outlier_prediction', 'precomputed/AbSplice_DNA_trained_on_all_GTEx.pkl')
+    'splicing_outlier_prediction', 'precomputed/AbSplice_DNA.pkl')
 ABSPLICE_RNA = resource_filename(
-    'splicing_outlier_prediction', 'precomputed/AbSplice_RNA_trained_on_all_GTEx.pkl')
+    'splicing_outlier_prediction', 'precomputed/AbSplice_RNA.pkl')
 
 dtype_columns = {
     'variant': pd.StringDtype(),
@@ -517,9 +517,11 @@ class SplicingOutlierResult:
 
     def predict_absplice_dna(self, pickle_file=None, features=None, abs_features=True, median_n_cutoff=0, tpm_cutoff=1):
         if features is None:
-            features = ['delta_psi', 'delta_score',
-                        'gene_is_expressed', 'splice_site_is_expressed',
-                        'ref_psi', 'delta_logit_psi']
+            features = [
+                'delta_logit_psi',
+                'delta_psi', 
+                'delta_score',
+                'splice_site_is_expressed']
         if pickle_file is None:
             pickle_file = ABSPLICE_DNA
 
@@ -535,11 +537,12 @@ class SplicingOutlierResult:
 
     def predict_absplice_rna(self, pickle_file=None, features=None, abs_features=True, median_n_cutoff=0, tpm_cutoff=1):
         if features is None:
-            features = ['delta_psi', 'delta_score',
-                        'gene_is_expressed', 'splice_site_is_expressed',
-                        'ref_psi', 'delta_logit_psi',
-                        'delta_psi_cat', 'count_cat',
-                        'psi_cat', 'ref_psi_cat']
+            features = [
+                'delta_logit_psi',
+                'delta_psi',
+                'delta_psi_cat'
+                'delta_score',
+                'splice_site_is_expressed']
         if pickle_file is None:
             pickle_file = ABSPLICE_RNA
 
