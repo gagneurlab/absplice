@@ -1,6 +1,8 @@
 import pandas as pd
 import numpy as np
 import pathlib
+from kipoiseq.extractors.vcf import MultiSampleVCF
+from collections import namedtuple
 
 
 def get_abs_max_rows(df, groupby, max_col, dropna=True):
@@ -83,3 +85,59 @@ def inject_new_row(df, new_row_dict):
     for k,v in new_row_dict.items():
         new_row[k] = v
     return df.append(new_row)
+
+
+def read_spliceai(path, **kwargs):
+    if isinstance(path, pd.DataFrame):
+        return path
+    else:
+        if not isinstance(path, pathlib.PosixPath):
+            path = pathlib.Path(path)
+        if path.suffix.lower() == '.csv':
+            return pd.read_csv(path, **kwargs)
+        elif path.suffix.lower() == '.tsv':
+            return pd.read_csv(path, sep='\t', **kwargs)
+        elif path.suffix.lower() == '.parquet':
+            return pd.read_parquet(path, **kwargs)
+        elif path.suffix.lower() == '.vcf' or str(path).endswith('.vcf.gz'):
+            return read_spliceai_vcf(path)
+        else:
+            raise ValueError("unknown file ending.")
+
+
+dtype_columns_spliceai = {
+    'variant': pd.StringDtype(), 
+    'gene_name': pd.StringDtype(), 
+    'delta_score': 'float64',
+    'acceptor_gain': 'float64', 
+    'acceptor_loss': 'float64',
+    'donor_gain': 'float64', 
+    'donor_loss': 'float64',
+    'acceptor_gain_position': 'Int64',
+    'acceptor_loss_positiin': 'Int64',
+    'donor_gain_position': 'Int64',
+    'donor_loss_position': 'Int64',
+}
+
+def read_spliceai_vcf(path):
+    columns = ['gene_name', 'delta_score',
+                'acceptor_gain', 'acceptor_loss',
+                'donor_gain', 'donor_loss',
+                'acceptor_gain_position',
+                'acceptor_loss_positiin',
+                'donor_gain_position',
+                'donor_loss_position']
+    rows = list()
+    for variant in MultiSampleVCF(path):
+        row = variant.source.INFO.get('SpliceAI')
+        row = '|'.join(row.split('|')[1:])
+        rows.append({
+            **{'variant': str(variant)}, 
+            **dict(zip(columns, row.split('|')))})
+    df = pd.DataFrame(rows)
+        
+    for col in df.columns:
+        if col in dtype_columns_spliceai.keys():
+            df = df.astype({col: dtype_columns_spliceai[col]})
+            
+    return df

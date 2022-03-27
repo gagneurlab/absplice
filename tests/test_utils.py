@@ -1,7 +1,7 @@
 import pandas as pd
-from splicing_outlier_prediction.utils import get_abs_max_rows, filter_samples_with_RNA_seq
+from splicing_outlier_prediction.utils import get_abs_max_rows, filter_samples_with_RNA_seq, read_spliceai_vcf, dtype_columns_spliceai
 from splicing_outlier_prediction import SplicingOutlierResult
-from conftest import gene_map, gene_tpm, spliceai_path, mmsplice_path
+from conftest import gene_map, gene_tpm, spliceai_path, mmsplice_path, spliceai_vcf_path, spliceai_vcf_path2
 
 
 def test_get_max_rows():
@@ -59,3 +59,24 @@ def test_outlier_results_filter_samples_with_RNA_seq(df_var_samples, outlier_mod
         {
             # 'Lung': 'NA00002;NA00003', 
             'Testis': 'NA00002'}
+        
+    
+def test_utils_read_spliceai_vcf():
+    df = read_spliceai_vcf(spliceai_vcf_path2)
+    df_compare = pd.DataFrame({
+        'variant': ['17:41201201:TTC>CA', '17:41276032:T>A', '17:41279042:A>GA'],
+        'gene_name': ['OR4F5', 'EXOSC3', 'test'],
+        'delta_score': [0.01, 0.00, 0.00],
+        'acceptor_gain': [0.01, 0.00, 0.00],
+        'acceptor_loss': [0.00, 0.00, 0.00],
+        'donor_gain': [0.00, 0.00, 0.00],
+        'donor_loss': [0.00, 0.00, 0.00],
+        'acceptor_gain_position': [42, 0, 0],
+        'acceptor_loss_positiin': [25, -13, -13],
+        'donor_gain_position': [24, -44, -44],
+        'donor_loss_position': [2, -12, -12]
+    })
+    for col in df_compare.columns:
+        if col in dtype_columns_spliceai.keys():
+            df_compare = df_compare.astype({col: dtype_columns_spliceai[col]})
+    pd.testing.assert_frame_equal(df, df_compare)

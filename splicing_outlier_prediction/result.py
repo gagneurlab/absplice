@@ -6,7 +6,8 @@ import numpy as np
 import pickle
 from pathlib import Path
 import pathlib
-from splicing_outlier_prediction.utils import get_abs_max_rows, normalize_gene_annotation, read_csv
+from splicing_outlier_prediction.utils import get_abs_max_rows, normalize_gene_annotation, \
+    read_csv, read_spliceai
 from splicing_outlier_prediction.cat_dataloader import CatInference
 
 GENE_MAP = resource_filename(
@@ -139,6 +140,7 @@ class SplicingOutlierResult:
 
     def validate_df_spliceai(self, df_spliceai):
         if df_spliceai is not None:
+            df_spliceai = read_spliceai(df_spliceai)
             df_spliceai = self._validate_df(
                 df_spliceai,
                 columns=['variant', 'gene_name', 'delta_score'])
@@ -229,10 +231,7 @@ class SplicingOutlierResult:
             df_absplice_dna = self._validate_df(
                 df_absplice_dna,
                 columns=[
-                    # 'variant', 'gene_id', 'tissue', 'delta_psi', 'delta_score',
-                    # 'gene_is_expressed', 'splice_site_is_expressed', 'ref_psi', 'delta_logit_psi',
-                    # 'AbSplice_DNA'
-                    'gene_id', 'tissue', 'delta_psi', 'delta_score', 'AbSplice_DNA'
+                    'gene_id', 'tissue', 'AbSplice_DNA'
                 ])
             df_absplice_dna = self._validate_dtype(df_absplice_dna)
         return df_absplice_dna
@@ -242,11 +241,7 @@ class SplicingOutlierResult:
             df_absplice_rna = self._validate_df(
                 df_absplice_rna,
                 columns=[
-                    # 'variant', 'gene_id', 'tissue', 'delta_psi', 'delta_score',
-                    # 'gene_is_expressed', 'splice_site_is_expressed', 'ref_psi', 'delta_logit_psi',
-                    # 'delta_psi_cat', 'count_cat', 'psi_cat', 'ref_psi_cat',
-                    # 'AbSplice_RNA'
-                    'gene_id', 'tissue', 'delta_psi', 'delta_score', 'AbSplice_RNA'
+                    'gene_id', 'tissue', 'AbSplice_RNA'
                 ])
             df_absplice_rna = self._validate_dtype(df_absplice_rna)
         return df_absplice_rna
@@ -257,21 +252,21 @@ class SplicingOutlierResult:
         else:
             return None
 
-    def add_spliceai(self, df,
-                     gene_map=None, key='gene_name', value='gene_id'):
-        """
-        Includes spliceai predictions into results.
+    # def add_spliceai(self, df,
+    #                  gene_map=None, key='gene_name', value='gene_id'):
+    #     """
+    #     Includes spliceai predictions into results.
 
-        Args:
-          df: path to csv or dataframe of spliceai predictions
-          gene_map: dict or dataframe to map gene_name to gene_id (many to one mapping)
-        """
-        if self.df_spliceai is None:
-            df = read_csv(df)
-            self.df_spliceai = self.validate_df_spliceai(df)
-            if 'gene_id' not in self.df_spliceai:
-                self.df_spliceai = normalize_gene_annotation(
-                    self.df_spliceai, gene_map, key, value)
+    #     Args:
+    #       df: path to csv or dataframe of spliceai predictions
+    #       gene_map: dict or dataframe to map gene_name to gene_id (many to one mapping)
+    #     """
+    #     if self.df_spliceai is None:
+    #         df = read_csv(df)
+    #         self.df_spliceai = self.validate_df_spliceai(df)
+    #         if 'gene_id' not in self.df_spliceai:
+    #             self.df_spliceai = normalize_gene_annotation(
+    #                 self.df_spliceai, gene_map, key, value)
 
     def _add_tissue_info_to_spliceai(self):
         """
@@ -540,7 +535,7 @@ class SplicingOutlierResult:
             features = [
                 'delta_logit_psi',
                 'delta_psi',
-                'delta_psi_cat'
+                'delta_psi_cat',
                 'delta_score',
                 'splice_site_is_expressed']
         if pickle_file is None:

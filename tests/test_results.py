@@ -9,7 +9,7 @@ from splicing_outlier_prediction.utils import inject_new_row
 from splicing_outlier_prediction.result import GENE_MAP, GENE_TPM_GTEx
 from conftest import df_mmsplice_cat, multi_vcf_file, \
     mmsplice_path, spliceai_path, mmsplice_cat_path, var_samples_path, \
-        fasta_file, ref_table5_kn_testis, ref_table5_kn_lung, ref_table3_kn_testis, ref_table3_kn_lung
+        fasta_file, ref_table5_kn_testis, ref_table5_kn_lung, ref_table3_kn_testis, ref_table3_kn_lung, spliceai_vcf_path2
     
 def test_splicing_outlier_result__init__mmsplice_only(df_mmsplice):
     # initialize with pd.DataFrame
@@ -33,10 +33,19 @@ def test_splicing_outlier_result__init__spliceai_only(df_spliceai):
     )
     assert sor.df_spliceai is not None
     assert 'delta_score' in sor.df_spliceai.columns
+    del sor
     
     # initialitze with path
     sor = SplicingOutlierResult(
         df_spliceai = spliceai_path
+    )
+    assert sor.df_spliceai is not None
+    assert 'delta_score' in sor.df_spliceai.columns
+    del sor
+    
+    # initialitze with vcf
+    sor = SplicingOutlierResult(
+        df_spliceai = spliceai_vcf_path2
     )
     assert sor.df_spliceai is not None
     assert 'delta_score' in sor.df_spliceai.columns
@@ -89,15 +98,15 @@ def test_splicing_outlier_result__init__absplice_rna_input():
     )
     assert sor.absplice_rna_input.shape[0] > 0
      
-def test_splicing_outlier_result_add_spliceai(outlier_results, df_spliceai, gene_map):
-    assert outlier_results.df_spliceai is None
-    outlier_results.add_spliceai(df_spliceai, gene_map)
-    assert outlier_results.df_spliceai is not None
+# def test_splicing_outlier_result_add_spliceai(outlier_results, df_spliceai, gene_map):
+#     assert outlier_results.df_spliceai is None
+#     outlier_results.add_spliceai(df_spliceai, gene_map)
+#     assert outlier_results.df_spliceai is not None
     
-def test_splicing_outlier_result_add_tissue_info_to_spliceai(outlier_results_complete):
-    results = outlier_results_complete
-    results._add_tissue_info_to_spliceai()
-    assert 'tissue' in results._df_spliceai_tissue.columns
+# def test_splicing_outlier_result_add_tissue_info_to_spliceai(outlier_results_complete):
+#     results = outlier_results_complete
+#     results._add_tissue_info_to_spliceai()
+#     assert 'tissue' in results._df_spliceai_tissue.columns
     
 def test_splicing_outlier_result_add_samples():
     sor = SplicingOutlierResult(

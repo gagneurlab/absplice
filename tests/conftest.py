@@ -27,6 +27,9 @@ mmsplice_path = 'tests/data/test_mmsplice.csv'
 spliceai_path = 'tests/data/test_spliceAI.csv'
 mmsplice_cat_path = 'tests/data/test_mmsplice_cat.csv'
 
+spliceai_vcf_path = 'tests/data/spliceai_snv.vcf'
+spliceai_vcf_path2 = 'tests/data/test_spliceai.vcf'
+
 @pytest.fixture
 def df_var_samples():
     return pd.read_csv(var_samples_path)
@@ -93,13 +96,12 @@ def gene_map():
 def gene_tpm():
     return pd.read_csv(GENE_TPM_GTEx)
 
-@pytest.fixture
-def outlier_results_complete(outlier_model, outlier_dl_multi, df_spliceai, gene_map, df_var_samples):
-    results = outlier_model.predict_on_dataloader(outlier_dl_multi)
-    results.add_spliceai(df_spliceai, gene_map)
-    results.add_samples(df_var_samples)
-    return results
-
+# @pytest.fixture
+# def outlier_results_complete(outlier_model, outlier_dl_multi, df_spliceai, gene_map, df_var_samples):
+#     results = outlier_model.predict_on_dataloader(outlier_dl_multi)
+#     results.add_spliceai(df_spliceai, gene_map)
+#     results.add_samples(df_var_samples)
+#     return results
 
 @pytest.fixture
 def mmsplice_splicemap_cols():
@@ -113,9 +115,7 @@ def mmsplice_splicemap_cols():
         'ref_acceptorIntron', 'ref_acceptor', 'ref_exon', 'ref_donor', 'ref_donorIntron',
         'alt_acceptorIntron', 'alt_acceptor', 'alt_exon', 'alt_donor', 'alt_donorIntron'])
     
-    
-    
-    
+     
 variants = [
     "chr3:193360794:C:['A']"
 ]
