@@ -1,5 +1,13 @@
 example/clinvar*
+example/spliceai.vcf
+example/*.csv
+example/*.fa
+example/*.fa.fai
+example/*.fa.gz
 splicing_outlier_prediction/precomputed/splicemap_gtex_v8/*
+tests/data/test_real_data/*
+tests/data/create_test_data/*
+tests/data/*_backup*
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

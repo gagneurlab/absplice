@@ -130,10 +130,12 @@ def read_spliceai_vcf(path):
     rows = list()
     for variant in MultiSampleVCF(path):
         row = variant.source.INFO.get('SpliceAI')
-        row = '|'.join(row.split('|')[1:])
+        results = row.split('|')[1:]
+        scores = np.array(list(map(float, results[1:])))
+        spliceai_info = [results[0], scores[:4].max(), *scores]
         rows.append({
             **{'variant': str(variant)}, 
-            **dict(zip(columns, row.split('|')))})
+            **dict(zip(columns, spliceai_info))})
     df = pd.DataFrame(rows)
         
     for col in df.columns:
