@@ -510,7 +510,7 @@ class SplicingOutlierResult:
         df[absplice_score] = model.predict_proba(df)[:, 1]
         return df
 
-    def predict_absplice_dna(self, pickle_file=None, features=None, abs_features=True, median_n_cutoff=0, tpm_cutoff=1):
+    def predict_absplice_dna(self, pickle_file=None, features=None, abs_features=False, median_n_cutoff=0, tpm_cutoff=1):
         if features is None:
             features = [
                 'delta_logit_psi',
@@ -530,7 +530,7 @@ class SplicingOutlierResult:
             tpm_cutoff=tpm_cutoff)
         return self._absplice_dna
 
-    def predict_absplice_rna(self, pickle_file=None, features=None, abs_features=True, median_n_cutoff=0, tpm_cutoff=1):
+    def predict_absplice_rna(self, pickle_file=None, features=None, abs_features=False, median_n_cutoff=0, tpm_cutoff=1):
         if features is None:
             features = [
                 'delta_logit_psi',
