@@ -2,8 +2,8 @@ from splicing_outlier_prediction import SpliceOutlier, SpliceOutlierDataloader
 
 dl = SpliceOutlierDataloader(
     snakemake.input['fasta'], snakemake.input['vcf'],
-    splicemap5=list(snakemake.input['splicemap_5']),
-    splicemap3=list(snakemake.input['splicemap_3'])
+    splicemap5=list(snakemake.params['splicemap_5']),
+    splicemap3=list(snakemake.params['splicemap_3'])
 )
 
 model = SpliceOutlier()

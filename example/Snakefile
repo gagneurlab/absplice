@@ -11,7 +11,7 @@ configfile: "./config.yaml"
 def splicemap5(wildcards):
     path = Path(config['splicemap_dir'])
     return [
-        path / 'motor_neuron_splicemap_psi5_method=kn_event_filter=median_cutoff.csv.gz',
+#         path / 'motor_neuron_splicemap_psi5_method=kn_event_filter=median_cutoff.csv.gz',
         path / 'Testis_splicemap_psi5_method=kn_event_filter=median_cutoff.csv.gz',
         path / 'Cells_Cultured_fibroblasts_splicemap_psi5_method=kn_event_filter=median_cutoff.csv.gz',
     ]
@@ -19,7 +19,7 @@ def splicemap5(wildcards):
 def splicemap3(wildcards):
     path = Path(config['splicemap_dir'])
     return [
-        path / 'motor_neuron_splicemap_psi3_method=kn_event_filter=median_cutoff.csv.gz',
+#         path / 'motor_neuron_splicemap_psi3_method=kn_event_filter=median_cutoff.csv.gz',
         path / 'Testis_splicemap_psi3_method=kn_event_filter=median_cutoff.csv.gz',
         path / 'Cells_Cultured_fibroblasts_splicemap_psi3_method=kn_event_filter=median_cutoff.csv.gz',
     ]
@@ -27,7 +27,8 @@ def splicemap3(wildcards):
 
 rule all:
     input:
-        config['splicing_pred']['absplice_dna']
+        config['splicing_pred']['absplice_dna'],
+#         config['splicemap_dir']
 
 
 rule download_human_fasta:
@@ -39,10 +40,19 @@ rule download_human_fasta:
         "wget -O - {params} | gunzip -c > {output}"
 
 
+rule download_splicemaps:
+    output:
+        directory(config['splicemap_dir'])
+    shell:
+        "splicemap_download --version gtex_v8 --splicemap_path {output}"
+            
+        
 rule mmsplice_splicemap:
     input:
         vcf = config['vcf'],
         fasta = config['fasta']['file'],
+        splicemap_dir = config['splicemap_dir']
+    params:
         splicemap_5 = splicemap5,
         splicemap_3 = splicemap3,
     output:

@@ -4,7 +4,8 @@ fasta:
 
 vcf: example.vcf
 
-splicemap_dir: ../splicing_outlier_prediction/precomputed/splicemap_gtex_v8/
+# splicemap_dir: ../splicing_outlier_prediction/precomputed/splicemap_gtex_v8/
+splicemap_dir: splicemap_gtex_v8/
 
 splicing_pred:
   mmsplice_splicemap: mmsplice_splicemap.csv
