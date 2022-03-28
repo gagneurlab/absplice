@@ -12,48 +12,22 @@ def splicemap5(wildcards):
     path = Path(config['splicemap_dir'])
     return [
         path / 'motor_neuron_splicemap_psi5_method=kn_event_filter=median_cutoff.csv.gz',
+        path / 'Testis_splicemap_psi5_method=kn_event_filter=median_cutoff.csv.gz',
         path / 'Cells_Cultured_fibroblasts_splicemap_psi5_method=kn_event_filter=median_cutoff.csv.gz',
-        path / 'Cells_EBV_transformed_lymphocytes_splicemap_psi5_method=kn_event_filter=median_cutoff.csv.gz'
     ]
 
 def splicemap3(wildcards):
     path = Path(config['splicemap_dir'])
     return [
         path / 'motor_neuron_splicemap_psi3_method=kn_event_filter=median_cutoff.csv.gz',
+        path / 'Testis_splicemap_psi3_method=kn_event_filter=median_cutoff.csv.gz',
         path / 'Cells_Cultured_fibroblasts_splicemap_psi3_method=kn_event_filter=median_cutoff.csv.gz',
-        path / 'Cells_EBV_transformed_lymphocytes_splicemap_psi3_method=kn_event_filter=median_cutoff.csv.gz'
     ]
+
 
 rule all:
     input:
-        config['splicing_pred']['spliceai_vcf'],
-        config['splicing_pred']['mmsplice_splicemap'],
         config['splicing_pred']['absplice_dna']
-
-
-rule download_clinvar:
-    params:
-        url = config['clinvar']['url']
-    output:
-        config['clinvar']['vcf'],
-        config['clinvar']['vcf_tbi']
-    run:
-        shell('wget {params.url}')
-        shell('wget {params.url}.tbi')
-
-
-rule subset_vcf:
-    input:
-        config['clinvar']['vcf']
-    params:
-        region = config['clinvar']['region']
-    output:
-        config['clinvar']['vcf_subset']
-    run:
-        vcf_ungziped = output[0].replace('.gz', '')
-        shell('tabix -h {input} {params.region} > {vcf_ungziped}')
-        shell('bgzip {vcf_ungziped}')
-        shell('tabix -p vcf {output}')
 
 
 rule download_human_fasta:
@@ -67,8 +41,7 @@ rule download_human_fasta:
 
 rule mmsplice_splicemap:
     input:
-#         vcf = config['clinvar']['vcf_subset'],
-        vcf = config['vcf_example'],
+        vcf = config['vcf'],
         fasta = config['fasta']['file'],
         splicemap_5 = splicemap5,
         splicemap_3 = splicemap3,
@@ -80,8 +53,7 @@ rule mmsplice_splicemap:
 
 rule spliceai:
     input:
-#         vcf = config['clinvar']['vcf_subset'],
-        vcf = config['vcf_example'],
+        vcf = config['vcf'],
         fasta = config['fasta']['file']
     params:
         genome = 'grch38'
@@ -89,21 +61,6 @@ rule spliceai:
         result = config['splicing_pred']['spliceai_vcf']
     shell:
         'spliceai -I {input.vcf} -O {output.result} -R {input.fasta} -A {params.genome}'
-        # 'cat {input.vcf} | spliceai -R {input.fasta} -A {params.genome} > {output.result}'
-        
-# rule spliceai:
-#     input:
-#         vcf = config['vcf'],
-#         db = config_precomputed['spliceai']['db'].format(
-#             genome=config['genome']),
-#         fasta = config['fasta'],
-#     params:
-#         lookup_only = config['spliceai']['lookup_only'],
-#         genome = config['genome'],
-#     output:
-#         result = directory(config['splicing_pred']['spliceai'])
-#     script:
-#         "./spliceai.py"
 
     
 rule absplice_dna:
