@@ -6,35 +6,29 @@ import pathlib
 
 SNAKEMAKE_DIR = os.path.dirname(workflow.snakefile)
 
-# Read config from dataset (user can change accordingly)
 configfile: "./config.yaml"
 
 def splicemap5(wildcards):
     path = Path(config['splicemap_dir'])
-    # __import__("pdb").set_trace()
     return [
+        path / 'motor_neuron_splicemap_psi5_method=kn_event_filter=median_cutoff.csv.gz',
         path / 'Cells_Cultured_fibroblasts_splicemap_psi5_method=kn_event_filter=median_cutoff.csv.gz',
         path / 'Cells_EBV_transformed_lymphocytes_splicemap_psi5_method=kn_event_filter=median_cutoff.csv.gz'
     ]
-    # return [x for x in path.iterdir() if x.is_file() and 'splicemap_psi5' in str(x) and 'Cells_Cultured_fibroblasts' in str(x)]
 
 def splicemap3(wildcards):
     path = Path(config['splicemap_dir'])
     return [
+        path / 'motor_neuron_splicemap_psi3_method=kn_event_filter=median_cutoff.csv.gz',
         path / 'Cells_Cultured_fibroblasts_splicemap_psi3_method=kn_event_filter=median_cutoff.csv.gz',
         path / 'Cells_EBV_transformed_lymphocytes_splicemap_psi3_method=kn_event_filter=median_cutoff.csv.gz'
     ]
-    # return [x for x in path.iterdir() if x.is_file() and 'splicemap_psi3' in str(x) and 'Cells_Cultured_fibroblasts' in str(x)]
-
 
 rule all:
     input:
-        config['splicing_pred']['spliceai_vcf']
-        # config['splicing_pred']['mmsplice_splicemap']
-        # config['clinvar']['vcf_subset']
-        # config['clinvar']['vcf'],
-        # config['fasta']['file'],
-        # config['splicing_pred']['mmsplice_splicemap']
+        config['splicing_pred']['spliceai_vcf'],
+        config['splicing_pred']['mmsplice_splicemap'],
+        config['splicing_pred']['absplice_dna']
 
 
 rule download_clinvar:
@@ -73,7 +67,8 @@ rule download_human_fasta:
 
 rule mmsplice_splicemap:
     input:
-        vcf = config['clinvar']['vcf_subset'],
+#         vcf = config['clinvar']['vcf_subset'],
+        vcf = config['vcf_example'],
         fasta = config['fasta']['file'],
         splicemap_5 = splicemap5,
         splicemap_3 = splicemap3,
@@ -85,7 +80,8 @@ rule mmsplice_splicemap:
 
 rule spliceai:
     input:
-        vcf = config['clinvar']['vcf_subset'],
+#         vcf = config['clinvar']['vcf_subset'],
+        vcf = config['vcf_example'],
         fasta = config['fasta']['file']
     params:
         genome = 'grch38'
@@ -94,6 +90,7 @@ rule spliceai:
     shell:
         'spliceai -I {input.vcf} -O {output.result} -R {input.fasta} -A {params.genome}'
         # 'cat {input.vcf} | spliceai -R {input.fasta} -A {params.genome} > {output.result}'
+        
 # rule spliceai:
 #     input:
 #         vcf = config['vcf'],
@@ -109,11 +106,11 @@ rule spliceai:
 #         "./spliceai.py"
 
     
-# rule absplice_dna:
-#     input:
-#         mmsplice_splicemap = config['splicing_pred']['mmsplice_splicemap']],
-#         spliceai = config['splicing_pred']['spliceai'],
-#     output:
-#         absplice_dna = directory(config['splicing_pred']['absplice'])
-#     script:
-#         "./absplice_dna.py"
+rule absplice_dna:
+    input:
+        mmsplice_splicemap = config['splicing_pred']['mmsplice_splicemap'],
+        spliceai = config['splicing_pred']['spliceai_vcf'],
+    output:
+        absplice_dna = config['splicing_pred']['absplice_dna']
+    script:
+        "./absplice_dna.py"

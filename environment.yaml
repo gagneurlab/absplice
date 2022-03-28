@@ -1,4 +1,4 @@
-name: absplice
+name: absplice_check2
 channels:
   - defaults
   - conda-forge
@@ -13,6 +13,17 @@ dependencies:
   - python-rocksdb
   - pytest
   - tabix
+  - setuptools
+  - kipoiseq>=0.7
+  - cyvcf2
+  - scipy
+  - pandas
+  - pyfaidx
+  - tqdm
+  - click
+  - pyranges>=0.0.71
+  - pip
+  - pyarrow
   - pip:
     - mmsplice
     - interpret

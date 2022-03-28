@@ -5,4 +5,4 @@ splicing_result = SplicingOutlierResult(
         df_spliceai=snakemake.input['spliceai'],
     )
 splicing_result.predict_absplice_dna()
-splicing_result._absplice_dna.to_parquet(snakemake.output['absplice_dna'])
+splicing_result._absplice_dna.to_csv(snakemake.output['absplice_dna'])
