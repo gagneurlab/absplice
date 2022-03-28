@@ -1,4 +1,4 @@
-name: absplice_check2
+name: absplice_check_splicemap
 channels:
   - defaults
   - conda-forge
@@ -27,3 +27,5 @@ dependencies:
   - pip:
     - mmsplice
     - interpret
+    - git+https://github.com/gagneurlab/splicemap.git
+    
