@@ -38,7 +38,5 @@
 ##contig=<ID=chr21>
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
 chr17	50722650	.	T	A	9.6	.	.
-chr1	16971630	.	C	A	9.6	.	.
 chr3	123956736	.	T	A	9.6	.	.
-chr1	100038319	.	G	A	9.6	.	.
 chr1	109910810	.	C	G	9.6	.	.
