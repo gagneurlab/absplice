@@ -18,5 +18,4 @@
 ##FORMAT=<ID=HQ,Number=2,Type=Integer,Description="Haplotype Quality">
 ##contig=<ID=chr17>
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
-chr1	16971630	.	C	A	10	.	.
 chr17	50722650	.	T	A	9.6	.	.
