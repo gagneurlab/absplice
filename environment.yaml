@@ -1,4 +1,4 @@
-name: absplice_check_splicemap
+name: absplice
 channels:
   - defaults
   - conda-forge
