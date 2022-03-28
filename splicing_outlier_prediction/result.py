@@ -11,9 +11,9 @@ from splicing_outlier_prediction.utils import get_abs_max_rows, normalize_gene_a
 from splicing_outlier_prediction.cat_dataloader import CatInference
 
 GENE_MAP = resource_filename(
-    'splicing_outlier_prediction', 'precomputed/gene_mapping_hg19.tsv')
-GENE_TPM_GTEx = resource_filename(
-    'splicing_outlier_prediction', 'precomputed/gene_tissue_tpm.csv')
+    'splicing_outlier_prediction', 'precomputed/GENE_MAP.tsv')
+GENE_TPM = resource_filename(
+    'splicing_outlier_prediction', 'precomputed/GENE_TPM.csv')
 ABSPLICE_DNA = resource_filename(
     'splicing_outlier_prediction', 'precomputed/AbSplice_DNA.pkl')
 ABSPLICE_RNA = resource_filename(
@@ -171,7 +171,7 @@ class SplicingOutlierResult:
             gene_tpm = self._validate_dtype(gene_tpm)
         else:
             gene_tpm = self._validate_df(
-                GENE_TPM_GTEx,
+                GENE_TPM,
                 columns=['gene_id', 'tissue', 'gene_tpm'])
         if gene_tpm is not None and self.df_mmsplice is not None:
             missing_tissues = set(self.df_mmsplice['tissue']).difference(

@@ -6,7 +6,7 @@ from kipoiseq.extractors.vcf import MultiSampleVCF
 from splicing_outlier_prediction import SpliceOutlier, SpliceOutlierDataloader, CatInference, SplicingOutlierResult
 from splicing_outlier_prediction.ensemble import train_model_ebm
 from splicing_outlier_prediction.utils import inject_new_row
-from splicing_outlier_prediction.result import GENE_MAP, GENE_TPM_GTEx
+from splicing_outlier_prediction.result import GENE_MAP, GENE_TPM
 from conftest import df_mmsplice_cat, multi_vcf_file, \
     mmsplice_path, spliceai_path, mmsplice_cat_path, var_samples_path, \
         fasta_file, ref_table5_kn_testis, ref_table5_kn_lung, ref_table3_kn_testis, ref_table3_kn_lung, spliceai_vcf_path2
@@ -71,7 +71,7 @@ def test_splicing_outlier_result__init__absplice_dna_input():
     sor_absplice_dna = SplicingOutlierResult(
         df_mmsplice=mmsplice_path, 
         df_spliceai=spliceai_path, 
-        gene_tpm=GENE_TPM_GTEx,
+        gene_tpm=GENE_TPM,
         gene_map=GENE_MAP
     )
     df_absplice_dna_input = sor_absplice_dna.absplice_dna_input
@@ -88,7 +88,7 @@ def test_splicing_outlier_result__init__absplice_rna_input():
         df_mmsplice=mmsplice_path, 
         df_spliceai=spliceai_path, 
         df_mmsplice_cat=mmsplice_cat_path, 
-        gene_tpm=GENE_TPM_GTEx,
+        gene_tpm=GENE_TPM,
         gene_map=GENE_MAP,
         df_var_samples=var_samples_path
     )

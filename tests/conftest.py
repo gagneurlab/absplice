@@ -4,7 +4,7 @@ import tempfile
 from splicing_outlier_prediction import SplicingOutlierResult, \
     SpliceOutlierDataloader, SpliceOutlier, CatInference
 from splicing_outlier_prediction.result import SplicingOutlierResult, \
-    GENE_MAP, GENE_TPM_GTEx
+    GENE_MAP, GENE_TPM
 
 vcf_file = 'tests/data/test.vcf.gz'
 multi_vcf_file = 'tests/data/multi_test.vcf.gz'
@@ -94,7 +94,7 @@ def gene_map():
 
 @pytest.fixture
 def gene_tpm():
-    return pd.read_csv(GENE_TPM_GTEx)
+    return pd.read_csv(GENE_TPM)
 
 # @pytest.fixture
 # def outlier_results_complete(outlier_model, outlier_dl_multi, df_spliceai, gene_map, df_var_samples):
