@@ -11,9 +11,9 @@ from splicing_outlier_prediction.utils import get_abs_max_rows, normalize_gene_a
 from splicing_outlier_prediction.cat_dataloader import CatInference
 
 GENE_MAP = resource_filename(
-    'splicing_outlier_prediction', 'precomputed/GENE_MAP.tsv')
+    'splicing_outlier_prediction', 'precomputed/GENE_MAP.tsv.gz')
 GENE_TPM = resource_filename(
-    'splicing_outlier_prediction', 'precomputed/GENE_TPM.csv')
+    'splicing_outlier_prediction', 'precomputed/GENE_TPM.csv.gz')
 ABSPLICE_DNA = resource_filename(
     'splicing_outlier_prediction', 'precomputed/AbSplice_DNA.pkl')
 ABSPLICE_RNA = resource_filename(
