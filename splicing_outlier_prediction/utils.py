@@ -59,9 +59,9 @@ def read_csv(path, **kwargs):
     else:
         if not isinstance(path, pathlib.PosixPath):
             path = pathlib.Path(path)
-        if path.suffix.lower() == '.csv':
+        if path.suffix.lower() == '.csv' or str(path).endswith('.csv.gz'):
             return pd.read_csv(path, **kwargs)
-        elif path.suffix.lower() == '.tsv':
+        elif path.suffix.lower() == '.tsv' or str(path).endswith('.tsv.gz'):
             return pd.read_csv(path, sep='\t', **kwargs)
         elif path.suffix.lower() == '.parquet':
             return pd.read_parquet(path, **kwargs)
@@ -93,9 +93,9 @@ def read_spliceai(path, **kwargs):
     else:
         if not isinstance(path, pathlib.PosixPath):
             path = pathlib.Path(path)
-        if path.suffix.lower() == '.csv':
+        if path.suffix.lower() == '.csv' or str(path).endswith('.csv.gz'):
             return pd.read_csv(path, **kwargs)
-        elif path.suffix.lower() == '.tsv':
+        elif path.suffix.lower() == '.tsv' or str(path).endswith('.tsv.gz'):
             return pd.read_csv(path, sep='\t', **kwargs)
         elif path.suffix.lower() == '.parquet':
             return pd.read_parquet(path, **kwargs)
