@@ -1,6 +1,6 @@
 import pandas as pd
-from splicing_outlier_prediction.utils import get_abs_max_rows, filter_samples_with_RNA_seq, read_spliceai_vcf, dtype_columns_spliceai
-from splicing_outlier_prediction import SplicingOutlierResult
+from absplice.utils import get_abs_max_rows, filter_samples_with_RNA_seq, read_spliceai_vcf, dtype_columns_spliceai
+from absplice import SplicingOutlierResult
 from conftest import gene_map, gene_tpm, spliceai_path, mmsplice_path, spliceai_vcf_path, spliceai_vcf_path2
 
 

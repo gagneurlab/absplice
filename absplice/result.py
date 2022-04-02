@@ -6,18 +6,18 @@ import numpy as np
 import pickle
 from pathlib import Path
 import pathlib
-from splicing_outlier_prediction.utils import get_abs_max_rows, normalize_gene_annotation, \
+from absplice.utils import get_abs_max_rows, normalize_gene_annotation, \
     read_csv, read_spliceai
-from splicing_outlier_prediction.cat_dataloader import CatInference
+from absplice.cat_dataloader import CatInference
 
 GENE_MAP = resource_filename(
-    'splicing_outlier_prediction', 'precomputed/GENE_MAP.tsv.gz')
+    'absplice', 'precomputed/GENE_MAP.tsv.gz')
 GENE_TPM = resource_filename(
-    'splicing_outlier_prediction', 'precomputed/GENE_TPM.csv.gz')
+    'absplice', 'precomputed/GENE_TPM.csv.gz')
 ABSPLICE_DNA = resource_filename(
-    'splicing_outlier_prediction', 'precomputed/AbSplice_DNA.pkl')
+    'absplice', 'precomputed/AbSplice_DNA.pkl')
 ABSPLICE_RNA = resource_filename(
-    'splicing_outlier_prediction', 'precomputed/AbSplice_RNA.pkl')
+    'absplice', 'precomputed/AbSplice_RNA.pkl')
 
 dtype_columns = {
     'variant': pd.StringDtype(),

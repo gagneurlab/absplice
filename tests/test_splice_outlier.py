@@ -1,8 +1,8 @@
 import pytest
 import pandas as pd
 import numpy as np
-from splicing_outlier_prediction import SpliceOutlier, SpliceOutlierDataloader, CatInference
-from splicing_outlier_prediction.ensemble import train_model_ebm
+from absplice import SpliceOutlier, SpliceOutlierDataloader, CatInference
+from absplice.ensemble import train_model_ebm
 from conftest import fasta_file, multi_vcf_file, \
     ref_table5_kn_testis, ref_table3_kn_testis,  \
     ref_table5_kn_lung, ref_table3_kn_lung, \

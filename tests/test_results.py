@@ -3,10 +3,10 @@ import pandas as pd
 import numpy as np
 from kipoiseq.extractors.vcf import MultiSampleVCF
 # from kipoiseq.extractors.vcf_query import to_sample_csv
-from splicing_outlier_prediction import SpliceOutlier, SpliceOutlierDataloader, CatInference, SplicingOutlierResult
-from splicing_outlier_prediction.ensemble import train_model_ebm
-from splicing_outlier_prediction.utils import inject_new_row
-from splicing_outlier_prediction.result import GENE_MAP, GENE_TPM
+from absplice import SpliceOutlier, SpliceOutlierDataloader, CatInference, SplicingOutlierResult
+from absplice.ensemble import train_model_ebm
+from absplice.utils import inject_new_row
+from absplice.result import GENE_MAP, GENE_TPM
 from conftest import df_mmsplice_cat, multi_vcf_file, \
     mmsplice_path, spliceai_path, mmsplice_cat_path, var_samples_path, \
         fasta_file, ref_table5_kn_testis, ref_table5_kn_lung, ref_table3_kn_testis, ref_table3_kn_lung, spliceai_vcf_path2

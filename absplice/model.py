@@ -5,7 +5,7 @@ try:
     from mmsplice.utils import df_batch_writer, df_batch_writer_parquet, delta_logit_PSI_to_delta_PSI
 except ImportError:
     pass
-from splicing_outlier_prediction.result import SplicingOutlierResult
+from absplice.result import SplicingOutlierResult
 from pathlib import Path
 import pathlib
 

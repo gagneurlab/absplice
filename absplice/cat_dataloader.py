@@ -1,6 +1,6 @@
 from splicemap import SpliceCountTable as CountTable
-from splicing_outlier_prediction.dataloader import SpliceMapMixin
-from splicing_outlier_prediction.utils import delta_logit_PSI_to_delta_PSI, logit
+from absplice.dataloader import SpliceMapMixin
+from absplice.utils import delta_logit_PSI_to_delta_PSI, logit
 import pandas as pd
 import re
 from typing import List

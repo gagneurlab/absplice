@@ -1,4 +1,4 @@
-from splicing_outlier_prediction import SplicingOutlierResult
+from absplice import SplicingOutlierResult
 
 splicing_result = SplicingOutlierResult(
         df_mmsplice=snakemake.input['mmsplice_splicemap'], 

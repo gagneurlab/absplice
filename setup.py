@@ -22,8 +22,8 @@ setup_requirements = ['pytest-runner', ]
 test_requirements = ['pytest', 'pytest-benchmark']
 
 setup(
-    author="M. Hasan Celik",
-    author_email='muhammedhasancelik@gmail.com',
+    author="M. Hasan Celik, Nils Wagner",
+    author_email='muhammedhasancelik@gmail.com, wagnern@in.tum.de',
     classifiers=[
         'Development Status :: 1 - Pre-Alpha',
         'Intended Audience :: Developers',
@@ -34,20 +34,20 @@ setup(
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9',
     ],
-    description="Predict splicing variant outlier prediction",
+    description="Aberrant splicing prediction across human tissues",
     install_requires=requirements,
     license="MIT license",
     long_description=readme + '\n\n' + history,
     long_description_content_type='text/markdown',
     include_package_data=True,
-    keywords='splicing_outlier_prediction',
-    name='splicing_outlier_prediction',
-    packages=find_packages(include=['splicing_outlier_prediction']),
+    keywords='absplice',
+    name='absplice',
+    packages=find_packages(include=['absplice']),
     setup_requires=setup_requirements,
     extras_require=extras_requirements,
     test_suite='tests',
     tests_require=test_requirements,
-    url='https://github.com/gagneurlab/splicing_outlier_prediction',
+    url='https://github.com/gagneurlab/absplice',
     version='0.0.1',
     zip_safe=False
 )

@@ -2,7 +2,7 @@ Splicing Outlier Prediction
 --------------------------------
 
 ## Installation
-Clone git repository of splicing_outlier_prediction:
+Clone git repository of absplice:
 ```
 git clone git@gitlab.cmm.in.tum.de:gagneurlab/splicing-outlier-prediction.git
 ```

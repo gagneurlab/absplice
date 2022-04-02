@@ -1,5 +1,5 @@
 import pytest
-from splicing_outlier_prediction import CatInference
+from absplice import CatInference
 from splicemap import SpliceCountTable as CountTable
 from conftest import ref_table5_kn_testis, ref_table3_kn_testis, \
     ref_table5_kn_lung, ref_table3_kn_lung, \
