@@ -1,3 +1,4 @@
+tests/data/create_test_data
 example/clinvar*
 example/spliceai.vcf
 example/*.csv
