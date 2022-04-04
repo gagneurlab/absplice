@@ -14,7 +14,7 @@ git clone git@github.com:gagneurlab/absplice.git
 
 cd into repo directory:
 ```
-cd splicing-outlier-prediction
+cd absplice
 ```
 
 Install conda environment:
