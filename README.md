@@ -9,7 +9,7 @@ Genome-wide AbSplice-DNA scores for all possible SNVs are available [here](https
 ## Installation
 Clone git repository of splicing_outlier_prediction:
 ```
-git clone git@github.com:gagneurlab/splicing-outlier-prediction.git
+git clone git@github.com:gagneurlab/absplice.git
 ```
 
 cd into repo directory:
