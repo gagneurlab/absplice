@@ -45,7 +45,7 @@ rule download_splicemaps:
     output:
         directory(config['splicemap_dir'])
     shell:
-        "splicemap_download --version gtex_v8 --splicemap_path {output}"
+        "splicemap_download --version gtex_v8 --splicemap_dir {output}"
             
         
 rule mmsplice_splicemap:
