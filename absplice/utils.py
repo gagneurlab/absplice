@@ -129,13 +129,14 @@ def read_spliceai_vcf(path):
                 'donor_loss_position']
     rows = list()
     for variant in MultiSampleVCF(path):
-        row = variant.source.INFO.get('SpliceAI')
-        results = row.split('|')[1:]
-        scores = np.array(list(map(float, results[1:])))
-        spliceai_info = [results[0], scores[:4].max(), *scores]
-        rows.append({
-            **{'variant': str(variant)}, 
-            **dict(zip(columns, spliceai_info))})
+        row_all = variant.source.INFO.get('SpliceAI')
+        for row in row_all.split(','):
+            results = row.split('|')[1:]
+            scores = np.array(list(map(float, results[1:])))
+            spliceai_info = [results[0], scores[:4].max(), *scores]
+            rows.append({
+                **{'variant': str(variant)}, 
+                **dict(zip(columns, spliceai_info))})
     df = pd.DataFrame(rows)
         
     for col in df.columns:
