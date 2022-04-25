@@ -7,7 +7,7 @@ Integration of RNA-seq data from an accessible tissue (e.g. blood or skin) of an
 Genome-wide AbSplice-DNA scores for all possible SNVs are available [here](https://doi.org/10.5281/zenodo.6408331) for download (currently 10,000 scores for genes uploaded).
 
 ## Installation
-Clone git repository of splicing_outlier_prediction:
+Clone git repo:
 ```
 git clone https://github.com/gagneurlab/absplice.git
 ```
