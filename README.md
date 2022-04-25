@@ -28,6 +28,10 @@ Activate conda environment:
 ```
 conda activate absplice
 ```
+Install modules from absplice:
+```
+pip install -e .
+```
 
 ## Example usecase
 The [example](https://github.com/gagneurlab/splicing-outlier-prediction/tree/master/example) folder contains a snakemake workflow to generate AbSplice predictions, given a vcf file and a fasta file.

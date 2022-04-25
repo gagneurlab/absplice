@@ -2,9 +2,8 @@ import pytest
 import pandas as pd
 import tempfile
 from absplice import SplicingOutlierResult, \
-    SpliceOutlierDataloader, SpliceOutlier, CatInference
-from absplice.result import SplicingOutlierResult, \
-    GENE_MAP, GENE_TPM
+    SpliceOutlierDataloader, SpliceOutlier, CatInference, \
+        GENE_MAP, GENE_TPM
 
 vcf_file = 'tests/data/test.vcf.gz'
 multi_vcf_file = 'tests/data/multi_test.vcf.gz'
