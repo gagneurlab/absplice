@@ -45,7 +45,8 @@ rule download_splicemaps:
     output:
         directory(config['splicemap_dir'])
     shell:
-        "splicemap_download --version gtex_v8 --splicemap_dir {output}"
+        "splicemap_download --version gtex_v8 --splicemap_dir {output} --tissues Testis --tissues Cells_Cultured_fibroblasts"
+        # "splicemap_download --version gtex_v8 --splicemap_dir {output}"
             
         
 rule mmsplice_splicemap:
