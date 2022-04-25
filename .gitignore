@@ -1,4 +1,5 @@
 tests/data/create_test_data
+example/splicemap_gtex_v8/*
 example/clinvar*
 example/spliceai.vcf
 example/*.csv
