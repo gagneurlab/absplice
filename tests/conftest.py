@@ -136,8 +136,3 @@ def vcf_path():
 
         temp_vcf.flush()
         yield temp_vcf.name
-
-
-
-
-     
