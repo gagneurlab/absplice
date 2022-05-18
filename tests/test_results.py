@@ -67,10 +67,39 @@ def test_splicing_outlier_result__init__mmsplice_cat_only(df_mmsplice_cat):
     assert 'delta_psi_cat' in sor.df_mmsplice_cat.columns
     
 def test_splicing_outlier_result__init__absplice_dna_input():
-    # Initialize with mmsplice_cat
     sor_absplice_dna = SplicingOutlierResult(
         df_mmsplice=mmsplice_path, 
         df_spliceai=spliceai_path, 
+        gene_tpm=GENE_TPM,
+        gene_map=GENE_MAP
+    )
+    df_absplice_dna_input = sor_absplice_dna.absplice_dna_input
+    
+    sor = SplicingOutlierResult(
+        df_absplice_dna_input=df_absplice_dna_input
+    )
+    assert sor.absplice_dna_input.shape[0] > 0
+    
+    
+def test_splicing_outlier_result__init__absplice_dna_input_mmsplice_None():
+    sor_absplice_dna = SplicingOutlierResult(
+        df_mmsplice=None, 
+        df_spliceai=spliceai_path, 
+        gene_tpm=GENE_TPM,
+        gene_map=GENE_MAP
+    )
+    df_absplice_dna_input = sor_absplice_dna.absplice_dna_input
+    
+    sor = SplicingOutlierResult(
+        df_absplice_dna_input=df_absplice_dna_input
+    )
+    assert sor.absplice_dna_input.shape[0] > 0
+    
+    
+def test_splicing_outlier_result__init__absplice_dna_input_spliceai_None():
+    sor_absplice_dna = SplicingOutlierResult(
+        df_mmsplice=mmsplice_path, 
+        df_spliceai=None, 
         gene_tpm=GENE_TPM,
         gene_map=GENE_MAP
     )

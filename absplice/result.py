@@ -85,6 +85,7 @@ class SplicingOutlierResult:
         self._absplice_dna = self.validate_absplice_dna(df_absplice_dna)
         self._absplice_rna = self.validate_absplice_rna(df_absplice_rna)
         self.contains_chr = self._contains_chr()
+        self.contains_samples = self._contains_samples()
         self._df_spliceai_tissue = None
         self._junction = None
         self._splice_site = None
@@ -251,7 +252,17 @@ class SplicingOutlierResult:
             return 'chr' in self.df_mmsplice.junction[0]
         else:
             return None
-
+        
+    def _contains_samples(self):
+        contains_samples = False
+        if self.df_mmsplice is not None:
+            if 'sample' in self.df_mmsplice.columns:
+                contains_samples = True
+        elif self.df_spliceai is not None:
+            if 'sample' in self.df_spliceai.columns:
+                contains_samples = True
+        return contains_samples
+        
     def _add_tissue_info_to_spliceai(self):
         """
         checks if self.df_spliceai has 'tissue' column.
@@ -259,12 +270,16 @@ class SplicingOutlierResult:
         tissue independent spliceai predictions are copied for each tissue in self.df_mmsplice
         """
         df_spliceai = self.df_spliceai
-        l = list()
-        for tissue in self.df_mmsplice['tissue'].unique():
-            _df = df_spliceai.copy()
-            _df['tissue'] = tissue
-            l.append(_df)
-        self._df_spliceai_tissue = pd.concat(l)
+        if self.df_mmsplice is not None:
+            l = list()
+            for tissue in self.df_mmsplice['tissue'].unique():
+                _df = df_spliceai.copy()
+                _df['tissue'] = tissue
+                l.append(_df)
+            self._df_spliceai_tissue = pd.concat(l)
+        else:
+            self._df_spliceai_tissue = df_spliceai.copy()
+            self._df_spliceai_tissue['tissue'] = 'Not provided'
         return self._df_spliceai_tissue
 
     def _add_samples(self, df):
@@ -437,20 +452,30 @@ class SplicingOutlierResult:
     def absplice_dna_input(self):
         if self._absplice_dna_input is None:
             groupby = ['variant', 'gene_id', 'tissue']
-            if 'sample' in self.df_mmsplice and 'sample' in self.df_spliceai:
+            if self.contains_samples:
                 groupby.append('sample')
-            df_spliceai = self._add_tissue_info_to_spliceai()  # add tissue info to spliceai
-            # this is the same as 'variant_mmsplice'
-            df_mmsplice = self._get_maximum_effect(
-                self.df_mmsplice, groupby, score='delta_psi')
-            # dropna=False assures that also missing gene_id and genes that do not have tpm values in tissues are predicted
-            df_spliceai = self._get_maximum_effect(
-                df_spliceai, groupby, score='delta_score', dropna=False)
-            cols_spliceai = ['delta_score', 'gene_name']
+                
+            # MMSplice (SpliceMap)
             cols_mmsplice = [
                 'Chromosome', 'Start', 'End', 'Strand', 'junction', 'event_type', 'splice_site', 'gene_name',
                 'delta_logit_psi', 'delta_psi', 'ref_psi', 'k', 'n', 'median_n',
                 'novel_junction', 'weak_site_donor', 'weak_site_acceptor']
+            if self.df_mmsplice is not None:
+                df_mmsplice = self._get_maximum_effect(
+                    self.df_mmsplice, groupby, score='delta_psi')
+            else:
+                df_mmsplice = pd.DataFrame(columns=[*cols_mmsplice, *groupby]).set_index(groupby)
+            
+            # SpliceAI
+            cols_spliceai = ['delta_score', 'gene_name']
+            if self.df_spliceai is not None:
+                df_spliceai = self._add_tissue_info_to_spliceai()  # add tissue info to spliceai
+                df_spliceai = self._get_maximum_effect(
+                    df_spliceai, groupby, score='delta_score', dropna=False) # dropna=False assures that also missing gene_id and genes that do not have tpm values in tissues are predicted
+            else:
+                df_spliceai = pd.DataFrame(columns=[*cols_spliceai, *groupby]).set_index(groupby)
+
+            # Join MMSplice & SpliceAI
             self._absplice_dna_input = df_mmsplice[cols_mmsplice].join(
                 df_spliceai[cols_spliceai], how='outer', rsuffix='_spliceai')
 
