@@ -6,13 +6,11 @@ from collections import namedtuple
 
 
 def get_abs_max_rows(df, groupby, max_col, dropna=True):
-    df = df.reset_index()
-    _df = df.copy()
-    _df[max_col] = _df[max_col].abs()
-    max_scores = _df.groupby(groupby, dropna=dropna)[max_col].idxmax()
-    return df.iloc[max_scores.values].set_index(groupby)
-
-
+    return df.reset_index() \
+        .sort_values(by=max_col, key=abs, ascending=False) \
+        .drop_duplicates(subset=groupby) \
+        .set_index(groupby)
+    
 def expit(x):
     return 1. / (1. + np.exp(-x))
 

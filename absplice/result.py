@@ -349,14 +349,14 @@ class SplicingOutlierResult:
             & (~self.df_mmsplice_cat['delta_psi_cat'].isna())
         ]
 
-    def _get_maximum_effect(self, df, groupby, score, dropna=True):
+    def _get_maximum_effect(self, df, groupby, score):
         df = df.reset_index()
         if 'index' in df.columns:
             df = df.drop(columns='index')
         if len(set(groupby).difference(df.columns)) != 0:
             raise KeyError(" %s are not in columns" %
                            set(groupby).difference(df.columns))
-        return get_abs_max_rows(df.set_index(groupby), groupby, score, dropna)
+        return get_abs_max_rows(df.set_index(groupby), groupby, score)
 
     @property
     def psi5(self):
@@ -415,7 +415,7 @@ class SplicingOutlierResult:
             groupby.append('sample')
         if self._gene_spliceai is None:
             self._gene_spliceai = self._get_maximum_effect(
-                self.df_spliceai, groupby, score='delta_score')  # dropna=False ?
+                self.df_spliceai, groupby, score='delta_score')
         return self._gene_spliceai
 
     @property
@@ -445,7 +445,7 @@ class SplicingOutlierResult:
             groupby.append('sample')
         if self._variant_spliceai is None:
             self._variant_spliceai = self._get_maximum_effect(
-                self.df_spliceai, groupby, score='delta_score')  # dropna=False ?
+                self.df_spliceai, groupby, score='delta_score')
         return self._variant_spliceai
 
     @property
@@ -469,9 +469,9 @@ class SplicingOutlierResult:
             # SpliceAI
             cols_spliceai = ['delta_score', 'gene_name']
             if self.df_spliceai is not None:
-                df_spliceai = self._add_tissue_info_to_spliceai()  # add tissue info to spliceai
+                df_spliceai = self._add_tissue_info_to_spliceai()
                 df_spliceai = self._get_maximum_effect(
-                    df_spliceai, groupby, score='delta_score', dropna=False) # dropna=False assures that also missing gene_id and genes that do not have tpm values in tissues are predicted
+                    df_spliceai, groupby, score='delta_score')
             else:
                 df_spliceai = pd.DataFrame(columns=[*cols_spliceai, *groupby]).set_index(groupby)
 

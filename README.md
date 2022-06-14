@@ -4,7 +4,7 @@ This package predicts aberrant splicing across human tissues with AbSplice.
 AbSplice predictions are based on enhanced tissue-specific splice site annotations ([SpliceMaps](https://github.com/gagneurlab/splicemap)).
 If purely sequence based information is available, different DNA-based splicing predictions are combined into an integrative model "AbSplice-DNA".
 Integration of RNA-seq data from an accessible tissue (e.g. blood or skin) of an individual to predict aberrant splicing in any other tissue from the same individual is supported in "AbSplice-RNA".
-Genome-wide AbSplice-DNA scores for all possible SNVs are available [here](https://doi.org/10.5281/zenodo.6408331) for download (currently 10,000 scores for genes uploaded).
+Genome-wide AbSplice-DNA scores for all possible SNVs are available [here](https://doi.org/10.5281/zenodo.6408331) for download.
 
 ## Installation
 Clone git repo:
