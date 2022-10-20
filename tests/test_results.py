@@ -9,7 +9,7 @@ from absplice.utils import inject_new_row
 from absplice.result import GENE_MAP, GENE_TPM
 from conftest import df_mmsplice_cat, multi_vcf_file, \
     mmsplice_path, spliceai_path, mmsplice_cat_path, var_samples_path, \
-        fasta_file, ref_table5_kn_testis, ref_table5_kn_lung, ref_table3_kn_testis, ref_table3_kn_lung, spliceai_vcf_path2
+        fasta_file, ref_table5_kn_testis, ref_table5_kn_lung, ref_table3_kn_testis, ref_table3_kn_lung, spliceai_vcf_path2, cadd_splice_path
     
 def test_splicing_outlier_result__init__mmsplice_only(df_mmsplice):
     # initialize with pd.DataFrame
@@ -51,6 +51,22 @@ def test_splicing_outlier_result__init__spliceai_only(df_spliceai):
     assert 'delta_score' in sor.df_spliceai.columns
     
     
+def test_splicing_outlier_result__init__cadd_splice_only():
+    # # initialize with pd.DataFrame
+    # sor = SplicingOutlierResult(
+    #     df_cadd_splice = df_cadd_splice
+    # )
+    # assert sor.df_cadd_splice is not None
+    # assert 'PHRED' in sor.df_cadd_splice.columns
+    
+    # initialitze with path
+    sor = SplicingOutlierResult(
+        df_cadd_splice = cadd_splice_path
+    )
+    assert sor.df_cadd_splice is not None
+    assert 'PHRED' in sor.df_cadd_splice.columns
+    
+    
 def test_splicing_outlier_result__init__mmsplice_cat_only(df_mmsplice_cat):
     # initialize with pd.DataFrame
     sor = SplicingOutlierResult(
@@ -79,6 +95,23 @@ def test_splicing_outlier_result__init__absplice_dna_input():
         df_absplice_dna_input=df_absplice_dna_input
     )
     assert sor.absplice_dna_input.shape[0] > 0
+    
+    
+def test_splicing_outlier_result__init__absplice_dna_input_CADD():
+    sor_absplice_dna = SplicingOutlierResult(
+        df_mmsplice=mmsplice_path, 
+        df_spliceai=spliceai_path, 
+        df_cadd_splice=cadd_splice_path,
+        gene_tpm=GENE_TPM,
+        gene_map=GENE_MAP
+    )
+    df_absplice_dna_input = sor_absplice_dna.absplice_dna_input
+    
+    sor = SplicingOutlierResult(
+        df_absplice_dna_input=df_absplice_dna_input
+    )
+    assert sor.absplice_dna_input.shape[0] > 0
+    assert 'PHRED' in sor.absplice_dna_input.columns
     
     
 def test_splicing_outlier_result__init__absplice_dna_input_mmsplice_None():
@@ -272,6 +305,17 @@ def test_splicing_outlier_result_predict_absplice_dna():
     )
     sor.predict_absplice_dna()
     assert 'AbSplice_DNA' in sor._absplice_dna.columns
+    
+    
+def test_splicing_outlier_result_predict_absplice_dna_CADD():
+    sor = SplicingOutlierResult(
+        df_mmsplice=mmsplice_path, 
+        df_spliceai=spliceai_path,
+        df_cadd_splice=cadd_splice_path
+    )
+    sor.predict_absplice_dna(cadd_splice=True)
+    assert 'AbSplice_DNA' in sor._absplice_dna.columns
+    assert 'PHRED' in sor._absplice_dna.columns
     
     
 def test_splicing_outlier_result_predict_absplice_rna():

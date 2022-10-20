@@ -128,17 +128,58 @@ def read_spliceai_vcf(path):
     rows = list()
     for variant in MultiSampleVCF(path):
         row_all = variant.source.INFO.get('SpliceAI')
-        for row in row_all.split(','):
-            results = row.split('|')[1:]
-            scores = np.array(list(map(float, results[1:])))
-            spliceai_info = [results[0], scores[:4].max(), *scores]
-            rows.append({
-                **{'variant': str(variant)}, 
-                **dict(zip(columns, spliceai_info))})
+        if row_all:
+            for row in row_all.split(','):
+                results = row.split('|')[1:]
+                scores = np.array(list(map(float, results[1:])))
+                spliceai_info = [results[0], scores[:4].max(), *scores]
+                rows.append({
+                    **{'variant': str(variant)}, 
+                    **dict(zip(columns, spliceai_info))})
     df = pd.DataFrame(rows)
         
     for col in df.columns:
         if col in dtype_columns_spliceai.keys():
             df = df.astype({col: dtype_columns_spliceai[col]})
             
+    return df
+
+
+def _add_variant_row(row):
+    return str(row['#Chrom']) + ':' + str(row['Pos']) + ':' + row['Ref'] + '>' + row['Alt']
+
+
+def _add_variant(df):
+    if 'variant' in df.columns:
+        return df
+    else:
+        df['variant'] = df.apply(lambda x: _add_variant_row(x), axis=1)
+        # df['variant'] = df['variant'].astype(pd.StringDtype())
+        return df
+    
+    
+def _check_gene_id(df):
+    if 'GeneID' in df.columns:
+        df = df.rename(columns={'GeneID': 'gene_id'})
+    if 'gene_id' not in df.columns:
+        raise ValueError("Please add gene_id.")
+    return df
+
+        
+def read_cadd_splice(path, **kwargs):
+    if isinstance(path, pd.DataFrame):
+        df = path
+    else:
+        if not isinstance(path, pathlib.PosixPath):
+            path = pathlib.Path(path)
+        if path.suffix.lower() == '.csv' or str(path).endswith('.csv.gz'):
+            df = pd.read_csv(path, **kwargs)
+        elif path.suffix.lower() == '.tsv' or str(path).endswith('.tsv.gz'):
+            df = pd.read_csv(path, sep='\t', **kwargs)
+        elif path.suffix.lower() == '.parquet':
+            df  = pd.read_parquet(path, **kwargs)
+        else:
+            raise ValueError("unknown file ending.")
+    df = _add_variant(df)
+    df = _check_gene_id(df)
     return df

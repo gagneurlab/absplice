@@ -29,6 +29,8 @@ mmsplice_cat_path = 'tests/data/test_mmsplice_cat.csv'
 spliceai_vcf_path = 'tests/data/spliceai_snv.vcf'
 spliceai_vcf_path2 = 'tests/data/test_spliceai.vcf'
 
+cadd_splice_path = 'tests/data/cadd_splice_test.tsv.gz'
+
 @pytest.fixture
 def df_var_samples():
     return pd.read_csv(var_samples_path)

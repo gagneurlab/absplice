@@ -1,7 +1,7 @@
 import pandas as pd
-from absplice.utils import get_abs_max_rows, filter_samples_with_RNA_seq, read_spliceai_vcf, dtype_columns_spliceai
+from absplice.utils import get_abs_max_rows, filter_samples_with_RNA_seq, read_cadd_splice, read_spliceai_vcf, dtype_columns_spliceai
 from absplice import SplicingOutlierResult
-from conftest import gene_map, gene_tpm, spliceai_path, mmsplice_path, spliceai_vcf_path, spliceai_vcf_path2
+from conftest import gene_map, gene_tpm, spliceai_path, mmsplice_path, spliceai_vcf_path, spliceai_vcf_path2, cadd_splice_path
 
 
 def test_get_max_rows():
@@ -79,4 +79,19 @@ def test_utils_read_spliceai_vcf():
     for col in df_compare.columns:
         if col in dtype_columns_spliceai.keys():
             df_compare = df_compare.astype({col: dtype_columns_spliceai[col]})
+    pd.testing.assert_frame_equal(df, df_compare)
+    
+    
+def test_utils_read_cadd_splice():
+    df = read_cadd_splice(cadd_splice_path, skiprows=1)
+    df_compare = pd.DataFrame({
+        '#Chrom': [17, 17, 17, 17, 17],
+        'Pos': [41229271, 41236605, 41249878, 41271389, 41238435],
+        'Ref': ['T', 'G', 'G', 'A', 'C'],
+        'Alt': ['A', 'A', 'A', 'G', 'G'],
+        'RawScore': [ 0.087061, -0.546492, -0.987847,  0.071266,  0.18075 ],
+        'PHRED': [1.978, 0.095, 0.008, 1.846, 2.907],
+        'gene_id': ['ENSG00000204873', 'ENSG00000204873', 'ENSG00000241595','ENSG00000212659', 'ENSG00000204873'],
+        'variant': ['17:41229271:T>A', '17:41236605:G>A', '17:41249878:G>A', '17:41271389:A>G', '17:41238435:C>G'],
+    })
     pd.testing.assert_frame_equal(df, df_compare)
