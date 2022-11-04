@@ -8,7 +8,7 @@ from absplice.ensemble import train_model_ebm
 from absplice.utils import inject_new_row
 from absplice.result import GENE_MAP, GENE_TPM
 from conftest import df_mmsplice_cat, multi_vcf_file, \
-    mmsplice_path, spliceai_path, mmsplice_cat_path, var_samples_path, \
+    mmsplice_path, spliceai_path, mmsplice_cat_path, var_samples_path, absplice_precomputed_path, \
         fasta_file, ref_table5_kn_testis, ref_table5_kn_lung, ref_table3_kn_testis, ref_table3_kn_lung, spliceai_vcf_path2, cadd_splice_path
     
 def test_splicing_outlier_result__init__mmsplice_only(df_mmsplice):
@@ -97,6 +97,13 @@ def test_splicing_outlier_result__init__absplice_dna_input():
     assert sor.absplice_dna_input.shape[0] > 0
     
     
+def test_splicing_outlier_result__init__absplice_dna_input_precomputed():
+    sor = SplicingOutlierResult(
+        df_absplice_dna_input = absplice_precomputed_path
+    )
+    assert sor.absplice_dna_input.shape[0] > 0
+    
+    
 def test_splicing_outlier_result__init__absplice_dna_input_CADD():
     sor_absplice_dna = SplicingOutlierResult(
         df_mmsplice=mmsplice_path, 
@@ -159,6 +166,20 @@ def test_splicing_outlier_result__init__absplice_rna_input():
         df_absplice_rna_input=df_absplice_rna_input
     )
     assert sor.absplice_rna_input.shape[0] > 0
+    
+    
+def test_splicing_outlier_result__init__absplice_rna_input_absplice_dna_precomputed():
+    # Initialize with mmsplice_cat
+    sor_absplice_rna = SplicingOutlierResult(
+        df_absplice_dna_input = absplice_precomputed_path,
+        df_mmsplice_cat=mmsplice_cat_path, 
+        df_var_samples=var_samples_path
+    )
+    df_absplice_rna_input = sor_absplice_rna.absplice_rna_input
+    sor = SplicingOutlierResult(
+        df_absplice_rna_input=df_absplice_rna_input
+    )
+    assert sor.absplice_rna_input.shape[0] > 0
      
 # def test_splicing_outlier_result_add_spliceai(outlier_results, df_spliceai, gene_map):
 #     assert outlier_results.df_spliceai is None
@@ -205,15 +226,12 @@ def test_splicing_outlier_result_infer_cat(outlier_results_multi, cat_dl, df_var
     results.add_samples(df_var_samples)
     results.infer_cat(cat_dl)
 
-    assert sorted(results.df_mmsplice_cat.columns.tolist()) == sorted([
-        'event_type', 'variant', 'Chromosome', 'Start', 'End', 'Strand',
-        'events', 'splice_site', 'ref_psi', 'k', 'n', 'median_n',
-        'novel_junction', 'weak_site_acceptor', 'weak_site_donor',
-        'gene_name', 'transcript_id', 'gene_type', 'gene_tpm',
-        'delta_psi', 'delta_logit_psi',
-        'ref_acceptorIntron', 'ref_acceptor', 'ref_exon', 'ref_donor', 'ref_donorIntron',
-        'alt_acceptorIntron', 'alt_acceptor', 'alt_exon', 'alt_donor', 'alt_donorIntron',
-        'tissue_cat', 'count_cat', 'psi_cat', 'ref_psi_cat', 'k_cat', 'n_cat', 'median_n_cat',
+    assert sorted(results.df_mmsplice_cat.reset_index().columns.tolist()) == sorted([
+        'variant', 'tissue', 'junction', 'event_type',
+        'splice_site', 'ref_psi', 'median_n', 
+        'gene_id', 'gene_name', 'gene_tpm',
+        'delta_logit_psi', 'delta_psi',
+        'sample', 'tissue_cat', 'count_cat', 'psi_cat', 'ref_psi_cat', 'k_cat', 'n_cat', 'median_n_cat',
         'delta_logit_psi_cat', 'delta_psi_cat'])
 
     assert results.df_mmsplice_cat.loc[(

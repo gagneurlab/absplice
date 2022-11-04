@@ -145,15 +145,20 @@ def read_spliceai_vcf(path):
     return df
 
 
-def _add_variant_row(row):
-    return str(row['#Chrom']) + ':' + str(row['Pos']) + ':' + row['Ref'] + '>' + row['Alt']
+def _add_variant_col(row):
+    if '#Chrom' in row:
+        return str(row['#Chrom']).replace('chr', '') + ':' + str(row['Pos']) + ':' + row['Ref'] + '>' + row['Alt']
+    elif 'chrom' in row:
+        return str(row['chrom']).replace('chr', '') + ':' + str(row['pos']) + ':' + row['ref'] + '>' + row['alt']
+    else:
+        raise NotImplementedError()
 
 
 def _add_variant(df):
-    if 'variant' in df.columns:
+    if 'variant' in df.reset_index().columns:
         return df
     else:
-        df['variant'] = df.apply(lambda x: _add_variant_row(x), axis=1)
+        df['variant'] = df.apply(lambda x: _add_variant_col(x), axis=1)
         # df['variant'] = df['variant'].astype(pd.StringDtype())
         return df
     
@@ -182,4 +187,22 @@ def read_cadd_splice(path, **kwargs):
             raise ValueError("unknown file ending.")
     df = _add_variant(df)
     df = _check_gene_id(df)
+    return df
+
+
+def read_absplice(path, **kwargs):
+    if isinstance(path, pd.DataFrame):
+        df = path
+    else:
+        if not isinstance(path, pathlib.PosixPath):
+            path = pathlib.Path(path)
+        if path.suffix.lower() == '.csv' or str(path).endswith('.csv.gz'):
+            df = pd.read_csv(path, **kwargs)
+        elif path.suffix.lower() == '.tsv' or str(path).endswith('.tsv.gz'):
+            df = pd.read_csv(path, sep='\t', **kwargs)
+        elif path.suffix.lower() == '.parquet':
+            df  = pd.read_parquet(path, **kwargs)
+        else:
+            raise ValueError("unknown file ending.")
+    df = _add_variant(df)
     return df
