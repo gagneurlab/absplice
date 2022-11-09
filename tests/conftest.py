@@ -31,6 +31,8 @@ spliceai_vcf_path2 = 'tests/data/test_spliceai.vcf'
 
 cadd_splice_path = 'tests/data/cadd_splice_test.tsv.gz'
 
+absplice_precomputed_path = 'tests/data/all_SNVs_precomputed.csv'
+
 @pytest.fixture
 def df_var_samples():
     return pd.read_csv(var_samples_path)
@@ -107,15 +109,11 @@ def gene_tpm():
 @pytest.fixture
 def mmsplice_splicemap_cols():
     return sorted([
-        'variant', 'junction', 'tissue', 'event_type',
-        'Chromosome', 'Start', 'End', 'Strand',
-        'events', 'splice_site', 'ref_psi', 'k', 'n', 'median_n',
-        'novel_junction', 'weak_site_donor', 'weak_site_acceptor',
-        'gene_id', 'gene_name', 'transcript_id', 'gene_type', 'gene_tpm',
-        'delta_logit_psi', 'delta_psi',
-        'ref_acceptorIntron', 'ref_acceptor', 'ref_exon', 'ref_donor', 'ref_donorIntron',
-        'alt_acceptorIntron', 'alt_acceptor', 'alt_exon', 'alt_donor', 'alt_donorIntron'])
-    
+            'variant', 'tissue', 'junction', 'event_type',
+            'splice_site', 'ref_psi', 'median_n', 
+            'gene_id', 'gene_name', 'gene_tpm',
+            'delta_logit_psi', 'delta_psi',
+        ])
      
 variants = [
     "chr3:193360794:C:['A']"

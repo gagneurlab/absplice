@@ -1,6 +1,8 @@
+from collections import defaultdict
 import itertools
 from typing import List
 import pandas as pd
+from tqdm import tqdm
 from kipoi.data import SampleIterator
 from splicemap.splice_map import SpliceMap
 
@@ -14,27 +16,51 @@ except ImportError:
 
 class SpliceMapMixin:
 
-    def __init__(self, splicemap5=None, splicemap3=None):
+    def __init__(self, splicemap5=None, splicemap3=None, progress=True):
+        self.progress = progress
+        
         if splicemap5 is None and splicemap3 is None:
             raise ValueError(
                 '`ref_tables5` and `ref_tables3` cannot be both empty')
 
         if splicemap5 is not None:
             self.splicemaps5 = self._read_splicemap(splicemap5)
-            self.combined_splicemap5 = self._combine_splicemaps(
+            self.combined_splicemap5 = self._combine_junctions(
                 self.splicemaps5)
+            self.metadata_splicemap5 = self._splicemap_metadata(self.splicemaps5)
         else:
             self.combined_splicemap5 = None
 
         if splicemap3 is not None:
             self.splicemaps3 = self._read_splicemap(splicemap3)
-            self.combined_splicemap3 = self._combine_splicemaps(
+            self.combined_splicemap3 = self._combine_junctions(
                 self.splicemaps3)
+            self.metadata_splicemap3 = self._splicemap_metadata(self.splicemaps3)
         else:
             self.combined_splicemap3 = None
 
+    def _splicemap_metadata(self, splicemaps):
+        metadata = defaultdict(list)
+        
+        cols = ['junction', 'gene_id', 'tissue', 'ref_psi', 'median_n', 'gene_name', 'gene_tpm', 'splice_site']
+        
+        for splicemap in splicemaps:
+            
+            df = splicemap.df.copy()
+            df = df.rename(columns={'junctions': 'junction'})
+            df['tissue'] = splicemap.name 
+            itertuples = df[cols].itertuples(index=False)
+            
+            if self.progress:
+                itertuples = tqdm(itertuples)
+            
+            for row in itertuples:
+                metadata[row.junction].append(tuple(row))       
+        
+        return dict(metadata)
+    
     @staticmethod
-    def _combine_splicemaps(splicemaps: List[SpliceMap]):
+    def _combine_junctions(splicemaps: List[SpliceMap]):
         columns = ['junctions', 'Chromosome', 'Start', 'End', 'Strand']
         df = pd.concat(
             [s.df[columns] for s in splicemaps]

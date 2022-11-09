@@ -7,7 +7,7 @@ import pickle
 from pathlib import Path
 import pathlib
 from absplice.utils import get_abs_max_rows, normalize_gene_annotation, \
-    read_csv, read_spliceai, read_cadd_splice
+    read_csv, read_spliceai, read_cadd_splice, read_absplice
 from absplice.cat_dataloader import CatInference
 
 GENE_MAP = resource_filename(
@@ -211,16 +211,19 @@ class SplicingOutlierResult:
 
     def validate_absplice_dna_input(self, df_absplice_dna_input):
         if df_absplice_dna_input is not None:
+            df_absplice_dna_input = read_absplice(df_absplice_dna_input)
             df_absplice_dna_input = self._validate_df(
                 df_absplice_dna_input,
                 columns=[
-                    'variant', 'gene_id', 'tissue', 'gene_name', 'gene_name_spliceai', 'gene_tpm',
-                    'Chromosome', 'Start', 'End', 'Strand', 'junction', 'event_type', 'splice_site',
-                    'delta_score', 'delta_logit_psi', 'delta_psi', 'ref_psi', 'k', 'n', 'median_n',
-                    'novel_junction', 'weak_site_donor', 'weak_site_acceptor'
+                    'variant', 'gene_id', 'tissue', 'median_n',
+                    'delta_score', 'delta_logit_psi', 'delta_psi',
                 ])
             df_absplice_dna_input = self._validate_dtype(df_absplice_dna_input)
             groupby = ['variant', 'gene_id', 'tissue']
+            
+            if self.df_var_samples is not None and 'sample' not in df_absplice_dna_input:
+                df_absplice_dna_input = self._add_samples(df_absplice_dna_input)
+            
             if 'sample' in df_absplice_dna_input:
                 groupby.append('sample')
             df_absplice_dna_input = df_absplice_dna_input.set_index(groupby)
@@ -231,10 +234,10 @@ class SplicingOutlierResult:
             df_absplice_rna_input = self._validate_df(
                 df_absplice_rna_input,
                 columns=[
-                    'variant', 'gene_id', 'tissue', 'sample', 'gene_name', 'gene_name_spliceai', 'gene_tpm',
-                    'Chromosome', 'Start', 'End', 'Strand', 'junction', 'event_type', 'splice_site',
-                    'delta_score', 'delta_logit_psi', 'delta_psi', 'ref_psi', 'k', 'n', 'median_n',
-                    'novel_junction', 'weak_site_donor', 'weak_site_acceptor',
+                    'variant', 'gene_id', 'tissue', 'sample', 
+                    # 'gene_tpm', 'event_type', 'splice_site', 'k', 'n',
+                    'junction', 
+                    'delta_score', 'delta_logit_psi', 'delta_psi', 'ref_psi', 'median_n',
                     'tissue_cat', 'k_cat', 'n_cat', 'median_n_cat', 'psi_cat', 'ref_psi_cat',
                     'delta_logit_psi_cat', 'delta_psi_cat'
                 ])
@@ -313,6 +316,8 @@ class SplicingOutlierResult:
         return self._df_cadd_splice_tissue
 
     def _add_samples(self, df):
+        assert 'chr' not in df.iloc[0]['variant']
+        assert 'chr' not in self.df_var_samples.iloc[0]['variant']
         df = df.set_index('variant') \
             .join(self.df_var_samples.set_index('variant'),
                   how='inner') \
@@ -350,7 +355,6 @@ class SplicingOutlierResult:
         for cat in cat_inference:
             assert self.contains_chr == cat.contains_chr
 
-            cols_shared = ['junction', 'gene_id', 'tissue', 'event_type']
             common_cat_idx = set(pd.concat([cat.common5, cat.common3])
                                  .set_index(['junctions', 'gene_id', 'tissue', 'event_type']).index)
 
@@ -532,8 +536,7 @@ class SplicingOutlierResult:
         if self._absplice_rna_input is None:
             groupby = ['variant', 'gene_id', 'tissue', 'sample']
             if not pd.Series(groupby).isin(self.absplice_dna_input.index.names).all():
-                self._absplice_dna_input = self.absplice_dna_input.set_index(
-                    groupby)
+                self._absplice_dna_input = self.absplice_dna_input.set_index(groupby)
             df_mmsplice_cat = self._get_maximum_effect(
                 self.df_mmsplice_cat, groupby, score='delta_psi_cat')
             cols_mmsplice_cat = [
@@ -576,15 +579,13 @@ class SplicingOutlierResult:
         return self._absplice_dna
 
     def predict_absplice_rna(self, pickle_file=None, features=None, abs_features=False, median_n_cutoff=0, tpm_cutoff=1):
-        if features is None:
-            features = [
-                'delta_logit_psi',
-                'delta_psi',
-                'delta_psi_cat',
-                'delta_score',
-                'splice_site_is_expressed']
         if pickle_file is None:
             pickle_file = ABSPLICE_RNA
+        
+        # Load model and extract features
+        if features is None:
+            model = pickle.load(open(pickle_file, 'rb'))
+            features = sorted([x for x in model.feature_names if ' x ' not in x])
 
         self._absplice_rna = self._predict_absplice(
             df=self.absplice_rna_input,

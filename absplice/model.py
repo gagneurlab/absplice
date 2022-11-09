@@ -17,48 +17,48 @@ class SpliceOutlier:
         self.mmsplice = MMSplice()
         self.clip_threshold = clip_threshold
 
-    def _add_delta_psi_single_ref(self, df, splicemap):
-        df_splicemap = splicemap.df
+    def _add_metadata_event(self, df, metadata, event_type):
+        df = df[df['event_type'] == event_type].set_index('junction')
+        
+        return df.join(pd.DataFrame(
+            [
+                row
+                for junc in df.index
+                for row in metadata[junc]
+            ], 
+            columns=['junction', 'gene_id', 'tissue', 'ref_psi', 'median_n', 'gene_name', 'gene_tpm', 'splice_site']
+        ).set_index('junction')).reset_index()
 
-        core_cols = ['junctions', 'Chromosome', 'Start', 'End', 'Strand']
-        cols_splicemap = df_splicemap.columns.difference(core_cols, False)
-        df_splicemap = df_splicemap.rename(columns={'junctions': 'junction'}) \
-            .set_index('junction')[cols_splicemap]
-
-        df = df[df.columns.difference(cols_splicemap, False)] \
-            .set_index('junction')
-
-        df_joined = df.join(df_splicemap, how='inner').reset_index()
-
+    def _add_metadata(self, df, dl):
+        return pd.concat([
+            self._add_metadata_event(df, dl.metadata_splicemap5, 'psi5'),
+            self._add_metadata_event(df, dl.metadata_splicemap3, 'psi3')
+        ])
+        
+    def _add_delta_psi(self, df):
         delta_psi = delta_logit_PSI_to_delta_PSI(
-            df_joined['delta_logit_psi'],
-            df_joined['ref_psi'],
+            df['delta_logit_psi'],
+            df['ref_psi'],
             clip_threshold=self.clip_threshold or 0.01
         )
-        df_joined.insert(8, 'delta_psi', delta_psi)
-        df_joined.insert(3, 'tissue', splicemap.name)
-        return df_joined
-
-    def _add_delta_event(self, df, splicemaps, event_type):
-        df = df[df['event_type'] == event_type]
-        return pd.concat(
-            self._add_delta_psi_single_ref(df, splicemap)
-            for splicemap in splicemaps
-        )
-
-    def _add_delta_psi(self, df, dl):
-        return pd.concat([
-            self._add_delta_event(df, dl.splicemaps5, 'psi5'),
-            self._add_delta_event(df, dl.splicemaps3, 'psi3')
-        ])
+        df.insert(8, 'delta_psi', delta_psi)
+        return df
 
     def predict_on_batch(self, batch, dataloader):
         columns = batch['metadata']['junction'].keys()
         df = self.mmsplice._predict_batch(batch, columns)
         del df['exons']
         df = df.rename(columns={'ID': 'variant'})
-        df_with_delta_psi = self._add_delta_psi(df, dataloader)
-        return df_with_delta_psi
+        df = self._add_metadata(df, dataloader)
+        df = self._add_delta_psi(df)
+        cols = [
+            'variant', 'tissue', 'junction', 'event_type',
+            'splice_site', 'ref_psi', 'median_n', 
+            'gene_id', 'gene_name', 'gene_tpm',
+            'delta_logit_psi', 'delta_psi',
+        ]
+        df = df[cols]
+        return df
 
     def _predict_on_dataloader(self, dataloader,
                                batch_size=512, progress=True):
