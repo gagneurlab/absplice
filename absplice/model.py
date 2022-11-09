@@ -27,7 +27,7 @@ class SpliceOutlier:
                 for row in metadata[junc]
             ], 
             columns=['junction', 'gene_id', 'tissue', 'ref_psi', 'median_n', 'gene_name', 'gene_tpm', 'splice_site']
-        ).set_index('junction')).reset_index()
+        ).set_index('junction')).reset_index().drop_duplicates()
 
     def _add_metadata(self, df, dl):
         return pd.concat([
