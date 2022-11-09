@@ -11,3 +11,7 @@ splicing_pred:
   spliceai: spliceai.csv
   spliceai_vcf: spliceai.vcf
   absplice_dna: absplice_dna.csv
+
+gtex_tissues:
+    - Testis
+    - Cells_Cultured_fibroblasts
