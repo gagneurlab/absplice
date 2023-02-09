@@ -151,7 +151,7 @@ class SplicingOutlierResult:
         if df_outliers_cat is not None:
             df_outliers_cat = self._validate_df(
                 df_outliers_cat,
-                columns=['variant', 'gene_id', 'tissue', 'sample'
+                columns=['variant', 'gene_id', 'sample',
                          'pValueGene_g_minus_log10'])
             df_outliers_cat = self._validate_dtype(df_outliers_cat)
             df_outliers_cat = df_outliers_cat[
@@ -490,7 +490,7 @@ class SplicingOutlierResult:
     
     @property
     def variant_outliers_cat(self):
-        groupby = ['variant', 'gene_id', 'tissue', 'sample']
+        groupby = ['variant', 'gene_id', 'sample']
         if self._variant_outliers_cat is None:
             self._variant_outliers_cat = self._get_maximum_effect(
                 self.df_outliers_cat, groupby, score='pValueGene_g_minus_log10')
@@ -563,17 +563,24 @@ class SplicingOutlierResult:
             groupby = ['variant', 'gene_id', 'tissue', 'sample']
             if not pd.Series(groupby).isin(self.absplice_dna_input.index.names).all():
                 self._absplice_dna_input = self.absplice_dna_input.set_index(groupby)
+                
             df_mmsplice_cat = self._get_maximum_effect(
                 self.df_mmsplice_cat, groupby, score='delta_psi_cat')
             cols_mmsplice_cat = [
                 'junction', 'delta_psi', 'ref_psi', 'median_n',
                 *[col for col in df_mmsplice_cat.columns if 'cat' in col]]
+            
             df_outliers_cat = self._get_maximum_effect(
-                self.df_outliers_cat, groupby, score='pValueGene_g_minus_log10')
+                self.df_outliers_cat, ['variant', 'gene_id', 'sample'], score='pValueGene_g_minus_log10')
             cols_outliers_cat = ['pValueGene_g_minus_log10']
+            
             self._absplice_rna_input = self.absplice_dna_input.join(
-                df_mmsplice_cat[cols_mmsplice_cat], how='outer', rsuffix='_from_cat_infer').join(
-                df_outliers_cat[cols_outliers_cat], how='outer', rsuffix='_outlier_cat')
+                df_mmsplice_cat[cols_mmsplice_cat], how='outer', rsuffix='_from_cat_infer').reset_index()
+            
+            self._absplice_rna_input = self._absplice_rna_input.set_index(['variant', 'gene_id', 'sample']).join(
+                df_outliers_cat[cols_outliers_cat], how='outer', rsuffix='_outlier_cat').reset_index()
+            
+            self._absplice_rna_input = self._absplice_rna_input.set_index(groupby)
         return self._absplice_rna_input
 
     def _predict_absplice(self, df, absplice_score, pickle_file, features, abs_features, median_n_cutoff, tpm_cutoff):
