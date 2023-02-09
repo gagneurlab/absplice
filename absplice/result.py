@@ -68,6 +68,7 @@ class SplicingOutlierResult:
                  df_spliceai=None,
                  df_cadd_splice=None,
                  df_mmsplice_cat=None,
+                 df_outliers_cat=None,
                  gene_map=None,
                  gene_tpm=None,
                  df_var_samples=None,
@@ -79,6 +80,7 @@ class SplicingOutlierResult:
         self.df_var_samples = self.validate_df_var_samples(df_var_samples)
         self.df_mmsplice = self.validate_df_mmsplice(df_mmsplice)
         self.df_mmsplice_cat = self.validate_df_mmsplice_cat(df_mmsplice_cat)
+        self.df_outliers_cat = self.validate_df_outliers_cat(df_outliers_cat)
         self.gene_map = self.validate_df_gene_map(gene_map)
         self.gene_tpm = self.validate_df_gene_tpm(gene_tpm)
         self.df_spliceai = self.validate_df_spliceai(df_spliceai)
@@ -101,6 +103,7 @@ class SplicingOutlierResult:
         self._gene_absplice_rna = None
         self._variant_mmsplice = None
         self._variant_mmsplice_cat = None
+        self._variant_outliers_cat = None
         self._variant_spliceai = None
         self._variant_absplice_dna = None
         self._variant_absplice_rna = None
@@ -143,6 +146,18 @@ class SplicingOutlierResult:
                 ~df_mmsplice_cat['delta_psi_cat'].isna()
             ]
         return df_mmsplice_cat
+    
+    def validate_df_outliers_cat(self, df_outliers_cat):
+        if df_outliers_cat is not None:
+            df_outliers_cat = self._validate_df(
+                df_outliers_cat,
+                columns=['variant', 'gene_id', 'tissue', 'sample'
+                         'pValueGene_g_minus_log10'])
+            df_outliers_cat = self._validate_dtype(df_outliers_cat)
+            df_outliers_cat = df_outliers_cat[
+                ~df_outliers_cat['pValueGene_g_minus_log10'].isna()
+            ]
+        return df_outliers_cat
 
     def validate_df_spliceai(self, df_spliceai):
         if df_spliceai is not None:
@@ -239,7 +254,7 @@ class SplicingOutlierResult:
                     'junction', 
                     'delta_score', 'delta_logit_psi', 'delta_psi', 'ref_psi', 'median_n',
                     'tissue_cat', 'k_cat', 'n_cat', 'median_n_cat', 'psi_cat', 'ref_psi_cat',
-                    'delta_logit_psi_cat', 'delta_psi_cat'
+                    'delta_logit_psi_cat', 'delta_psi_cat', 'pValueGene_g_minus_log10'
                 ])
             df_absplice_rna_input = self._validate_dtype(df_absplice_rna_input)
             groupby = ['variant', 'gene_id', 'tissue', 'sample']
@@ -316,8 +331,9 @@ class SplicingOutlierResult:
         return self._df_cadd_splice_tissue
 
     def _add_samples(self, df):
-        assert 'chr' not in df.iloc[0]['variant']
-        assert 'chr' not in self.df_var_samples.iloc[0]['variant']
+        chr_df = 'chr' in df.iloc[0]['variant']
+        chr_samples = 'chr' in self.df_var_samples.iloc[0]['variant']
+        assert (chr_df == True and chr_samples == True) or (chr_df == False and chr_samples == False)
         df = df.set_index('variant') \
             .join(self.df_var_samples.set_index('variant'),
                   how='inner') \
@@ -471,6 +487,14 @@ class SplicingOutlierResult:
             self._variant_mmsplice_cat = self._get_maximum_effect(
                 self.df_mmsplice_cat, groupby, score='delta_psi_cat')
         return self._variant_mmsplice_cat
+    
+    @property
+    def variant_outliers_cat(self):
+        groupby = ['variant', 'gene_id', 'tissue', 'sample']
+        if self._variant_outliers_cat is None:
+            self._variant_outliers_cat = self._get_maximum_effect(
+                self.df_outliers_cat, groupby, score='pValueGene_g_minus_log10')
+        return self._variant_outliers_cat
 
     @property
     def variant_spliceai(self):  # NOTE: max aggregate for variant on each gene
@@ -491,9 +515,11 @@ class SplicingOutlierResult:
                 
             # MMSplice (SpliceMap)
             cols_mmsplice = [
-                'Chromosome', 'Start', 'End', 'Strand', 'junction', 'event_type', 'splice_site', 'gene_name',
-                'delta_logit_psi', 'delta_psi', 'ref_psi', 'k', 'n', 'median_n',
-                'novel_junction', 'weak_site_donor', 'weak_site_acceptor']
+                'junction', 'event_type',
+                'splice_site', 'ref_psi', 'median_n', 
+                'gene_name',
+                'delta_logit_psi', 'delta_psi',
+            ]
             if self.df_mmsplice is not None:
                 df_mmsplice = self._get_maximum_effect(
                     self.df_mmsplice, groupby, score='delta_psi')
@@ -532,7 +558,7 @@ class SplicingOutlierResult:
         return self._absplice_dna_input
 
     @property
-    def absplice_rna_input(self):
+    def absplice_rna_input(self): #TODO: check if tissue_cat should be included in groubpy
         if self._absplice_rna_input is None:
             groupby = ['variant', 'gene_id', 'tissue', 'sample']
             if not pd.Series(groupby).isin(self.absplice_dna_input.index.names).all():
@@ -542,8 +568,12 @@ class SplicingOutlierResult:
             cols_mmsplice_cat = [
                 'junction', 'delta_psi', 'ref_psi', 'median_n',
                 *[col for col in df_mmsplice_cat.columns if 'cat' in col]]
+            df_outliers_cat = self._get_maximum_effect(
+                self.df_outliers_cat, groupby, score='pValueGene_g_minus_log10')
+            cols_outliers_cat = ['pValueGene_g_minus_log10']
             self._absplice_rna_input = self.absplice_dna_input.join(
-                df_mmsplice_cat[cols_mmsplice_cat], how='outer', rsuffix='_from_cat_infer')
+                df_mmsplice_cat[cols_mmsplice_cat], how='outer', rsuffix='_from_cat_infer').join(
+                df_outliers_cat[cols_outliers_cat], how='outer', rsuffix='_outlier_cat')
         return self._absplice_rna_input
 
     def _predict_absplice(self, df, absplice_score, pickle_file, features, abs_features, median_n_cutoff, tpm_cutoff):
