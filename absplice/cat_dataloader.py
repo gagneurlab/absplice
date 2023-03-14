@@ -2,6 +2,7 @@ from splicemap import SpliceCountTable as CountTable
 from absplice.dataloader import SpliceMapMixin
 from absplice.utils import delta_logit_PSI_to_delta_PSI, logit
 import pandas as pd
+pd.options.mode.chained_assignment = None
 import re
 from typing import List
 from splicemap.splice_map import SpliceMap
