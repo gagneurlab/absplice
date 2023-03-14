@@ -42,10 +42,9 @@ class SpliceMapMixin:
     def _splicemap_metadata(self, splicemaps):
         metadata = defaultdict(list)
         
-        cols = ['junction', 'gene_id', 'tissue', 'ref_psi', 'median_n', 'gene_name', 'gene_tpm', 'splice_site']
-        
-        for splicemap in splicemaps:
+        cols = ['junction', 'gene_id', 'tissue', 'ref_psi', 'median_n', 'gene_name', 'splice_site']
             
+        for splicemap in splicemaps:
             df = splicemap.df.copy()
             df = df.rename(columns={'junctions': 'junction'})
             df['tissue'] = splicemap.name 

@@ -26,7 +26,7 @@ class SpliceOutlier:
                 for junc in df.index
                 for row in metadata[junc]
             ], 
-            columns=['junction', 'gene_id', 'tissue', 'ref_psi', 'median_n', 'gene_name', 'gene_tpm', 'splice_site']
+            columns=['junction', 'gene_id', 'tissue', 'ref_psi', 'median_n', 'gene_name', 'splice_site']
         ).set_index('junction')).reset_index().drop_duplicates()
 
     def _add_metadata(self, df, dl):
@@ -54,7 +54,7 @@ class SpliceOutlier:
         cols = [
             'variant', 'tissue', 'junction', 'event_type',
             'splice_site', 'ref_psi', 'median_n', 
-            'gene_id', 'gene_name', 'gene_tpm',
+            'gene_id', 'gene_name',
             'delta_logit_psi', 'delta_psi',
         ]
         df = df[cols]

@@ -17,6 +17,10 @@ ref_table3_kn_lung = 'tests/data/Lung_splicemap_psi3_method=kn_event_filter=medi
 ref_table5_kn_blood = 'tests/data/Cells_Cultured_fibroblasts_splicemap_psi5_method=kn_event_filter=median_cutoff.csv.gz'
 ref_table3_kn_blood = 'tests/data/Cells_Cultured_fibroblasts_splicemap_psi3_method=kn_event_filter=median_cutoff.csv.gz'
 
+ref_table5_dummy = 'tests/data/dummy_splicemap_psi5.csv.gz'
+ref_table3_dummy = 'tests/data/dummy_splicemap_psi3.csv.gz'
+ref_table3_dummyTESTIS = 'tests/data/dummy_TESTIS_splicemap_psi3.csv.gz'
+
 count_cat_file_lymphocytes_complete = 'tests/data/create_test/data/full_data/backup/test_count_table_cat_chrom17_lymphocytes.csv'
 count_cat_file_blood_complete = 'tests/data/create_test/data/full_data/backup/test_count_table_cat_chrom17_blood.csv'
 count_cat_file_lymphocytes = 'tests/data/test_count_table_cat_chrom17_lymphocytes.csv'
@@ -25,13 +29,14 @@ count_cat_file_blood = 'tests/data/test_count_table_cat_chrom17_blood.csv'
 mmsplice_path = 'tests/data/test_mmsplice.csv'
 spliceai_path = 'tests/data/test_spliceAI.csv'
 mmsplice_cat_path = 'tests/data/test_mmsplice_cat.csv'
+outliers_cat_path = 'tests/data/test_outliers_cat.csv'
 
 spliceai_vcf_path = 'tests/data/spliceai_snv.vcf'
 spliceai_vcf_path2 = 'tests/data/test_spliceai.vcf'
 
 cadd_splice_path = 'tests/data/cadd_splice_test.tsv.gz'
 
-absplice_precomputed_path = 'tests/data/all_SNVs_precomputed.csv'
+# absplice_precomputed_path = 'tests/data/all_SNVs_precomputed.csv'
 
 @pytest.fixture
 def df_var_samples():
@@ -111,12 +116,13 @@ def mmsplice_splicemap_cols():
     return sorted([
             'variant', 'tissue', 'junction', 'event_type',
             'splice_site', 'ref_psi', 'median_n', 
-            'gene_id', 'gene_name', 'gene_tpm',
+            'gene_id', 'gene_name',
             'delta_logit_psi', 'delta_psi',
         ])
      
 variants = [
-    "chr3:193360794:C:['A']"
+    "17:41276032:T:['A']",
+    "17:41203228:T:['A']" #on nevative strand
 ]
 
 def parse_vcf_id(vcf_id):
@@ -124,13 +130,18 @@ def parse_vcf_id(vcf_id):
 
 @pytest.fixture
 def vcf_path():
+    
+    chr_annotation = 'chr'
+    # chr_annotation = ''
+    
     with tempfile.NamedTemporaryFile('w') as temp_vcf:
         temp_vcf.write('##fileformat=VCFv4.0\n')
-        temp_vcf.write('##contig=<ID=13,length=115169878>\n')
-        temp_vcf.write('##contig=<ID=17,length=81195210>\n')
+        temp_vcf.write(f'##contig=<ID={chr_annotation}13,length=115169878>\n')
+        temp_vcf.write(f'##contig=<ID={chr_annotation}17,length=81195210>\n')
         temp_vcf.write('#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n')
 
         for v in variants:
+            v = chr_annotation + v
             temp_vcf.write('%s\t%s\t1\t%s\t%s\t.\t.\t.\n'
                            % tuple(parse_vcf_id(v)))
 

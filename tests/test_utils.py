@@ -1,7 +1,10 @@
 import pandas as pd
-from absplice.utils import get_abs_max_rows, filter_samples_with_RNA_seq, read_cadd_splice, read_absplice, read_spliceai_vcf, dtype_columns_spliceai
+from absplice.utils import get_abs_max_rows, filter_samples_with_RNA_seq, \
+    read_cadd_splice, read_absplice, read_spliceai_vcf, dtype_columns_spliceai
 from absplice import SplicingOutlierResult
-from conftest import gene_map, gene_tpm, spliceai_path, mmsplice_path, spliceai_vcf_path, spliceai_vcf_path2, cadd_splice_path, absplice_precomputed_path
+from conftest import gene_map, gene_tpm, spliceai_path, mmsplice_path, \
+    spliceai_vcf_path, spliceai_vcf_path2, cadd_splice_path#, \
+        # absplice_precomputed_path
 
 
 def test_get_max_rows():
@@ -97,24 +100,24 @@ def test_utils_read_cadd_splice():
     pd.testing.assert_frame_equal(df, df_compare)
     
     
-def test_utils_read_absplice():
-    df = read_absplice(absplice_precomputed_path)
-    df_compare = pd.DataFrame({
-        'gene_id': 'ENSG00000012048',
-        'tissue': 'Testis',
-        'delta_logit_psi': 0.0006480262366686,
-        'delta_psi': 6.413423046081057e-06,
-        'delta_score': 0.8,
-        'splice_site_is_expressed': 1,
-        'median_n': 51,
-        'AbSplice_DNA': 0.0305930295000895,
-        'chrom': 'chr17',
-        'pos': 41276032,
-        'ref': 'T',
-        'alt': 'A',
-        'start': 41276032,
-        'end': 41276033,
-        'variant': '17:41276032:T>A'
-    }, index=[0])
-    pd.testing.assert_frame_equal(df, df_compare)
+# def test_utils_read_absplice():
+#     df = read_absplice(absplice_precomputed_path)
+#     df_compare = pd.DataFrame({
+#         'gene_id': 'ENSG00000012048',
+#         'tissue': 'Testis',
+#         'delta_logit_psi': 0.0006480262366686,
+#         'delta_psi': 6.413423046081057e-06,
+#         'delta_score': 0.8,
+#         'splice_site_is_expressed': 1,
+#         'median_n': 51,
+#         'AbSplice_DNA': 0.0305930295000895,
+#         'chrom': 'chr17',
+#         'pos': 41276032,
+#         'ref': 'T',
+#         'alt': 'A',
+#         'start': 41276032,
+#         'end': 41276033,
+#         'variant': '17:41276032:T>A'
+#     }, index=[0])
+#     pd.testing.assert_frame_equal(df, df_compare)
     

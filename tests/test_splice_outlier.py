@@ -34,3 +34,34 @@ def test_multi_sample_predict(outlier_dl_multi, outlier_model):
     results = outlier_model.predict_on_dataloader(outlier_dl_multi)
     print(results.df_mmsplice.shape)
     
+    
+def test_var_negative_strand(vcf_path):
+    from conftest import ref_table3_dummy, ref_table3_dummyTESTIS, ref_table5_dummy
+    dl = SpliceOutlierDataloader(
+        fasta_file, vcf_path,
+        splicemap5=[ref_table5_dummy],
+        splicemap3=[ref_table3_dummyTESTIS, ref_table3_dummy]
+    )
+    model = SpliceOutlier()
+    
+    results = model.predict_on_dataloader(dl)
+    df = results.df_mmsplice
+    assert df[df['variant'].str.contains('17:41203228:T>A')]['delta_logit_psi'].max() < 10
+    
+    
+def test_singleVariantMatcher(vcf_path):
+    from kipoiseq.extractors import MultiSampleVCF, SingleVariantMatcher
+    import pyranges as pr
+    pr_exons = pd.read_csv('tests/data/pr_exons_debug.csv')
+    pr_exons = pr.PyRanges(pr_exons)
+    
+    matcher = SingleVariantMatcher(
+        vcf_path, pranges=pr_exons,
+        interval_attrs=('junction',)
+    )
+    
+    rows = list(matcher)
+    assert len(rows) == 2
+    
+    
+    
