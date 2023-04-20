@@ -103,7 +103,7 @@ if config['use_rocksdb'] == True:
     rule spliceai:
         resources:
 #            ntasks = 1,
-            mem_mb = lambda wildcards, attempt: attempt * 8000,
+            mem_mb = lambda wildcards, attempt: attempt * 16000,
             threads = 1,
             gpu = 1,
         input:
@@ -148,7 +148,7 @@ else:
         run:
             from absplice.utils import read_spliceai_vcf
             df = read_spliceai_vcf(input.spliceai_vcf)
-            df.to_csv(output.spliceai_csv, index=True)
+            df.to_csv(output.spliceai_csv, index=False)
 
 rule absplice_dna:
     input:
