@@ -37,6 +37,11 @@ setup(
     description="Aberrant splicing prediction across human tissues",
     install_requires=requirements,
     license="MIT license",
+    entry_points={
+        'console_scripts': [
+            'spliceai_rocksdb_download=absplice.spliceai_rocksdb_download:spliceai_rocksdb_download'
+        ]
+    },
     long_description=readme + '\n\n' + history,
     long_description_content_type='text/markdown',
     include_package_data=True,

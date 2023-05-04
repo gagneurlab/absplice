@@ -4,18 +4,15 @@ channels:
   - conda-forge
   - bioconda
 dependencies:
-  - python >= 3.8
+  - python==3.8
   - cython
   - tensorflow
   - spliceai
   - snakemake
-  - rocksdb
-  - python-rocksdb
   - pytest
   - tabix
   - setuptools
   - kipoiseq>=0.7
-  - cyvcf2
   - scipy
   - pandas
   - pyfaidx
@@ -24,8 +21,10 @@ dependencies:
   - pyranges>=0.0.71
   - pip
   - pyarrow
+  - cyvcf2==0.30.15
+  - deepdiff
   - pip:
     - mmsplice
-    - interpret
+    - interpret == 0.2.7
+    - interpret-core == 0.2.7
     - git+https://github.com/gagneurlab/splicemap.git
-    

@@ -1,4 +1,4 @@
-variant,gene_name,delta_score,acceptor_gain,acceptor_loss,donor_gain,donor_loss,acceptor_gain_position,acceptor_loss_positiin,donor_gain_position,donor_loss_position
+variant,gene_name,delta_score,acceptor_gain,acceptor_loss,donor_gain,donor_loss,acceptor_gain_position,acceptor_loss_position,donor_gain_position,donor_loss_position
 17:41201201:TTC>CA,BRCA1,0.2,0.0,0.0,0.0,0.0,4.0,42.0,0.0,-30.0
 17:41276032:T>A,BRCA1,0.8,0.0,0.0,0.0,0.0,33.0,41.0,19.0,-31.0
 17:41276032:T>A,FakeGene,0.5,0.0,0.0,0.0,0.0,33.0,41.0,19.0,-31.0

@@ -131,6 +131,7 @@ def read_spliceai_vcf(path):
         if row_all:
             for row in row_all.split(','):
                 results = row.split('|')[1:]
+                results = [0 if e == '.' else e for e in results]
                 scores = np.array(list(map(float, results[1:])))
                 spliceai_info = [results[0], scores[:4].max(), *scores]
                 rows.append({

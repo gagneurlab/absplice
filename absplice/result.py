@@ -528,7 +528,9 @@ class SplicingOutlierResult:
                     self.df_mmsplice, groupby, score='delta_psi')
             else:
                 df_mmsplice = pd.DataFrame(columns=[*cols_mmsplice, *groupby]).set_index(groupby)
-            
+
+            self._df_mmsplice_agg = df_mmsplice
+
             # SpliceAI
             cols_spliceai = ['delta_score', 'gene_name']
             if self.df_spliceai is not None:
@@ -537,6 +539,8 @@ class SplicingOutlierResult:
                     df_spliceai, groupby, score='delta_score')
             else:
                 df_spliceai = pd.DataFrame(columns=[*cols_spliceai, *groupby]).set_index(groupby)
+
+            self._df_spliceai_agg = df_spliceai
 
             # CADD-Splice
             cols_cadd_splice = ['PHRED']
@@ -587,6 +591,31 @@ class SplicingOutlierResult:
             
             self._absplice_rna_input = self._absplice_rna_input.set_index(groupby)
         return self._absplice_rna_input
+    
+    def add_extra_info(self):
+        mmsplice_splicemap_cols  = [
+            'junction', 
+            'event_type', 
+            'splice_site',
+            'ref_psi', 
+            'median_n'
+        ]
+        spliceai_cols = [
+            'acceptor_gain',
+            'acceptor_loss',
+            'donor_gain',
+            'donor_loss',
+            'acceptor_gain_position',
+            'acceptor_loss_position', 
+            'donor_gain_position', 
+            'donor_loss_position'
+        ]
+
+        self._absplice_dna = self._absplice_dna.join(
+            self._df_mmsplice_agg[mmsplice_splicemap_cols]).join(
+            self._df_spliceai_agg[spliceai_cols])
+
+        return self._absplice_dna
 
     def _predict_absplice(self, df, absplice_score, pickle_file, features, abs_features, median_n_cutoff, tpm_cutoff=None):
         model = pickle.load(open(pickle_file, 'rb'))
@@ -619,6 +648,8 @@ class SplicingOutlierResult:
             abs_features=abs_features,
             median_n_cutoff=median_n_cutoff,
             tpm_cutoff=tpm_cutoff)
+
+        self._absplice_dna = self.add_extra_info()
         return self._absplice_dna
 
     def predict_absplice_rna(self, pickle_file=None, features=None, abs_features=False, median_n_cutoff=10, tpm_cutoff=None):
