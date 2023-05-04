@@ -1,0 +1,4 @@
+variant,gene_id,tissue,delta_logit_psi,delta_psi,delta_score,splice_site_is_expressed,AbSplice_DNA,junction,event_type,splice_site,ref_psi,median_n,acceptor_gain,acceptor_loss,donor_gain,donor_loss,acceptor_gain_position,acceptor_loss_position,donor_gain_position,donor_loss_position
+chr1:225510364:A>G,ENSG00000185842,Cells_Cultured_fibroblasts,0.0,0.0,0.99,0,0.006010393418201111,,,,,,0.52,0.99,0.0,0.0,-26,2,47,4
+chr2:209138460:A>G,ENSG00000115020,Cells_Cultured_fibroblasts,-1.631956995994009,-0.3378700855847305,0.38,1,0.17978261362188067,chr2:209138457-209141435:+,psi3,chr2:209141435:+,0.503180522044308,15.0,0.0,0.0,0.0,0.38,-3,-21,28,-3
+chr2:86352917:G>A,ENSG00000132300,Cells_Cultured_fibroblasts,-2.5301569696829427,-0.38786759364864,0.99,1,0.37082404156476545,chr2:86352638-86352917:+,psi5,chr2:86352638:+,0.9391088917276352,84.0,0.0,0.99,0.0,0.0,34,1,-42,38
