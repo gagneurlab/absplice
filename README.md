@@ -19,6 +19,10 @@ cd absplice
 
 Install conda environment:
 ```
+# To prevent pacakge conflicts use:
+conda config --set channel_priority false
+```
+```
 # Recommended if you have mamba installed
 mamba env create -f environment.yaml
 # otherwise
@@ -35,7 +39,7 @@ pip install -e .
 
 ## Output
 
-Output of AbSplice is an tabular data which contains following columns:
+The output of AbSplice is tabular data which contains the following columns:
 
 
 |     ID     | Column | Description |
@@ -63,7 +67,7 @@ Output of AbSplice is an tabular data which contains following columns:
 | `donor_loss_position` | SpliceAI Delta position (donor loss) | See description of `acceptor_gain_position`. |
 
 ## Example usecase
-The [example](https://github.com/gagneurlab/splicing-outlier-prediction/tree/master/example) folder contains a snakemake workflow to generate AbSplice predictions, given a vcf file and a fasta file (will be downloaded if not provided).
+The [example](https://github.com/gagneurlab/absplice/tree/master/example) folder contains a snakemake workflow to generate AbSplice predictions, given a vcf file and a fasta file (will be downloaded if not provided).
 The snakemake workflow will download precomputed SpliceMaps from Zenodo and run AbSplice based on these annotations.
 To generate predictions run:
 ```
@@ -72,12 +76,12 @@ python -m snakemake -j 1 --use-conda
 ```
 To run this example on your own data do the following:
 
-- Specify the genome version that you are going to use (hg19 is compatible with gtex_v7 and hg38 is compatible with gtex_v8) in the field `genome` of the [config](https://github.com/gagneurlab/splicing-outlier-prediction/tree/master/example/config.yaml) file.
+- Specify the genome version that you are going to use (hg19 is compatible with gtex_v7 and hg38 is compatible with gtex_v8) in the field `genome` of the [config](https://github.com/gagneurlab/absplice/tree/master/example/config.yaml) file.
 
-- Store all vcf files for analysis to `data/resources/vcf_files/`.
+- Store all vcf files for analysis to [`data/resources/vcf_files/`](https://github.com/gagneurlab/absplice/tree/master/example/data/resources/vcf_files/).
 
 Optionally:
 
-- In the field `splicemap_tissues` of the [config](https://github.com/gagneurlab/splicing-outlier-prediction/tree/master/example/config.yaml) file you can uncomment the tissues that AbSplice will use to generate predictions (by default only fibroblasts).
+- In the field `splicemap_tissues` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/config.yaml#L35) file you can uncomment the tissues that AbSplice will use to generate predictions (by default only fibroblasts).
 
-- If you want to run the example on large datasets, you can enable a fast lookup interface spliceai_rocksdb that uses precomputed scores. This precomputed database will be downloaded from Nextcloud (it will take significant time – about 3-4 hours). To enable fast lookup simply change the field `use_rocksdb` in [config](https://github.com/gagneurlab/splicing-outlier-prediction/tree/master/example/config.yaml) file to `True`.
+- If you want to run the example on large datasets, you can enable a fast lookup interface spliceai_rocksdb that uses precomputed scores. This precomputed database will be downloaded from Nextcloud (it will take significant time – about 3-4 hours). To enable fast lookup simply change the field `use_rocksdb` in [config](https://github.com/gagneurlab/absplice/blob/master/example/config.yaml#L9) file to `True`.
