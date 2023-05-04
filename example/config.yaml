@@ -6,7 +6,7 @@ vcf: data/resources/vcf_files/{vcf_id}
 
 
 # False by default, you can change this if you want to run on large datasets (see Readme)
-use_rocksdb: True
+use_rocksdb: False
 
 fasta:
   hg19:
