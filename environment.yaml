@@ -21,7 +21,7 @@ dependencies:
   - pyranges>=0.0.71
   - pip
   - pyarrow
-  - cyvcf2
+  - cyvcf2==0.30.16
   - deepdiff
   - pip:
     - mmsplice
