@@ -1,6 +1,6 @@
 AbSplice: aberrant splicing prediction across human tissues
 --------------------------------
-This methods predicts aberrant splicing across human tissues with AbSplice, as described in [Wagner, Çelik et al., Nature Genetics 2023](https://www.nature.com/articles/s41588-023-01373-3).
+This method predicts aberrant splicing across human tissues with AbSplice, as described in [Wagner, Çelik et al., Nature Genetics 2023](https://www.nature.com/articles/s41588-023-01373-3).
 
 Precomputed AbSplice-DNA scores for all possible single-nucleotide variants genome-wide are available [here](https://doi.org/10.5281/zenodo.6408331) for download.
 
@@ -47,7 +47,7 @@ pip install -e .
 
 ## Output
 
-The output of AbSplice is tabular data which contains the following columns:
+The [output](https://github.com/gagneurlab/absplice/blob/master/example/data/results/hg19/example.vcf.gz_absplice_dna.csv) of AbSplice is tabular data. It contains the following columns (`variant`, `gene_id`, `tissue` being the unique row identifier):
 
 
 |     ID     | Column | Description |
@@ -68,13 +68,14 @@ The output of AbSplice is tabular data which contains the following columns:
 | `acceptor_gain` | SpliceAI Delta score (acceptor gain) | Probability computed by SpliceAI that the variant will lead to an acceptor gain at `acceptor_gain_position` . |
 | `acceptor_loss` | SpliceAI Delta score (acceptor loss) | Probability computed by SpliceAI that the variant will lead to an acceptor loss at `acceptor_loss_position`. |
 | `donor_gain` | SpliceAI Delta score (donor gain) | Probability computed by SpliceAI that the variant will lead to a donor gain at `donor_gain_position`. |
-| `donor_loss` | SpliceAI Delta score (donor loss) | Probability MMSplicen) | Delta position represents the location of respective splicing change  relative to the variant position: positive values are downstream of the variant, negative values are upstream. |
+| `donor_loss` | SpliceAI Delta score (donor loss) | Probability computed by SpliceAI that the variant will lead to a donor loss at `donor_loss_position`. |
+| `acceptor_gain_position` | SpliceAI Delta postion (acceptor gain) | Delta position represents the location of respective splicing change  relative to the variant position: positive values are downstream of the variant, negative values are upstream. |
 | `acceptor_loss_position` | SpliceAI Delta position (acceptor loss) | See description of `acceptor_gain_position`. |
 | `donor_gain_position` | SpliceAI Delta postion (donor gain) | See description of `acceptor_gain_position`. |
 | `donor_loss_position` | SpliceAI Delta position (donor loss) | See description of `acceptor_gain_position`. |
 
 ## Example use case
-The [example](https://github.com/gagneurlab/absplice/tree/master/example) folder contains a snakemake workflow to generate AbSplice predictions, given a vcf file and a fasta file (will be downloaded if not provided).
+The [example](https://github.com/gagneurlab/absplice/tree/master/example) folder contains a snakemake workflow to generate AbSplice predictions, given a vcf file and a fasta file (either for hg19 or hg38, will be downloaded automatically).
 The snakemake workflow will download precomputed SpliceMaps from Zenodo and run AbSplice based on these annotations.
 To generate predictions run:
 ```
@@ -83,9 +84,9 @@ python -m snakemake -j 1 --use-conda
 ```
 To run this example on your own data do the following:
 
-- Specify the genome version that you are going to use (currently supported hg19 and hg38) in the field `genome` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/config.yaml#L2) file.
-
 - Store all vcf files for analysis in [`data/resources/vcf_files/`](https://github.com/gagneurlab/absplice/tree/master/example/data/resources/vcf_files/).
+
+- Specify the genome version that you are going to use (currently supported hg19 and hg38) in the field `genome` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/config.yaml#L2) file.
 
 - In the field `splicemap_tissues` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/config.yaml#L35) file you can uncomment the tissues that AbSplice will use to generate predictions (by default only fibroblasts).
 
