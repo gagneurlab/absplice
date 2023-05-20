@@ -62,7 +62,22 @@ class SpliceMapMixin:
     @staticmethod
     def _read_splicemap(path):
         if type(path) is str:
-            return [SpliceMap.read_csv(path)]
+            if path.endswith(".parquet"):
+                df = pd.read_parquet(path)
+                retval = []
+                for tissue_name, tissue_df in df.groupby("tissue"):
+                    retval.append(SpliceMap(tissue_df, tissue_name))
+                return retval
+            elif path.endswith(".feather"):
+                from pyarrow import feather
+                table = feather.read_table(path, memory_map=True)
+                df = table.to_pandas()
+                retval = []
+                for tissue_name, tissue_df in df.groupby("tissue"):
+                    retval.append(SpliceMap(tissue_df, tissue_name))
+                return retval
+            else:
+                return [SpliceMap.read_csv(path)]
         elif type(path) is SpliceMap:
             return [path]
         elif type(path) is list:

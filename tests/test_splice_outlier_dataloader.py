@@ -49,6 +49,16 @@ def test_splicing_outlier_dataloader_init(outlier_dl):
     )] == list(sorted(set(outlier_dl.combined_splicemap3)))
 
 
+def test_splicing_outlier_dataloader_feather(outlier_dl5_feather):
+    # psi 5
+    assert outlier_dl5_feather.combined_splicemap5 is not None
+    assert len(outlier_dl5_feather.combined_splicemap5) == 5
+    assert len(outlier_dl5_feather.splicemaps5) == 1
+    assert outlier_dl5_feather.splicemaps5[0].name == 'Testis'
+    # psi 3
+    assert outlier_dl5_feather.combined_splicemap3 is None
+
+
 def test_splicing_outlier_dataloader_init_dl3(outlier_dl3):
     # psi 5
     assert outlier_dl3.combined_splicemap5 is None

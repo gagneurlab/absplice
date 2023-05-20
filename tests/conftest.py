@@ -145,6 +145,34 @@ def parse_vcf_id(vcf_id):
 
 
 @pytest.fixture
+def ref_table5_kn_testis_feather():
+    from splicemap.splice_map import SpliceMap
+    sm = SpliceMap.read_csv(ref_table5_kn_testis)
+    df: pd.DataFrame = (
+        sm.df
+        .assign(tissue=sm.name)
+        .astype({
+            "Chromosome": pd.StringDtype(storage="pyarrow"),
+            "Start": pd.Int32Dtype(),
+            "End": pd.Int32Dtype(),
+            "Strand": pd.StringDtype(storage="pyarrow"),
+        })
+    )
+    with tempfile.NamedTemporaryFile('w', suffix=".feather") as tmp_path:
+        df.to_feather(tmp_path.name)
+
+        yield tmp_path.name
+
+
+@pytest.fixture
+def outlier_dl5_feather(ref_table5_kn_testis_feather):
+    return SpliceOutlierDataloader(
+        fasta_file, vcf_file,
+        splicemap5=[ref_table5_kn_testis_feather],
+        splicemap3=None)
+
+
+@pytest.fixture
 def vcf_path():
     chr_annotation = 'chr'
     # chr_annotation = ''
