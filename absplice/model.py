@@ -1,5 +1,6 @@
 from tqdm import tqdm
 import pandas as pd
+
 try:
     from mmsplice import MMSplice
     from mmsplice.utils import df_batch_writer, df_batch_writer_parquet, delta_logit_PSI_to_delta_PSI
@@ -18,23 +19,16 @@ class SpliceOutlier:
         self.clip_threshold = clip_threshold
 
     def _add_metadata_event(self, df, metadata, event_type):
-        df = df[df['event_type'] == event_type].set_index('junction')
-        
-        return df.join(pd.DataFrame(
-            [
-                row
-                for junc in df.index
-                for row in metadata[junc]
-            ], 
-            columns=['junction', 'gene_id', 'tissue', 'ref_psi', 'median_n', 'gene_name', 'splice_site']
-        ).set_index('junction')).reset_index().drop_duplicates()
+        df = df[df['event_type'] == event_type].set_index(['Chromosome', 'Start', 'End', 'Strand'])
+
+        return df.join(metadata, how="inner").reset_index().drop_duplicates()
 
     def _add_metadata(self, df, dl):
         return pd.concat([
             self._add_metadata_event(df, dl.metadata_splicemap5, 'psi5'),
             self._add_metadata_event(df, dl.metadata_splicemap3, 'psi3')
         ])
-        
+
     def _add_delta_psi(self, df):
         delta_psi = delta_logit_PSI_to_delta_PSI(
             df['delta_logit_psi'],
@@ -53,7 +47,7 @@ class SpliceOutlier:
         df = self._add_delta_psi(df)
         cols = [
             'variant', 'tissue', 'junction', 'event_type',
-            'splice_site', 'ref_psi', 'median_n', 
+            'splice_site', 'ref_psi', 'median_n',
             'gene_id', 'gene_name',
             'delta_logit_psi', 'delta_psi',
         ]

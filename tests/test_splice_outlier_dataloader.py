@@ -2,7 +2,9 @@ import pytest
 from absplice import SpliceOutlierDataloader
 from conftest import fasta_file, vcf_file, multi_vcf_file, \
     ref_table5_kn_testis, ref_table3_kn_testis, ref_table5_kn_lung, ref_table3_kn_lung, \
-     count_cat_file_lymphocytes
+    count_cat_file_lymphocytes
+
+from absplice.utils import junction_str_to_tuple
 
 
 @pytest.fixture
@@ -28,11 +30,11 @@ def test_splicing_outlier_dataloader_init(outlier_dl):
     assert outlier_dl.splicemaps5[0].name == 'Testis'
     assert outlier_dl.splicemaps5[1].name == 'Lung'
 
-    assert sorted(
+    assert [junction_str_to_tuple(k) for k in sorted(
         set(outlier_dl.splicemaps5[0].df['junctions']).union(
             set(outlier_dl.splicemaps5[1].df['junctions'])
         )
-    ) == sorted(set(outlier_dl.combined_splicemap5.index))
+    )] == list(sorted(set(outlier_dl.combined_splicemap5)))
 
     # splicemap3
     assert outlier_dl.combined_splicemap3.shape[0] == 5
@@ -40,11 +42,11 @@ def test_splicing_outlier_dataloader_init(outlier_dl):
     assert outlier_dl.splicemaps3[0].name == 'Testis'
     assert outlier_dl.splicemaps3[1].name == 'Lung'
 
-    assert sorted(
+    assert [junction_str_to_tuple(k) for k in sorted(
         set(outlier_dl.splicemaps3[0].df['junctions']).union(
             set(outlier_dl.splicemaps3[1].df['junctions'])
         )
-    ) == sorted(set(outlier_dl.combined_splicemap3.index))
+    )] == list(sorted(set(outlier_dl.combined_splicemap3)))
 
 
 def test_splicing_outlier_dataloader_init_dl3(outlier_dl3):
@@ -54,8 +56,10 @@ def test_splicing_outlier_dataloader_init_dl3(outlier_dl3):
     assert outlier_dl3.combined_splicemap3.shape[0] == 4
     assert outlier_dl3.splicemaps3[0].name == 'Testis'
 
-    assert sorted(set(outlier_dl3.splicemaps3[0].df['junctions'])) \
-        == sorted(set(outlier_dl3.combined_splicemap3.index))
+    assert (
+            [junction_str_to_tuple(k) for k in sorted(set(outlier_dl3.splicemaps3[0].df['junctions']))]
+            == list(sorted(set(outlier_dl3.combined_splicemap3)))
+    )
 
 
 def test_splicing_outlier_dataloader_iter(outlier_dl):

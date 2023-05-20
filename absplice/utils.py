@@ -10,7 +10,8 @@ def get_abs_max_rows(df, groupby, max_col, dropna=True):
         .sort_values(by=max_col, key=abs, ascending=False) \
         .drop_duplicates(subset=groupby) \
         .set_index(groupby)
-    
+
+
 def expit(x):
     return 1. / (1. + np.exp(-x))
 
@@ -65,8 +66,8 @@ def read_csv(path, **kwargs):
             return pd.read_parquet(path, **kwargs)
         else:
             raise ValueError("unknown file ending.")
-    
-    
+
+
 def filter_samples_with_RNA_seq(df, samples_for_tissue):
     """
         samples_for_tissue: Dict, keys: tissue, values: samples with RNA-seq for respective tissue
@@ -80,7 +81,7 @@ def filter_samples_with_RNA_seq(df, samples_for_tissue):
 
 def inject_new_row(df, new_row_dict):
     new_row = pd.DataFrame(df[-1:].values, columns=df.columns)
-    for k,v in new_row_dict.items():
+    for k, v in new_row_dict.items():
         new_row[k] = v
     return pd.concat([df, new_row])
 
@@ -104,12 +105,12 @@ def read_spliceai(path, **kwargs):
 
 
 dtype_columns_spliceai = {
-    'variant': pd.StringDtype(), 
-    'gene_name': pd.StringDtype(), 
+    'variant': pd.StringDtype(),
+    'gene_name': pd.StringDtype(),
     'delta_score': 'float64',
-    'acceptor_gain': 'float64', 
+    'acceptor_gain': 'float64',
     'acceptor_loss': 'float64',
-    'donor_gain': 'float64', 
+    'donor_gain': 'float64',
     'donor_loss': 'float64',
     'acceptor_gain_position': 'Int64',
     'acceptor_loss_positiin': 'Int64',
@@ -117,14 +118,15 @@ dtype_columns_spliceai = {
     'donor_loss_position': 'Int64',
 }
 
+
 def read_spliceai_vcf(path):
     columns = ['gene_name', 'delta_score',
-                'acceptor_gain', 'acceptor_loss',
-                'donor_gain', 'donor_loss',
-                'acceptor_gain_position',
-                'acceptor_loss_positiin',
-                'donor_gain_position',
-                'donor_loss_position']
+               'acceptor_gain', 'acceptor_loss',
+               'donor_gain', 'donor_loss',
+               'acceptor_gain_position',
+               'acceptor_loss_positiin',
+               'donor_gain_position',
+               'donor_loss_position']
     rows = list()
     for variant in MultiSampleVCF(path):
         row_all = variant.source.INFO.get('SpliceAI')
@@ -135,14 +137,14 @@ def read_spliceai_vcf(path):
                 scores = np.array(list(map(float, results[1:])))
                 spliceai_info = [results[0], scores[:4].max(), *scores]
                 rows.append({
-                    **{'variant': str(variant)}, 
+                    **{'variant': str(variant)},
                     **dict(zip(columns, spliceai_info))})
     df = pd.DataFrame(rows)
-        
+
     for col in df.columns:
         if col in dtype_columns_spliceai.keys():
             df = df.astype({col: dtype_columns_spliceai[col]})
-            
+
     return df
 
 
@@ -162,8 +164,8 @@ def _add_variant(df):
         df['variant'] = df.apply(lambda x: _add_variant_col(x), axis=1)
         # df['variant'] = df['variant'].astype(pd.StringDtype())
         return df
-    
-    
+
+
 def _check_gene_id(df):
     if 'GeneID' in df.columns:
         df = df.rename(columns={'GeneID': 'gene_id'})
@@ -171,7 +173,7 @@ def _check_gene_id(df):
         raise ValueError("Please add gene_id.")
     return df
 
-        
+
 def read_cadd_splice(path, **kwargs):
     if isinstance(path, pd.DataFrame):
         df = path
@@ -183,7 +185,7 @@ def read_cadd_splice(path, **kwargs):
         elif path.suffix.lower() == '.tsv' or str(path).endswith('.tsv.gz'):
             df = pd.read_csv(path, sep='\t', **kwargs)
         elif path.suffix.lower() == '.parquet':
-            df  = pd.read_parquet(path, **kwargs)
+            df = pd.read_parquet(path, **kwargs)
         else:
             raise ValueError("unknown file ending.")
     df = _add_variant(df)
@@ -202,8 +204,14 @@ def read_absplice(path, **kwargs):
         elif path.suffix.lower() == '.tsv' or str(path).endswith('.tsv.gz'):
             df = pd.read_csv(path, sep='\t', **kwargs)
         elif path.suffix.lower() == '.parquet':
-            df  = pd.read_parquet(path, **kwargs)
+            df = pd.read_parquet(path, **kwargs)
         else:
             raise ValueError("unknown file ending.")
     df = _add_variant(df)
     return df
+
+
+def junction_str_to_tuple(junction_str: str):
+    chrom, range, strand = junction_str.split(":")
+    start, end = range.split("-")
+    return chrom, int(start), int(end), strand
