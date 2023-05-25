@@ -26,10 +26,7 @@ cd absplice
 ```
 
 Install conda environment:
-```
-# To prevent package conflicts use:
-conda config --set channel_priority false
-```
+
 ```
 # Recommended if you have mamba installed
 mamba env create -f environment.yaml
