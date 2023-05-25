@@ -6,6 +6,11 @@ jobs:
     steps:
       - checkout
       - run:
+          name: Install essential build tools
+          command: |
+            apt-get update
+            apt-get install -y build-essential
+      - run:
           name: Install dependencies
           command: |
             mamba env create -f environment.yaml
