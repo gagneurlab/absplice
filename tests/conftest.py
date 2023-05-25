@@ -131,8 +131,8 @@ def parse_vcf_id(vcf_id):
 @pytest.fixture
 def vcf_path():
     
-    chr_annotation = 'chr'
-    # chr_annotation = ''
+#    chr_annotation = 'chr'
+    chr_annotation = ''
     
     with tempfile.NamedTemporaryFile('w') as temp_vcf:
         temp_vcf.write('##fileformat=VCFv4.0\n')
