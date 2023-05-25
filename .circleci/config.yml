@@ -2,7 +2,7 @@ version: 2.1
 jobs:
   build:
     docker:
-      - image: continuumio/miniconda3:latest
+      - image: condaforge/mambaforge:latest
     steps:
       - checkout
       - run:
