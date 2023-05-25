@@ -18,7 +18,9 @@ jobs:
             pip install -e .
       - run:
           name: Run tests
-          command: pytest tests/
+          command: |
+            source activate absplice
+            pytest tests/
 workflows:
   version: 2
   build-and-test:
