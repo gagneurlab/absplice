@@ -9,9 +9,7 @@ jobs:
           name: Install dependencies
           command: |
             mamba env create -f environment.yaml
-            conda init bash
-            source ~/.bashrc
-            conda activate absplice
+            source activate absplice
             pip install -e .
       - run:
           name: Run tests
