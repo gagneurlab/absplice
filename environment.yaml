@@ -5,26 +5,26 @@ channels:
   - bioconda
 dependencies:
   - python==3.8
-  - cython
-  - tensorflow
-  - spliceai
-  - snakemake
-  - pytest
-  - tabix
-  - setuptools
-  - kipoiseq>=0.7
-  - scipy
-  - pandas
-  - pyfaidx
-  - tqdm
-  - click
-  - pyranges>=0.0.71
-  - pip
-  - pyarrow
-  - cyvcf2
-  - deepdiff
-  - pip:
-    - mmsplice
-    - interpret == 0.2.7
-    - interpret-core == 0.2.7
-    - git+https://github.com/gagneurlab/splicemap.git
+#   - cython
+#   - tensorflow
+#   - spliceai
+#   - snakemake
+#   - pytest
+#   - tabix
+#   - setuptools
+#   - kipoiseq>=0.7
+#   - scipy
+#   - pandas
+#   - pyfaidx
+#   - tqdm
+#   - click
+#   - pyranges>=0.0.71
+#   - pip
+#   - pyarrow
+#   - cyvcf2
+#   - deepdiff
+#   - pip:
+#     - mmsplice
+#     - interpret == 0.2.7
+#     - interpret-core == 0.2.7
+#     - git+https://github.com/gagneurlab/splicemap.git
