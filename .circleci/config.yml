@@ -25,7 +25,8 @@ jobs:
           name: Run example
           command: |
             source activate absplice
-            python -m snakemake -s example/Snakefile -j 1 --use-conda
+            cd example
+            python -m snakemake -j 1 --use-conda
 workflows:
   version: 2
   build-and-test:
