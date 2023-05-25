@@ -16,17 +16,17 @@ jobs:
             mamba env create -f environment.yaml
             source activate absplice
             pip install -e .
-#       - run:
-#           name: Run tests
-#           command: |
-#             source activate absplice
-#             pytest tests/
-#       - run:
-#           name: Run example without lookup
-#           command: |
-#             source activate absplice
-#             cd example
-#             python -m snakemake -j 1 --use-conda
+      - run:
+          name: Run tests
+          command: |
+            source activate absplice
+            pytest tests/
+      - run:
+          name: Run example without lookup
+          command: |
+            source activate absplice
+            cd example
+            python -m snakemake -j 1 --use-conda
       - run:
           name: Run example with lookup
           command: |
