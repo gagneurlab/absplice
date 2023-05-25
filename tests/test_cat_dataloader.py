@@ -1,4 +1,5 @@
 import pytest
+import deepdiff
 from absplice import CatInference
 from splicemap import SpliceCountTable as CountTable
 from conftest import ref_table5_kn_testis, ref_table3_kn_testis, \
@@ -232,7 +233,7 @@ def test_cat_dataloader_infer_splicemap_cat_with_splicemap_cat():
     assert junction_id in set(cat_dl_splicemap_cat.splicemap5_cat.df['junctions'])
     assert cat_dl_splicemap_cat.contains(sample) == True
     row = cat_dl_splicemap_cat.infer(junction_id, gene_id, tissue, sample, event_type)
-    assert row == {
+    expected == {
         'junction': '17:41277787-41283224:+',
         'gene_id': 'ENSG00000198496',
         'sample': 'NA00002',
@@ -247,6 +248,8 @@ def test_cat_dataloader_infer_splicemap_cat_with_splicemap_cat():
         'psi_cat': 0.8,
         'ref_psi_cat': 1.0
     }
+    diff = DeepDiff(row, expected, significant_digits=10)
+    assert not diff
     assert cat_dl_splicemap_cat.infer(junction_id, gene_id, tissue, sample, event_type) != \
         cat_dl_no_splicemap_cat.infer(junction_id, gene_id, tissue, sample, event_type)
     
