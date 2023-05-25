@@ -46,7 +46,7 @@ def test_var_negative_strand(vcf_path):
     
     results = model.predict_on_dataloader(dl)
     df = results.df_mmsplice
-    assert df[df['variant'].str.contains('17:41203228:T>A')]['delta_logit_psi'].max() < 10
+    assert df[df['variant'].str.contains('chr17:41203228:T>A')]['delta_logit_psi'].max() < 10
     
     
 def test_singleVariantMatcher(vcf_path):
