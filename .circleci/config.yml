@@ -8,7 +8,7 @@ jobs:
       - run:
           name: Install dependencies
           command: |
-            conda env create -f environment.yaml
+            mamba env create -f environment.yaml
             conda init bash
             source ~/.bashrc
             conda activate absplice
