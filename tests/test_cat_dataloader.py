@@ -205,7 +205,6 @@ def test_cat_dataloader_contains(cat_dl):
 #     }
 #     assert cat_dl[1].contains(junction_id, sample, tissue, event_type) == False
     
-    
 def test_cat_dataloader_infer_splicemap_cat_with_splicemap_cat():
     cat_dl_splicemap_cat = CatInference(
         splicemap5=[ref_table5_kn_testis, ref_table5_kn_lung],
