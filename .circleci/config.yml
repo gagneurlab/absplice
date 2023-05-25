@@ -9,11 +9,12 @@ jobs:
           name: Install dependencies
           command: |
             conda env create -f environment.yaml
+            conda init bash
             conda activate absplice
             pip install -e .
       - run:
           name: Run tests
-          command: pytest
+          command: pytest tests/
 workflows:
   version: 2
   build-and-test:
