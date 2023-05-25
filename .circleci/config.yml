@@ -1,76 +1,21 @@
-version: 2
-
-variables:
-  update_conda: &update_conda
-    run:
-      name: Update conda
-      command: |
-        conda install python=3.6 -y
-        conda update --yes conda
-        conda update setuptools
-  install_mmsplice: &install_mmsplice
-    run:
-      name: Install mmsplice
-      command: |
-        pip install cython cyvcf2 pybigwig
-        pip install -e '.'
-        pip install pytest pytest-runner pytest-benchmark
-  install_dependencies: &install_dependencies
-    run:
-      name: Install dependencies not in miniconda3
-      command: |
-        apt-get update && \
-        apt-get install -y build-essential libz-dev libcurl3-dev gcc libssl-dev libbz2-dev
-  test_cli: &test_cli
-    run:
-      name: Test cli
-      command: mmsplice
-  run_tests: &run_tests
-    run:
-      name: Run tests
-      command: pytest
-  install_docker: &install_docker
-    run:
-      name: Install Docker client
-      command: |
-        set -x
-        VER="17.03.0-ce"
-        apt-get update -y &&\
-        apt-get install curl -y
-        curl -L -o /tmp/docker-$VER.tgz https://download.docker.com/linux/static/stable/x86_64/docker-$VER.tgz
-        tar -xz -C /tmp -f /tmp/docker-$VER.tgz
-        mv /tmp/docker/* /usr/bin
-  build_docker: &build_docker
-    run:
-      name: Build docker container
-      command: docker build -t mmsplice .
-  run_vep: &run_vep
-    run:
-      name: Run vep on test.vcf and save analysis result with docker
-      command: |
-        gzip -dk tests/data/test.vcf.gz
-        cat tests/data/test.vcf | docker run -i mmsplice vep --plugin MMSplice --format vcf --assembly GRCh37 --database --port 3337 --vcf -o STDOUT | tee log_variant_effect_output.txt
-        sed -n '/##fileformat=VCFv4.*/,$p' log_variant_effect_output.txt > variant_effect_output.txt
-  test_docker: &test_docker
-    run:
-      name: Test vep plugin in docker
-      command: |
-        pytest -s tests/test_vep_plugin.py
-
+version: 2.1
 jobs:
   build:
     docker:
       - image: continuumio/miniconda3:latest
-    working_directory: ~/repo
     steps:
       - checkout
-      - *install_dependencies
-      - *install_mmsplice
-      - *test_cli
-      - *run_tests
-
+      - run:
+          name: Install dependencies
+          command: |
+            conda env create -f environment.yaml
+            conda activate absplice
+            pip install -e .
+      - run:
+          name: Run tests
+          command: pytest
 workflows:
   version: 2
-  workflow:
+  build-and-test:
     jobs:
       - build
