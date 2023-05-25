@@ -14,7 +14,7 @@ dependencies:
   - pip
   - pyarrow
   - pandas
-  - numpy
+  - numpy==1.23
   # needed for splicemap
   - seaborn
   - scikit-learn
