@@ -26,8 +26,7 @@ dependencies:
   - bioconda::kipoiseq>=0.7
   - deepdiff
   - pip:
-#    - mmsplice
+    - mmsplice
     - interpret == 0.2.7
     - interpret-core == 0.2.7
-    - git+https://github.com/gagneurlab/MMSplice_MTSplice.git@normalize_chroms
     - git+https://github.com/gagneurlab/splicemap.git
