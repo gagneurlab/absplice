@@ -29,6 +29,7 @@ jobs:
 #             python -m snakemake -j 1 --use-conda --cores 30
       - run:
           name: Run example with lookup
+          no_output_timeout: 30m
           command: |
             source activate absplice
             cd example
