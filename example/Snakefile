@@ -37,16 +37,26 @@ splicemap_v_mapper = {
     'hg19': 'gtex_v7',
 }
 
-rule all:
-    input:
-        expand(config['splicemap']['psi3'],
-            genome = config['genome'], tissue = config['splicemap_tissues']),
-        expand(config['splicemap']['psi5'],
-            genome = config['genome'], tissue = config['splicemap_tissues']),
-        expand(config['splicing_pred']['absplice_dna'],
-            genome = config['genome'], vcf_id=vcf_ids),
-        if config['use_rocksdb'] == True:
+if config['use_rocksdb'] == True:
+    rule all:
+        input:
+            expand(config['splicemap']['psi3'],
+                genome = config['genome'], tissue = config['splicemap_tissues']),
+            expand(config['splicemap']['psi5'],
+                genome = config['genome'], tissue = config['splicemap_tissues']),
+            expand(config['splicing_pred']['absplice_dna'],
+                genome = config['genome'], vcf_id=vcf_ids),
             expand(config['spliceai_rocksdb'][genome], chromosome = config['chromosomes']),
+
+else:
+    rule all:
+        input:
+            expand(config['splicemap']['psi3'],
+                genome = config['genome'], tissue = config['splicemap_tissues']),
+            expand(config['splicemap']['psi5'],
+                genome = config['genome'], tissue = config['splicemap_tissues']),
+            expand(config['splicing_pred']['absplice_dna'],
+                genome = config['genome'], vcf_id=vcf_ids),
 
 rule download_human_fasta:
     params:
