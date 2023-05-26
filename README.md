@@ -1,10 +1,18 @@
 AbSplice: aberrant splicing prediction across human tissues
 --------------------------------
-This package predicts aberrant splicing across human tissues with AbSplice. 
-AbSplice predictions are based on enhanced tissue-specific splice site annotations ([SpliceMaps](https://github.com/gagneurlab/splicemap)).
-If purely sequence based information is available, different DNA-based splicing predictions are combined into an integrative model "AbSplice-DNA".
-Integration of RNA-seq data from an accessible tissue (e.g. blood or skin) of an individual to predict aberrant splicing in any other tissue from the same individual is supported in "AbSplice-RNA".
-Genome-wide AbSplice-DNA scores for all possible SNVs are available [here](https://doi.org/10.5281/zenodo.6408331) for download.
+This method predicts aberrant splicing across human tissues with AbSplice, as described in [Wagner, Çelik et al., Nature Genetics 2023](https://www.nature.com/articles/s41588-023-01373-3).
+
+Precomputed AbSplice-DNA scores for all possible single-nucleotide variants genome-wide are available [here](https://doi.org/10.5281/zenodo.6408331) for download.
+
+
+AbSplice predictions are computed from VCF files and are based on enhanced tissue-specific splice site annotations ([SpliceMaps](https://github.com/gagneurlab/splicemap)). The scores represent the probability that a given variant causes aberrant splicing in a given tissue.
+
+AbSplice-DNA: if only DNA is available, different DNA-based splicing predictions, as well as information from tissue-specific SpliceMaps, are combined into the integrative model AbSplice-DNA (see [example](https://github.com/gagneurlab/absplice/tree/master/example) use case).
+
+AbSplice-RNA: if RNA-seq from clinically accessible tissues (e.g. blood or skin) is available, these direct splicing measurements can be used to predict aberrant splicing in another tissue from the same individual with the model AbSplice-RNA.
+
+![AbSplice](https://media.springernature.com/full/springer-static/image/art%3A10.1038%2Fs41588-023-01373-3/MediaObjects/41588_2023_1373_Fig1_HTML.png?as=webp)
+
 
 ## Installation
 Clone git repo:
@@ -18,6 +26,7 @@ cd absplice
 ```
 
 Install conda environment:
+
 ```
 # Recommended if you have mamba installed
 mamba env create -f environment.yaml
@@ -35,7 +44,7 @@ pip install -e .
 
 ## Output
 
-Output of AbSplice is an tabular data which contains following columns:
+The [output](https://github.com/gagneurlab/absplice/blob/master/example/data/results/hg19/example.vcf.gz_absplice_dna.csv) of AbSplice is tabular data. It contains the following columns (`variant`, `gene_id`, `tissue` being the unique row identifier):
 
 
 |     ID     | Column | Description |
@@ -62,8 +71,8 @@ Output of AbSplice is an tabular data which contains following columns:
 | `donor_gain_position` | SpliceAI Delta postion (donor gain) | See description of `acceptor_gain_position`. |
 | `donor_loss_position` | SpliceAI Delta position (donor loss) | See description of `acceptor_gain_position`. |
 
-## Example usecase
-The [example](https://github.com/gagneurlab/splicing-outlier-prediction/tree/master/example) folder contains a snakemake workflow to generate AbSplice predictions, given a vcf file and a fasta file (will be downloaded if not provided).
+## Example use case
+The [example](https://github.com/gagneurlab/absplice/tree/master/example) folder contains a snakemake workflow to generate AbSplice predictions, given a vcf file and a fasta file (either for hg19 or hg38, will be downloaded automatically).
 The snakemake workflow will download precomputed SpliceMaps from Zenodo and run AbSplice based on these annotations.
 To generate predictions run:
 ```
@@ -72,12 +81,12 @@ python -m snakemake -j 1 --use-conda
 ```
 To run this example on your own data do the following:
 
-- Specify the genome version that you are going to use (hg19 is compatible with gtex_v7 and hg38 is compatible with gtex_v8) in the field `genome` of the [config](https://github.com/gagneurlab/splicing-outlier-prediction/tree/master/example/config.yaml) file.
+- Store all vcf files for analysis in [`data/resources/vcf_files/`](https://github.com/gagneurlab/absplice/tree/master/example/data/resources/vcf_files/).
 
-- Store all vcf files for analysis to `data/resources/vcf_files/`.
+- Specify the genome version that you are going to use (currently supported hg19 and hg38) in the field `genome` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/config.yaml#L2) file.
+
+- In the field `splicemap_tissues` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/config.yaml#L35) file you can uncomment the tissues that AbSplice will use to generate predictions (by default only fibroblasts).
 
 Optionally:
 
-- In the field `splicemap_tissues` of the [config](https://github.com/gagneurlab/splicing-outlier-prediction/tree/master/example/config.yaml) file you can uncomment the tissues that AbSplice will use to generate predictions (by default only fibroblasts).
-
-- If you want to run the example on large datasets, you can enable a fast lookup interface spliceai_rocksdb that uses precomputed scores. This precomputed database will be downloaded from Nextcloud (it will take significant time – about 3-4 hours). To enable fast lookup simply change the field `use_rocksdb` in [config](https://github.com/gagneurlab/splicing-outlier-prediction/tree/master/example/config.yaml) file to `True`.
+- If you want to run the example on large datasets, you can enable a fast lookup interface [spliceai_rocksdb](https://github.com/gagneurlab/spliceai_rocksdb) that uses precomputed SpliceAI scores. The first time you use it, the precomputed database will be downloaded from Nextcloud (it will take significant time – about 3-4 hours). To enable fast lookup simply change the field `use_rocksdb` in the [config](https://github.com/gagneurlab/absplice/blob/master/example/config.yaml#L9) file to `True`.

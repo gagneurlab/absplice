@@ -82,7 +82,7 @@ def inject_new_row(df, new_row_dict):
     new_row = pd.DataFrame(df[-1:].values, columns=df.columns)
     for k,v in new_row_dict.items():
         new_row[k] = v
-    return df.append(new_row)
+    return pd.concat([df, new_row])
 
 
 def read_spliceai(path, **kwargs):

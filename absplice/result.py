@@ -379,7 +379,7 @@ class SplicingOutlierResult:
 
             df_common = self.junction.reset_index().set_index(['junction', 'gene_id', 'tissue', 'event_type'])
 
-            common_idx = set(df_common.index).intersection(common_cat_idx)
+            common_idx = sorted(set(df_common.index).intersection(common_cat_idx))
             df_common = df_common.loc[common_idx] \
                                  .set_index('sample', append=True)
 
@@ -610,6 +610,8 @@ class SplicingOutlierResult:
             'donor_gain_position', 
             'donor_loss_position'
         ]
+        if 'acceptor_loss_positiin' in self._df_spliceai_agg.columns:
+            self._df_spliceai_agg = self._df_spliceai_agg.rename(columns={'acceptor_loss_positiin': 'acceptor_loss_position'})
 
         self._absplice_dna = self._absplice_dna.join(
             self._df_mmsplice_agg[mmsplice_splicemap_cols]).join(

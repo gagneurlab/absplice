@@ -17,26 +17,8 @@
 ##FORMAT=<ID=HQ,Number=2,Type=Integer,Description="Haplotype Quality">
 ##contig=<ID=chr1>
 ##contig=<ID=chr2>
-##contig=<ID=chr3>
-##contig=<ID=chr4>
-##contig=<ID=chr5>
-##contig=<ID=chr6>
-##contig=<ID=chr7>
-##contig=<ID=chr8>
-##contig=<ID=chr9>
-##contig=<ID=chr10>
-##contig=<ID=chr11>
-##contig=<ID=chr12>
-##contig=<ID=chr13>
-##contig=<ID=chr14>
-##contig=<ID=chr15>
-##contig=<ID=chr16>
-##contig=<ID=chr17>
-##contig=<ID=chr18>
-##contig=<ID=chr19>
-##contig=<ID=chr20>
-##contig=<ID=chr21>
+##INFO=<ID=SpliceAI,Number=.,Type=String,Description="SpliceAIv1.3.1 variant annotation. These include delta scores (DS) and delta positions (DP) for acceptor gain (AG), acceptor loss (AL), donor gain (DG), and donor loss (DL). Format: ALLELE|SYMBOL|DS_AG|DS_AL|DS_DG|DS_DL|DP_AG|DP_AL|DP_DG|DP_DL">
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO
-chr17	50722650	.	T	A	9.6	.	.
-chr3	123956736	.	T	A	9.6	.	.
-chr1	109910810	.	C	G	9.6	.	.
+chr1	225510364	.	A	G	9.6	.	SpliceAI=G|DNAH14|0.52|0.99|0.00|0.00|-26|2|47|4
+chr2	86352917	.	G	A	9.6	.	SpliceAI=A|PTCD3|0.00|0.99|0.00|0.00|34|1|-42|38
+chr2	209138460	.	A	G	9.6	.	SpliceAI=G|PIKFYVE|0.00|0.00|0.00|0.38|-3|-21|28|-3
