@@ -26,13 +26,13 @@ jobs:
 #           command: |
 #             source activate absplice
 #             cd example
-#             python -m snakemake -j 1 --use-conda
+#             python -m snakemake -j 1 --use-conda --cores 30
       - run:
           name: Run example with lookup
           command: |
             source activate absplice
             cd example
-            python -m snakemake -j 1 --use-conda --config use_rocksdb=True --cores 24
+            python -m snakemake -j 1 --use-conda --config use_rocksdb=True --cores 30
 workflows:
   version: 2
   build-and-test:
