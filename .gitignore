@@ -6,10 +6,19 @@ example/*.csv
 example/*.fa
 example/*.fa.fai
 example/*.fa.gz
+example/dev.ipynb
 absplice/precomputed/splicemap_gtex_v8/*
 tests/data/test_real_data/*
 tests/data/create_test_data/*
 tests/data/*_backup*
+$TMP/*
+environment_test.yaml
+example/dag_False.svg
+example/dag_True.svg
+example/data
+example/run_slurm_jobs.sh
+example/test.vcf.gz.tbi
+.gitignore
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

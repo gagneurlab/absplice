@@ -39,13 +39,13 @@ splicemap_v_mapper = {
 
 rule all:
     input:
-        expand(config['splicemap']['psi3'], 
+        expand(config['splicemap']['psi3'],
             genome = config['genome'], tissue = config['splicemap_tissues']),
-        expand(config['splicemap']['psi5'], 
+        expand(config['splicemap']['psi5'],
             genome = config['genome'], tissue = config['splicemap_tissues']),
         expand(config['splicing_pred']['absplice_dna'],
             genome = config['genome'], vcf_id=vcf_ids),
-        
+        expand(config['spliceai_rocksdb'][genome], chromosome = config['chromosomes']),
 
 rule download_human_fasta:
     params:
@@ -95,10 +95,16 @@ if config['use_rocksdb'] == True:
         conda:
             "environment_spliceai_rocksdb.yaml"
         output:
-            spliceai_rocksdb = config['spliceai_rocksdb'][genome]
+            spliceai_rocksdb = directory(config['spliceai_rocksdb'][genome])
         shell:
-            "spliceai_rocksdb_download --version {params.version} --db_path {output.spliceai_rocksdb}"
+            "spliceai_rocksdb_download --version {params.version} --db_path {output.spliceai_rocksdb} --chromosome {wildcards.chromosome}"
 
+    def dict_path(wildcards):
+        paths = {}
+        genome = wildcards['genome']
+        for chr in config['chromosomes']:
+            paths[chr] = config['spliceai_rocksdb'][genome].format(chromosome=chr)
+        return paths
 
     rule spliceai:
         resources:
@@ -109,10 +115,12 @@ if config['use_rocksdb'] == True:
         input:
             vcf = config['vcf'],
             fasta = config['fasta'][genome]['file'],
-            spliceai_rocksdb = config['spliceai_rocksdb'][genome]
+            spliceai_rocksdb = expand(config['spliceai_rocksdb'][genome],
+                 chromosome=config['chromosomes'])
         params:
+            db_path = dict_path,
             lookup_only = False,
-            genome = genome_mapper[config['genome']]
+            genome = genome_mapper[config['genome']],
         conda:
             "environment_spliceai_rocksdb.yaml"
         output:

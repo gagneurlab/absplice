@@ -1,7 +1,6 @@
-name: spliceai-rocksdb_test_run
+name: spliceai-rocksdb
 channels:
   - conda-forge
-  - bioconda
 dependencies:
   - python>=3.6
   - python-rocksdb>=0.7
@@ -12,12 +11,12 @@ dependencies:
   - pyarrow
   - tqdm
   - pip
-  - snakemake>=6.1
   - setuptools
   - click
-  - wget
-  - kipoiseq
-  - spliceai
-  - cyvcf2
+  - pooch
+  - bioconda::snakemake>=6.1
+  - bioconda::kipoiseq
+  - bioconda::spliceai
+  - bioconda::cyvcf2
   - pip:
-    - git+https://github.com/gagneurlab/spliceai_rocksdb.git
+    - git+https://github.com/gagneurlab/spliceai_rocksdb.git@dev

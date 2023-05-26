@@ -28,9 +28,9 @@ splicing_pred:
   spliceai_vcf: data/results/{genome}/{vcf_id}_spliceai.vcf
   absplice_dna: data/results/{genome}/{vcf_id}_absplice_dna.csv
 
-spliceai_rocksdb: 
-  hg19: data/resources/spliceAI_grch37.db
-  hg38: data/resources/spliceAI_grch38.db
+spliceai_rocksdb:
+  hg19: data/results/dbs_by_chrom/spliceAI_hg19_chr{chromosome}.db
+  hg38: data/results/dbs_by_chrom/spliceAI_hg38_chr{chromosome}.db
 
 splicemap_tissues:
 #     - Adipose_Subcutaneous
@@ -77,8 +77,10 @@ splicemap_tissues:
 #     - Small_Intestine_Terminal_Ileum
 #     - Spleen
 #     - Stomach
-#     - Testis
+     - Testis
 #     - Thyroid
 #     - Uterus
 #     - Vagina
 #     - Whole_Blood
+
+chromosomes: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', 'X', 'Y']
