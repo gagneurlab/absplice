@@ -45,7 +45,8 @@ rule all:
             genome = config['genome'], tissue = config['splicemap_tissues']),
         expand(config['splicing_pred']['absplice_dna'],
             genome = config['genome'], vcf_id=vcf_ids),
-        expand(config['spliceai_rocksdb'][genome], chromosome = config['chromosomes']),
+        if config['use_rocksdb'] == True:
+            expand(config['spliceai_rocksdb'][genome], chromosome = config['chromosomes']),
 
 rule download_human_fasta:
     params:
