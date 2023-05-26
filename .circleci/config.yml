@@ -11,7 +11,7 @@ jobs:
             apt-get update
             apt-get install -y build-essential
       - run:
-          name: Build environment for AbSplice
+          name: Create environment for AbSplice
           command: |
             mamba env create -f environment.yaml
             source activate absplice
@@ -28,7 +28,7 @@ jobs:
             cd example
             python -m snakemake -j 1 --use-conda --cores 10
       - run:
-          name: Build environment for rocksdb lookup
+          name: Create environment for rocksdb lookup
           command: |
             mamba env create -f example/environment_spliceai_rocksdb.yaml
             source activate spliceai-rocksdb
