@@ -96,6 +96,8 @@ class SplicingOutlierResult:
         self.contains_chr = self._contains_chr()
         self.contains_samples = self._contains_samples()
         self._df_spliceai_tissue = None
+        self._df_mmsplice_agg = None
+        self._df_spliceai_agg = None
         self._junction = None
         self._splice_site = None
         self._gene_mmsplice = None
@@ -141,7 +143,7 @@ class SplicingOutlierResult:
             df_mmsplice_cat = self._validate_df(
                 df_mmsplice_cat,
                 columns=['variant', 'gene_id', 'tissue',
-                         'delta_psi', 'ref_psi', 'median_n', 'gene_tpm',
+                         'delta_psi', 'ref_psi', 'median_n',
                          'tissue_cat', 'delta_psi_cat'])
             df_mmsplice_cat = self._validate_dtype(df_mmsplice_cat)
             df_mmsplice_cat = df_mmsplice_cat[
@@ -610,6 +612,41 @@ class SplicingOutlierResult:
             'donor_gain_position', 
             'donor_loss_position'
         ]
+        
+        # get aggregated scores of SpliceAI and MMSplice + SpliceMap
+        groupby = ['variant', 'gene_id', 'tissue']
+        if self.contains_samples:
+            groupby.append('sample')
+             
+        if self._df_mmsplice_agg is None:
+            # MMSplice (SpliceMap)
+            cols_mmsplice = [
+                'junction', 'event_type',
+                'splice_site', 'ref_psi', 'median_n', 
+                'gene_name',
+                'delta_logit_psi', 'delta_psi',
+            ]
+            if self.df_mmsplice is not None:
+                df_mmsplice = self._get_maximum_effect(
+                    self.df_mmsplice, groupby, score='delta_psi')
+            else:
+                df_mmsplice = pd.DataFrame(columns=[*cols_mmsplice, *groupby]).set_index(groupby)
+
+            self._df_mmsplice_agg = df_mmsplice
+                
+        if self._df_spliceai_agg is None:
+            # SpliceAI
+            cols_spliceai = ['delta_score', 'gene_name']
+            if self.df_spliceai is not None:
+                df_spliceai = self._add_tissue_info_to_spliceai()
+                df_spliceai = self._get_maximum_effect(
+                    df_spliceai, groupby, score='delta_score')
+            else:
+                df_spliceai = pd.DataFrame(columns=[*cols_spliceai, *groupby]).set_index(groupby)
+
+            self._df_spliceai_agg = df_spliceai
+        
+        
         if 'acceptor_loss_positiin' in self._df_spliceai_agg.columns:
             self._df_spliceai_agg = self._df_spliceai_agg.rename(columns={'acceptor_loss_positiin': 'acceptor_loss_position'})
 
@@ -631,7 +668,7 @@ class SplicingOutlierResult:
         df[absplice_score] = model.predict_proba(df)[:, 1]
         return df
 
-    def predict_absplice_dna(self, pickle_file=None, features=None, abs_features=False, median_n_cutoff=10, tpm_cutoff=None, cadd_splice=False):
+    def predict_absplice_dna(self, pickle_file=None, features=None, abs_features=False, median_n_cutoff=10, tpm_cutoff=None, cadd_splice=False, extra_info=True):
         if pickle_file is None and cadd_splice == True:
             pickle_file = ABSPLICE_DNA_with_CADD_Splice
         if pickle_file is None:
@@ -651,7 +688,9 @@ class SplicingOutlierResult:
             median_n_cutoff=median_n_cutoff,
             tpm_cutoff=tpm_cutoff)
 
-        self._absplice_dna = self.add_extra_info()
+        if extra_info:
+            self._absplice_dna = self.add_extra_info()
+            
         return self._absplice_dna
 
     def predict_absplice_rna(self, pickle_file=None, features=None, abs_features=False, median_n_cutoff=10, tpm_cutoff=None):

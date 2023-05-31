@@ -1,8 +1,12 @@
 import pandas as pd
 import numpy as np
+from pyranges import PyRanges
 import pathlib
+from kipoiseq import Interval
 from kipoiseq.extractors.vcf import MultiSampleVCF
+from kipoiseq.extractors.vcf_query import BaseVariantQuery
 from collections import namedtuple
+from typing import List
 
 
 def get_abs_max_rows(df, groupby, max_col, dropna=True):
@@ -207,3 +211,144 @@ def read_absplice(path, **kwargs):
             raise ValueError("unknown file ending.")
     df = _add_variant(df)
     return df
+
+
+def annotate_junctions_DROP(df):
+    if 'chr' not in df['seqnames'].astype(str).values[0]:
+        df['seqnames'] = df['seqnames'].astype(str)
+        df['seqnames'] = df['seqnames'].apply(lambda x: 'chr' + x)
+    df['junctions'] = df['seqnames'].astype(str) + ':' \
+            + (df['start'] - 1).astype(str) + '-' \
+            + df['end'].astype(str) + ':' \
+            + df['strand'].map(lambda x: x if x == '-' else '+')
+    return df
+
+
+class VariantMafFilter(BaseVariantQuery):
+
+    def __init__(self, cutoff, population=None, not_in_population=True):
+        self.population = population
+        self.cutoff = cutoff
+        self.not_in_population = not_in_population
+
+    def __call__(self, v):
+        if self.population:
+            v = str(v)
+            return self.population[v] <= self.cutoff \
+                if v in self.population else self.not_in_population
+        else:
+            return v.source.aaf <= self.cutoff
+
+
+class PrivateVariantFilter(BaseVariantQuery):
+
+    def __init__(self, vcf, max_num_samples=2):
+        self.vcf = vcf
+        self.max_num_sample = max_num_samples
+
+    def __call__(self, v):
+        return len(self.vcf.get_samples(v)) <= self.max_num_sample
+
+
+class ReadDepthFilter(BaseVariantQuery):
+
+    def __init__(self, vcf, min_read=10, sample_id=None):
+        self.sample_mapping = vcf.sample_mapping
+        self.min_read = min_read
+        self.sample_id = sample_id
+
+    def __call__(self, v):
+        gt_depth = v.source.gt_alt_depths
+        if self.sample_id:
+            depth = gt_depth[self.sample_mapping[self.sample_id]]
+        else:
+            depth = min(gt_depth)
+        return depth >= self.min_read
+
+
+class GQFilter(BaseVariantQuery):
+
+    def __init__(self, vcf, min_GQ=80, sample_id=None):
+        self.sample_mapping = vcf.sample_mapping
+        self.min_GQ = min_GQ
+        self.sample_id = sample_id
+
+    def __call__(self, v):
+        gt_quals = v.source.gt_quals
+        if self.sample_id:
+            GQ = gt_quals[self.sample_mapping[self.sample_id]]
+        else:
+            GQ = max(gt_quals)
+        return GQ >= self.min_GQ
+    
+    
+class LongVariantFilter(BaseVariantQuery):
+
+    def __init__(self, vcf, max_length=10):
+        self.vcf = vcf
+        self.max_length = max_length
+
+    def __call__(self, v):
+        v = left_normalized(v)
+        length = max(len(v.ref), len(v.alt))
+        return length < self.max_length
+    
+    
+class Junction(Interval):
+
+    @property
+    def acceptor(self):
+        return self.start if self.strand == '-' else self.end
+
+    @property
+    def donor(self):
+        return self.end if self.strand == '-' else self.start
+
+    def dinucleotide_region(self):
+        return Interval(self.chrom, self.start, self.start + 2), \
+            Interval(self.chrom, self.end - 2, self.end)
+
+    def acceptor_region(self, overhang=(250, 250)):
+        return Interval(self.chrom, self.acceptor,
+                        self.acceptor, strand=self.strand) \
+            .slop(upstream=overhang[0], downstream=overhang[1])
+
+    def donor_region(self, overhang=(250, 250)):
+        return Interval(self.chrom, self.donor,
+                        self.donor, strand=self.strand) \
+            .slop(upstream=overhang[0], downstream=overhang[1])
+            
+    
+def get_splice_site_intervals(junction, overhang=(250, 250)):
+    junction = Junction.from_str(junction) if type(
+        junction) == str else junction
+
+    acceptor = junction.acceptor_region(overhang=overhang)
+    donor = junction.donor_region(overhang=overhang)
+    return [acceptor, donor]
+
+def get_unique_splice_site_intervals_in_event(event, overhang=(250, 250)):
+    sites = list()
+    for junction in event:
+        sites.append(get_splice_site_intervals(junction, overhang))
+    sites = [item for sublist in sites for item in sublist]
+    sites = list(set(sites))
+    return sites
+    
+def intervals_to_pyranges(intervals: List[Interval]) -> PyRanges:
+    """
+    Create pyrange object given list of intervals objects.
+    Args:
+      intervals: list of interval objects have CHROM, START, END, properties.
+    """
+    import pyranges
+    df = pd.DataFrame([
+        (
+            i.chrom,
+            i.start,
+            i.end,
+            i
+        )
+        for i in intervals
+    ], columns=['Chromosome', 'Start', 'End', 'interval'])
+    return pyranges.PyRanges(df)
