@@ -78,7 +78,7 @@ splicemap_tissues:
 
 # ============================= AbSplice-RNA related ================================
 
-AbSplice_RNA: True
+AbSplice_RNA: False
 
 DROP:
     DROP_group: 
