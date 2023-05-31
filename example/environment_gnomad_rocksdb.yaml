@@ -12,8 +12,9 @@ dependencies:
   - click
   - wget
   - bioconda::cyvcf2==0.30.16
-  - bioconda::kipoiseq>=0.7
+  # - bioconda::kipoiseq>=0.7
   - pip:
     - git+https://github.com/gagneurlab/gnomad_rocksdb.git
     - git+https://github.com/gagneurlab/splicemap.git
-    - git+https://github.com/gagneurlab/absplice.git
+    - git+https://github.com/gagneurlab/absplice.git@master
+    - git+https://github.com/kipoi/kipoiseq.git@master

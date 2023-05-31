@@ -27,10 +27,6 @@ cd absplice
 
 Install conda environment:
 ```
-# To prevent package conflicts use:
-conda config --set channel_priority false
-```
-```
 # Recommended if you have mamba installed
 mamba env create -f environment.yaml
 # otherwise
@@ -82,14 +78,34 @@ To generate predictions run:
 cd example
 python -m snakemake -j 1 --use-conda
 ```
-To run this example on your own data do the following:
+### AbSplice-DNA:
+To run the workflow on your own data do the following:
 
 - Store all vcf files for analysis in [`data/resources/vcf_files/`](https://github.com/gagneurlab/absplice/tree/master/example/data/resources/vcf_files/).
 
-- Specify the genome version that you are going to use (currently supported hg19 and hg38) in the field `genome` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/config.yaml#L2) file.
+- Specify the genome version that you are going to use (currently supported hg19 and hg38) in the field `genome` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/config.yaml#L4) file.
 
-- In the field `splicemap_tissues` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/config.yaml#L35) file you can uncomment the tissues that AbSplice will use to generate predictions (by default only fibroblasts).
+- In the field `splicemap_tissues` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/config.yaml#L27) file you can uncomment the tissues that AbSplice will use to generate predictions (by default only brain cortex).
 
 Optionally:
 
-- If you want to run the example on large datasets, you can enable a fast lookup interface [spliceai_rocksdb](https://github.com/gagneurlab/spliceai_rocksdb) that uses precomputed SpliceAI scores. The first time you use it, the precomputed database will be downloaded from Nextcloud (it will take significant time – about 3-4 hours). To enable fast lookup simply change the field `use_rocksdb` in the [config](https://github.com/gagneurlab/absplice/blob/master/example/config.yaml#L9) file to `True`.
+- If you want to run the example on large datasets, you can enable a fast lookup interface [spliceai_rocksdb](https://github.com/gagneurlab/spliceai_rocksdb) that uses precomputed SpliceAI scores. \
+The first time you use it, the precomputed database will be downloaded (it will take significant time – about 1 hour and use approximately 180GB of storage). \
+To enable fast lookup for SpliceAI simply change the field `use_rocksdb` in the [config](https://github.com/gagneurlab/absplice/blob/master/example/config.yaml#L25) file to `True`.
+
+### AbSplice-RNA:
+
+This part of the workflow is still preliminary and will be updated in the next days (e.g. supporting single sample vcf files). \
+To run AbSplice-RNA you need to set the field `AbSplice_RNA` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/config.yaml#L81) file to `True`.
+You need to provide results from [DROP](https://github.com/gagneurlab/drop) in [this folder](https://github.com/gagneurlab/absplice/tree/master/example/data/resources/absplice_rna_related_files/DROP). Specifiy the names of provided clinically accessible tissues in the field `DROP_group` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/config.yaml#L85) file.
+
+You will need to provide the following files from DROP:
+
+- [annotation file](https://github.com/gagneurlab/absplice/tree/master/example/data/resources/absplice_rna_related_files/DROP/processed_data/aberrant_splicing/annotations/Cells_Cultured_fibroblasts.tsv) containing the mapping from DNA IDs (as annotated in VCF file) to RNA IDs (as annotated in the fds-object of the analyzed RNA-seq cohort).
+- [splicing fds object](https://github.com/gagneurlab/absplice/tree/master/example/data/resources/absplice_rna_related_files/DROP/processed_data/aberrant_splicing/datasets/savedObjects/raw-Cells_Cultured_fibroblasts/fds-object.RDS) containing raw split-read counts for each detected splicing junction and each sample of the clinically acessible tissue.
+- [aberrant splicing results on junction level](https://github.com/gagneurlab/absplice/tree/master/example/data/resources/absplice_rna_related_files/DROP/processed_results/aberrant_splicing/results/Cells_Cultured_fibroblasts/results_per_junction.tsv) as detected by FRASER.
+- [aberrant splicing results on gene level](https://github.com/gagneurlab/absplice/tree/master/example/data/resources/absplice_rna_related_files/DROP/processed_results/aberrant_splicing/results/Cells_Cultured_fibroblasts/results.tsv) as detected by FRASER.
+
+AbSplice-RNA combines DNA and RNA information. \
+If a multisample vcf file is provided, the pipeline will extract which variants each individual carries. DNA-based predictions for those variants will then be combined with RNA-based predictions/ measurements for junctions in the vicinity of those variants. \
+Those DNA IDs need to match annotations from [the DROP annotation file](https://github.com/gagneurlab/absplice/tree/master/example/data/resources/absplice_rna_related_files/DROP/processed_data/aberrant_splicing/annotations/Cells_Cultured_fibroblasts.tsv).

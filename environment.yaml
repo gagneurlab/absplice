@@ -1,27 +1,30 @@
 name: absplice
 channels:
-  - defaults
   - conda-forge
-  - bioconda
 dependencies:
   - python==3.8
   - cython
   - tensorflow
-  - spliceai
-  - snakemake
   - pytest
-  - tabix
   - setuptools
-  - kipoiseq>=0.7
   - scipy
   - pandas
-  - pyfaidx
   - tqdm
   - click
-  - pyranges>=0.0.71
   - pip
   - pyarrow
-  - cyvcf2==0.30.16
+  - pandas
+  - numpy==1.23
+  # needed for splicemap
+  - seaborn
+  - scikit-learn
+  - bioconda::pyfaidx
+  - bioconda::pyranges>=0.0.71
+  - bioconda::cyvcf2==0.30.16
+  - bioconda::tabix
+  - bioconda::snakemake
+  - bioconda::spliceai
+  - bioconda::kipoiseq>=0.7
   - deepdiff
   - pip:
     - mmsplice

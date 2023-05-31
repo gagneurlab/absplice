@@ -77,6 +77,9 @@ splicemap_tissues:
 
 
 # ============================= AbSplice-RNA related ================================
+
+AbSplice_RNA: True
+
 DROP:
     DROP_group: 
       - 'Cells_Cultured_fibroblasts'

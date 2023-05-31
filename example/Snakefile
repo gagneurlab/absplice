@@ -3,10 +3,16 @@ SNAKEMAKE_DIR = os.path.dirname(workflow.snakefile)
 
 include: "./download/Snakefile"
 include: "./splicing_pred/DNA/Snakefile"
-# include: "./splicing_pred/RNA/Snakefile"
+if config['AbSplice_RNA'] == True:
+    include: "./splicing_pred/RNA/Snakefile"
+
+all_output_files = list()
+all_output_files.append(rules.all_download.input)
+all_output_files.append(rules.all_predict_dna.input)
+if config['AbSplice_RNA'] == True:
+    all_output_files.append(rules.all_predict_rna.input)
+
 
 rule all:
     input:
-        rules.all_download.input,
-        # rules.all_predict_rna.input,
-        rules.all_predict_dna.input,
+        all_output_files
