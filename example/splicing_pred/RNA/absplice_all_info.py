@@ -4,7 +4,7 @@ df_absplice_dna = pd.read_csv(snakemake.input['absplice_dna'])
 df_absplice_rna = pd.read_csv(snakemake.input['absplice_rna'])
 
 index = ['variant', 'gene_id', 'tissue']
-rna_cols = ['sample', 'delta_psi_cat', 'pValueGene_g_minus_log10', 'AbSplice_RNA']
+rna_cols = ['sample', 'delta_psi_cat', 'FRASER_pval_cat', 'AbSplice_RNA']
 df_absplice = df_absplice_rna.set_index(index)[rna_cols].join(
     df_absplice_dna.set_index(index), 
     how='outer',
@@ -13,7 +13,7 @@ df_absplice = df_absplice_rna.set_index(index)[rna_cols].join(
 cols = [
     'variant', 'gene_id', 'tissue', 'sample',
     'AbSplice_DNA', 'AbSplice_RNA',
-    'delta_psi_cat', 'pValueGene_g_minus_log10', 
+    'delta_psi_cat', 'FRASER_pval_cat', 
     'delta_logit_psi', 'delta_psi', 'delta_score',
     'splice_site_is_expressed',   
     'ref_psi', 'median_n',

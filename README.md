@@ -43,7 +43,7 @@ pip install -e .
 
 ## Output
 
-The [output](https://github.com/gagneurlab/absplice/blob/master/example/data/results/hg19/example.vcf.gz_absplice_dna.csv) of AbSplice is tabular data. It contains the following columns (`variant`, `gene_id`, `tissue` being the unique row identifier):
+The [output](https://github.com/gagneurlab/absplice/blob/master/example/data/results/hg19/_example_hg19.vcf.gz_AbSplice_DNA.csv) of AbSplice is tabular data. It contains the following columns (`variant`, `gene_id`, `tissue` being the unique row identifier):
 
 
 |     ID     | Column | Description |
@@ -95,6 +95,7 @@ To enable fast lookup for SpliceAI simply change the field `use_rocksdb` in the 
 
 ### AbSplice-RNA:
 
+[Example output for AbSplice-RNA](https://github.com/gagneurlab/absplice/blob/master/example/data/results/hg19/_example_hg19.vcf.gz_tissue_cat=Cells_Cultured_fibroblasts_AbSplice_all_info.csv).\
 This part of the workflow is still preliminary and will be updated in the next days (e.g. supporting single sample vcf files). \
 To run AbSplice-RNA you need to set the field `AbSplice_RNA` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/config.yaml#L81) file to `True`.
 You need to provide results from [DROP](https://github.com/gagneurlab/drop) in [this folder](https://github.com/gagneurlab/absplice/tree/master/example/data/resources/absplice_rna_related_files/DROP). Specifiy the names of provided clinically accessible tissues in the field `DROP_group` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/config.yaml#L85) file.
