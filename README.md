@@ -89,12 +89,12 @@ To run the workflow on your own data do the following:
 
 Optionally:
 
-- If you want to run the example on large datasets, you can enable a fast lookup interface [spliceai_rocksdb](https://github.com/gagneurlab/spliceai_rocksdb) that uses precomputed SpliceAI scores. \
-The first time you use it, the precomputed database will be downloaded (it will take significant time – about 1 hour and use approximately 180GB of storage). \
+- If you want to run the example on large datasets, you can enable a fast lookup interface [spliceai_rocksdb](https://github.com/gagneurlab/spliceai_rocksdb) that uses precomputed SpliceAI scores. 
+The first time you use it, the precomputed database will be downloaded (it will take significant time – about 1 hour and use approximately 180GB of storage). 
 To enable fast lookup for SpliceAI simply change the field `use_rocksdb` in the [config](https://github.com/gagneurlab/absplice/blob/master/example/workflow/config.yaml#L19) file to `True`.
 
 ### AbSplice-RNA:
-AbSplice-RNA combines DNA and RNA information. \
+AbSplice-RNA combines DNA and RNA information. 
 For each individual, DNA-based predictions of variants will be combined with RNA-based predictions/ measurements for junctions in the vicinity of the variants. The input are vcf files (either single or multisample) from DNA and the results from running FRASER on RNA-seq samples using [DROP](https://github.com/gagneurlab/drop).
 
 
