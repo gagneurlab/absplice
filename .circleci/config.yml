@@ -25,7 +25,7 @@ jobs:
           name: Run example
           command: |
             source activate absplice
-            cd example
+            cd example/workflow
             python -m snakemake -j 1 --use-conda --cores 10
       - run:
           name: Create environment for rocksdb lookup
