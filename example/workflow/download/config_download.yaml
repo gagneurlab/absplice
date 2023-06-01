@@ -1,35 +1,35 @@
 fasta:
   hg19:
     url: https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_39/GRCh37_mapping/GRCh37.primary_assembly.genome.fa.gz
-    file: data/resources/GRCh37.primary_assembly.genome.fa
+    file: ../data/resources/downloaded_files/GRCh37.primary_assembly.genome.fa
   hg38:
     url: https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_39/GRCh38.primary_assembly.genome.fa.gz
-    file: data/resources/GRCh38.primary_assembly.genome.fa
+    file: ../data/resources/downloaded_files/GRCh38.primary_assembly.genome.fa
 
 gtf:
   hg19:
     url: https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_39/GRCh37_mapping/gencode.v39lift37.annotation.gtf.gz
-    file: data/resources/gencode.v39lift37.annotation.gtf
-    coding_genes: data/resources/hg19_coding_genes.csv
+    file: ../data/resources/downloaded_files/gencode.v39lift37.annotation.gtf
+    coding_genes: ../data/resources/downloaded_files/hg19_coding_genes.csv
   hg38:
     url: https://ftp.ebi.ac.uk/pub/databases/gencode/Gencode_human/release_39/gencode.v39.annotation.gtf.gz
-    file: data/resources/gencode.v39.annotation.gtf
-    coding_genes: data/resources/hg38_coding_genes.csv
+    file: ../data/resources/downloaded_files/gencode.v39.annotation.gtf
+    coding_genes: ../data/resources/downloaded_files/hg38_coding_genes.csv
 
-splicemap_dir: data/resources/splicemap_{genome}/
+splicemap_dir: ../data/resources/downloaded_files/splicemap_{genome}/
 
 splicemap: 
-  psi3: data/resources/splicemap_{genome}/{tissue}_splicemap_psi3_method=kn_event_filter=median_cutoff.csv.gz
-  psi5: data/resources/splicemap_{genome}/{tissue}_splicemap_psi5_method=kn_event_filter=median_cutoff.csv.gz
+  psi3: ../data/resources/downloaded_files/splicemap_{genome}/{tissue}_splicemap_psi3_method=kn_event_filter=median_cutoff.csv.gz
+  psi5: ../data/resources/downloaded_files/splicemap_{genome}/{tissue}_splicemap_psi5_method=kn_event_filter=median_cutoff.csv.gz
 
 spliceai_rocksdb: 
-  hg19: data/resources/spliceAI_grch37_chr{chromosome}.db
-  hg38: data/resources/spliceAI_grch38_chr{chromosome}.db
+  hg19: ../data/resources/downloaded_files/spliceAI_grch37_chr{chromosome}.db
+  hg38: ../data/resources/downloaded_files/spliceAI_grch38_chr{chromosome}.db
 chromosomes: ['1', '2', '3', '4', '5', '6', '7', '8', '9', '10', '11', '12', '13', '14', '15', '16', '17', '18', '19', '20', '21', '22', 'X', 'Y']
 
 gnomad_rocksdb: 
-  hg19: data/resources/gnomad_maf_db_hg19/gnomad_maf_db_2.1.1.db
-  hg38: data/resources/gnomad_maf_db_hg38/gnomad_maf_db_3.1.2.db
+  hg19: ../data/resources/downloaded_files/gnomad_maf_db_hg19/gnomad_maf_db_2.1.1.db
+  hg38: ../data/resources/downloaded_files/gnomad_maf_db_hg38/gnomad_maf_db_3.1.2.db
 
 all_available_splicemap_tissues:
   - Adipose_Subcutaneous

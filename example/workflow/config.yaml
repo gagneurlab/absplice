@@ -3,8 +3,8 @@
 # specify genome version hg19 or hg38 
 genome: hg19
 
-# store all the vcf file that you want to analyze to directory data/resources/vcf_files/
-vcf: data/resources/vcf_files/{vcf_id}
+# store all the vcf file that you want to analyze to directory ../data/resources/vcf_files/
+vcf: ../data/resources/analysis_files/vcf_files/{vcf_id}
 
 # parameters for variant filtering
 variant_filtering:
@@ -14,12 +14,6 @@ variant_filtering:
   max_num_samples: 
     apply_filter: True
     filter_cutoff: 2
-
-# mapping of variants to individuals, result of variant filtering on provided vcfs
-variant_sample_map: data/resources/variant_sample_map/{vcf_id}_variant_sample_map.csv
-
-multisample_vcf: True
-vcf_DNA_ID: data/resources/variant_sample_map/{vcf_id}_DNA_ID.txt # this file only needs to be provided if the vcf file does not contain the sample information
 
 # False by default, you can change this if you want to run on large datasets (see Readme)
 use_rocksdb: False
@@ -78,15 +72,16 @@ splicemap_tissues:
 
 # ============================= AbSplice-RNA related ================================
 
-AbSplice_RNA: False
+AbSplice_RNA: True
 
 DROP:
+    geneAnnotation: 'v29'
     DROP_group: 
       - 'Cells_Cultured_fibroblasts'
-    working_dir: data/resources/absplice_rna_related_files/DROP/
+    working_dir: ../data/resources/analysis_files/absplice_rna_related_files/DROP/
     sample_annotation: processed_data/aberrant_splicing/annotations/{tissue_cat}.tsv
     count_table: processed_data/aberrant_splicing/datasets/
-    outliers: processed_results/aberrant_splicing/results/
+    outliers: processed_results/aberrant_splicing/results/{geneAnnotation}/
 
 
 cat_outlier_filtering:

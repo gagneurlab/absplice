@@ -4,18 +4,9 @@ from os import listdir
 from os.path import isfile, join
 import pathlib
 
-config_download_path = f"{SNAKEMAKE_DIR}/download/config_download.yaml"
-with open(config_download_path, "r") as fd:
-    config_download = yaml.safe_load(fd)
-
-config_pred_path = f"{SNAKEMAKE_DIR}/splicing_pred/config_pred.yaml"
-with open(config_pred_path, "r") as fd:
-    config_pred = yaml.safe_load(fd)
-
-configfile: "./config.yaml"
-
 genome = config['genome']
-vcf_ids = [file for file in listdir(os.path.dirname(config['vcf'])) if '.tbi' not in file]
+vcf_dir = os.path.dirname(config['vcf'])
+vcf_ids = [file for file in listdir(vcf_dir) if '.tbi' not in file]
 
 def splicemap5(wildcards):
     path = Path(config_download['splicemap_dir'])
@@ -79,7 +70,7 @@ if config['use_rocksdb'] == True:
             lookup_only = False,
             genome = genome_mapper[config['genome']]
         conda:
-            "../../environment_spliceai_rocksdb.yaml"
+            "../../../envs/environment_spliceai_rocksdb.yaml"
         output:
             result = config_pred['splicing_pred']['spliceai']
         script:
@@ -100,7 +91,7 @@ else:
         params:
             genome = genome_mapper[config['genome']]
         conda:
-            "../../environment_spliceai_rocksdb.yaml"
+            "../../../envs/environment_spliceai_rocksdb.yaml"
         output:
             result = config_pred['splicing_pred']['spliceai_vcf']
         shell:

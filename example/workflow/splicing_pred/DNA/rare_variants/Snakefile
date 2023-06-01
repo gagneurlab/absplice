@@ -1,0 +1,32 @@
+import os
+import yaml
+from os import listdir
+from os.path import isfile, join
+import pathlib
+
+genome = config['genome']
+vcf_dir = os.path.dirname(config['vcf'])
+vcf_ids = [file for file in listdir(vcf_dir) if '.tbi' not in file]
+
+
+rule rare_variants_from_vcf:
+    input:
+        vcf = config['vcf'],
+        maf = ancient(config_download['gnomad_rocksdb'][genome]),
+    params:
+        filter_maf = config['variant_filtering']['minor_allele_frequency']['apply_filter'],
+        filter_private = config['variant_filtering']['max_num_samples']['apply_filter'],
+        maf_cutoff = config['variant_filtering']['minor_allele_frequency']['filter_cutoff'],
+        max_num_samples = config['variant_filtering']['max_num_samples']['filter_cutoff'],
+    conda:
+        "../../../../envs/environment_gnomad_rocksdb.yaml"
+    output:
+        filtered_variants = config_cat['variant_sample_map'],
+    script:
+        "./variants_from_vcf.py"
+
+
+rule all_rare_variants:
+    input:
+        expand(config_cat['variant_sample_map'], 
+            vcf_id=vcf_ids)

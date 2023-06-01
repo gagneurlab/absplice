@@ -8,22 +8,9 @@ include: "../DNA/rare_variants/Snakefile"
 include: "./count_table/Snakefile"
 include: "./outliers/Snakefile"
 
-config_download_path = f"{SNAKEMAKE_DIR}/download/config_download.yaml"
-with open(config_download_path, "r") as fd:
-    config_download = yaml.safe_load(fd)
-
-config_pred_path = f"{SNAKEMAKE_DIR}/splicing_pred/config_pred.yaml"
-with open(config_pred_path, "r") as fd:
-    config_pred = yaml.safe_load(fd)
-
-config_cat_path = f"{SNAKEMAKE_DIR}/splicing_pred/RNA/config_cat.yaml"
-with open(config_cat_path, "r") as fd:
-    config_cat = yaml.safe_load(fd)
-
-configfile: "./config.yaml"
-
 genome = config['genome']
-vcf_ids = [file for file in listdir(os.path.dirname(config['vcf'])) if '.tbi' not in file]
+vcf_dir = os.path.dirname(config['vcf'])
+vcf_ids = [file for file in listdir(vcf_dir) if '.tbi' not in file]
 
 def splicemap5(wildcards):
     path = Path(config_download['splicemap_dir'])
@@ -59,7 +46,7 @@ rule infer_delta_psi_from_cat:
         splicemap_3 = splicemap3,
         splicemap_cat5 = splicemap_cat5,
         splicemap_cat3 = splicemap_cat3,
-        var_samples_df = config['variant_sample_map'],
+        var_samples_df = config_cat['variant_sample_map'],
         cat_count_table = config_cat['cat_count_table']['updated'],
     params:
         tissue_cat = '{tissue_cat}',
@@ -78,7 +65,7 @@ rule absplice_rna:
         df_spliceai = config_pred['splicing_pred']['spliceai'],
         df_mmsplice_cat = config_pred['splicing_pred']['delta_psi_inferred_from_cat'],
         df_outliers_cat = config_pred['splicing_pred']['cat_outliers'],
-        var_samples_df = config['variant_sample_map'],
+        var_samples_df = config_cat['variant_sample_map'],
     output:
         absplice_rna = config_pred['splicing_pred']['absplice_rna']
     script:
@@ -98,9 +85,12 @@ rule absplice:
 rule all_predict_rna:
     input:
         expand(config_pred['splicing_pred']['delta_psi_inferred_from_cat'],
-            genome = config['genome'], vcf_id=vcf_ids, tissue_cat=config['DROP']['DROP_group']),
+            genome = config['genome'], 
+            vcf_id=vcf_ids, tissue_cat=config['DROP']['DROP_group']),
         expand(config_pred['splicing_pred']['absplice_rna'],
-            genome = config['genome'], vcf_id=vcf_ids, tissue_cat=config['DROP']['DROP_group']),
+            genome = config['genome'], 
+            vcf_id=vcf_ids, tissue_cat=config['DROP']['DROP_group']),
         expand(config_pred['splicing_pred']['absplice_rna_with_dna_info'],
-            genome = config['genome'], vcf_id=vcf_ids, tissue_cat=config['DROP']['DROP_group']),
+            genome = config['genome'], 
+            vcf_id=vcf_ids, tissue_cat=config['DROP']['DROP_group']),
         

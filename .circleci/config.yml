@@ -30,7 +30,7 @@ jobs:
       - run:
           name: Create environment for rocksdb lookup
           command: |
-            mamba env create -f example/environment_spliceai_rocksdb.yaml
+            mamba env create -f example/envs/environment_spliceai_rocksdb.yaml
             source activate spliceai-rocksdb
 workflows:
   version: 2

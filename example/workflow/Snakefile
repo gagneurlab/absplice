@@ -1,0 +1,38 @@
+
+import yaml
+
+SNAKEMAKE_DIR = os.path.dirname(workflow.snakefile)
+print(SNAKEMAKE_DIR)
+
+# config files
+config_download_path = f"{SNAKEMAKE_DIR}/download/config_download.yaml"
+with open(config_download_path, "r") as fd:
+    config_download = yaml.safe_load(fd)
+
+config_pred_path = f"{SNAKEMAKE_DIR}/splicing_pred/config_pred.yaml"
+with open(config_pred_path, "r") as fd:
+    config_pred = yaml.safe_load(fd)
+
+config_cat_path = f"{SNAKEMAKE_DIR}/splicing_pred/RNA/config_cat.yaml"
+with open(config_cat_path, "r") as fd:
+    config_cat = yaml.safe_load(fd)
+
+configfile: "./config.yaml"
+
+# snakemake subworkflows
+include: "./download/Snakefile"
+include: "./splicing_pred/DNA/Snakefile"
+if config['AbSplice_RNA'] == True:
+    include: "./splicing_pred/RNA/Snakefile"
+
+# list of output files to generate
+all_output_files = list()
+all_output_files.append(rules.all_download.input)
+all_output_files.append(rules.all_predict_dna.input)
+if config['AbSplice_RNA'] == True:
+    all_output_files.append(rules.all_predict_rna.input)
+
+
+rule all:
+    input:
+        all_output_files

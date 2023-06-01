@@ -4,29 +4,18 @@ from os import listdir
 from os.path import isfile, join
 import pathlib
 
-config_cat_path = f"{SNAKEMAKE_DIR}/splicing_pred/RNA/config_cat.yaml"
-with open(config_cat_path, "r") as fd:
-    config_cat = yaml.safe_load(fd)
-
-config_pred_path = f"{SNAKEMAKE_DIR}/splicing_pred/config_pred.yaml"
-with open(config_pred_path, "r") as fd:
-    config_pred = yaml.safe_load(fd)
-
-configfile: "./config.yaml"
-
 genome = config['genome']
 
-def outlier_path(wildcards):
-    return config['DROP']['working_dir'] + \
-            config['DROP']['outliers'] + wildcards['tissue_cat'] + '/results_per_junction_fdr.tsv'
 
 def outlier_path_gene_level(wildcards):
     return config['DROP']['working_dir'] + \
-            config['DROP']['outliers'] + wildcards['tissue_cat'] + '/results.tsv'
+            config['DROP']['outliers'].format(geneAnnotation=config['DROP']['geneAnnotation']) + \
+            wildcards['tissue_cat'] + '/results.tsv'
 
 def outlier_path_junction_level(wildcards):
     return config['DROP']['working_dir'] + \
-            config['DROP']['outliers'] + wildcards['tissue_cat'] + '/results_per_junction.tsv'
+            config['DROP']['outliers'].format(geneAnnotation=config['DROP']['geneAnnotation']) + \
+            wildcards['tissue_cat'] + '/results_per_junction.tsv'
 
 
 rule outliers_gene_level:
@@ -73,7 +62,7 @@ rule outliers_combine_gene_junction_level:
 rule outliers_with_variant_in_proximity:
     input:
         outliers_signif = config_cat['cat_outliers']['combine_gene_junction']['gene_junction_signif'],
-        variants = config['variant_sample_map'],
+        variants = config_cat['variant_sample_map'],
     output:
         outlier_with_variant = config_cat['cat_outliers']['combine_gene_junction']['outlier_with_variant'],
     script:
@@ -100,10 +89,11 @@ rule copy_outlier_results:
 
 rule all_cat_outliers:
     input:
-        rules.outliers_gene_level.output,
-        rules.copy_outlier_results.output,
         expand(rules.outliers_minus_log10_pval.output,
             vcf_id=vcf_ids, tissue_cat=config['DROP']['DROP_group']),
+        expand(rules.copy_outlier_results.output,
+            genome = config['genome'], tissue_cat=config['DROP']['DROP_group'],
+            vcf_id=vcf_ids),
 
 
 

@@ -4,11 +4,11 @@ from os import listdir
 from os.path import isfile, join
 import pathlib
 
-config_download_path = f"{SNAKEMAKE_DIR}/download/config_download.yaml"
-with open(config_download_path, "r") as fd:
-    config_download = yaml.safe_load(fd)
+# config_download_path = f"{SNAKEMAKE_DIR}/../../download/config_download.yaml"
+# with open(config_download_path, "r") as fd:
+#     config_download = yaml.safe_load(fd)
 
-configfile: "./config.yaml"
+# configfile: "./config.yaml"
 
 genome = config['genome']
 
@@ -86,7 +86,7 @@ rule download_gnomad_maf_db:
     params:
         version = maf_version_mapper[config['genome']]
     conda:
-        "../environment_gnomad_rocksdb.yaml"
+        "../../envs/environment_gnomad_rocksdb.yaml"
     output:
         gnomad_maf_db = directory(config_download['gnomad_rocksdb'][genome])
     shell:
@@ -122,7 +122,7 @@ if config['use_rocksdb'] == True:
         params:
             version = genome_mapper[config['genome']]
         conda:
-            "environment_spliceai_rocksdb.yaml"
+            "../../envs/environment_spliceai_rocksdb.yaml"
         output:
             spliceai_rocksdb = directory(config_download['spliceai_rocksdb'][genome])
         shell:
