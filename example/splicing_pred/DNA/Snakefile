@@ -56,6 +56,14 @@ if config['use_rocksdb'] == True:
         'hg38': 'grch38',
         'hg19': 'grch37',
     }
+
+    def dict_path(wildcards):
+        paths = {}
+        genome = wildcards['genome']
+        for chr in config_download['chromosomes']:
+            paths[chr] = config_download['spliceai_rocksdb'][genome].format(chromosome=chr)
+        return paths
+
     rule spliceai:
         resources:
             mem_mb = lambda wildcards, attempt: attempt * 16000,
@@ -64,8 +72,10 @@ if config['use_rocksdb'] == True:
         input:
             vcf = config['vcf'],
             fasta = config_download['fasta'][genome]['file'],
-            spliceai_rocksdb = config_download['spliceai_rocksdb'][genome]
+            spliceai_rocksdb = expand(config_download['spliceai_rocksdb'][genome],
+                                    chromosome=config['chromosomes'])
         params:
+            db_path = dict_path,
             lookup_only = False,
             genome = genome_mapper[config['genome']]
         conda:

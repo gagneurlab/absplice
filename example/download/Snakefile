@@ -126,8 +126,12 @@ if config['use_rocksdb'] == True:
         output:
             spliceai_rocksdb = directory(config_download['spliceai_rocksdb'][genome])
         shell:
-            "spliceai_rocksdb_download --version {params.version} --db_path {output.spliceai_rocksdb}"
-    list_outputs.append(config_download['spliceai_rocksdb'][genome])
+            "spliceai_rocksdb_download --version {params.version} --db_path {output.spliceai_rocksdb} --chromosome {wildcards.chromosome}"
+    list_outputs.append(
+        expand(config_download['spliceai_rocksdb'][genome],
+        chromosome = config_download['chromosomes']
+        )
+    )
 
 
 rule all_download:
