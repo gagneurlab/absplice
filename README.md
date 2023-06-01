@@ -1,6 +1,6 @@
 AbSplice: aberrant splicing prediction across human tissues
 --------------------------------
-This method predicts aberrant splicing across human tissues with AbSplice, as described in [Wagner, Çelik et al., Nature Genetics 2023](https://www.nature.com/articles/s41588-023-01373-3).
+AbSplice is a method that predicts aberrant splicing across human tissues, as described in [Wagner, Çelik et al., Nature Genetics 2023](https://www.nature.com/articles/s41588-023-01373-3).
 
 Precomputed AbSplice-DNA scores for all possible single-nucleotide variants genome-wide are available [here](https://doi.org/10.5281/zenodo.6408331) for download.
 
