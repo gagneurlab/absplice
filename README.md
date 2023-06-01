@@ -81,17 +81,17 @@ python -m snakemake -j 1 --use-conda
 ### AbSplice-DNA:
 To run the workflow on your own data do the following:
 
-- Store all vcf files for analysis in [`data/resources/vcf_files/`](https://github.com/gagneurlab/absplice/tree/master/example/data/resources/vcf_files/).
+- Store all vcf files for analysis in [`data/resources/vcf_files/`](https://github.com/gagneurlab/absplice/tree/master/example/data/resources/analysis_files/vcf_files).
 
-- Specify the genome version that you are going to use (currently supported hg19 and hg38) in the field `genome` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/config.yaml#L4) file.
+- Specify the genome version that you are going to use (currently supported hg19 and hg38) in the field `genome` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/workflow/config.yaml#L4) file.
 
-- In the field `splicemap_tissues` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/config.yaml#L21) file you can uncomment the tissues that AbSplice will use to generate predictions (by default only brain cortex).
+- In the field `splicemap_tissues` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/workflow/config.yaml#L21) file you can uncomment the tissues that AbSplice will use to generate predictions (by default only brain cortex).
 
 Optionally:
 
 - If you want to run the example on large datasets, you can enable a fast lookup interface [spliceai_rocksdb](https://github.com/gagneurlab/spliceai_rocksdb) that uses precomputed SpliceAI scores. \
 The first time you use it, the precomputed database will be downloaded (it will take significant time – about 1 hour and use approximately 180GB of storage). \
-To enable fast lookup for SpliceAI simply change the field `use_rocksdb` in the [config](https://github.com/gagneurlab/absplice/blob/master/example/config.yaml#L19) file to `True`.
+To enable fast lookup for SpliceAI simply change the field `use_rocksdb` in the [config](https://github.com/gagneurlab/absplice/blob/master/example/workflow/config.yaml#L19) file to `True`.
 
 ### AbSplice-RNA:
 AbSplice-RNA combines DNA and RNA information. \
@@ -103,8 +103,8 @@ The DNA IDs in the vcf file have to match the DNA IDs in the `DNA_ID` column of 
 [Example output for AbSplice-RNA](https://github.com/gagneurlab/absplice/blob/master/example/data/results/hg19/_example_hg19.vcf.gz_tissue_cat=Cells_Cultured_fibroblasts_AbSplice_all_info.csv). 
 
 To run AbSplice-RNA on your own data you need to:
-- Set the field `AbSplice_RNA` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/config.yaml#L75) file to `True`.
-- Run the aberrant splicing module of [DROP](https://github.com/gagneurlab/drop) and copy the root directory of DROP to [this folder](https://github.com/gagneurlab/absplice/tree/master/example/data//resources/analysis_files/absplice_rna_related_files/DROP/). 
-- Specifiy the names of the DROP groups in the field `DROP_group` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/config.yaml#L80) file.
-- Speficy the gene annotation that was used to run DROP in the field `geneAnnotation` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/config.yaml#L78) file.
+- Set the field `AbSplice_RNA` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/workflow/config.yaml#L75) file to `True`.
+- Run the aberrant splicing module of [DROP](https://github.com/gagneurlab/drop) and copy the root directory of DROP into [this folder](https://github.com/gagneurlab/absplice/tree/master/example/data//resources/analysis_files/absplice_rna_related_files/). 
+- Specifiy the names of the DROP groups in the field `DROP_group` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/workflow/config.yaml#L80) file.
+- Speficy the gene annotation that was used to run DROP in the field `geneAnnotation` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/workflow/config.yaml#L78) file.
 
