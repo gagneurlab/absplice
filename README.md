@@ -83,9 +83,9 @@ To run the workflow on your own data do the following:
 
 - Store all vcf files for analysis in [`data/resources/vcf_files/`](https://github.com/gagneurlab/absplice/tree/master/example/data/resources/analysis_files/vcf_files).
 
-- Specify the genome version that you are going to use (currently supported hg19 and hg38) in the field `genome` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/workflow/config.yaml#L4) file.
+- Specify the genome version that you are going to use (hg19 or hg38) in the field `genome` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/workflow/config.yaml#L4) file.
 
-- In the field `splicemap_tissues` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/workflow/config.yaml#L21) file you can uncomment the tissues that AbSplice will use to generate predictions (by default only brain cortex).
+- In the field `splicemap_tissues` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/workflow/config.yaml#L21) file you can uncomment the tissues that AbSplice will use to generate predictions.
 
 Optionally:
 
