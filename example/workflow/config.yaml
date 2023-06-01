@@ -72,7 +72,7 @@ splicemap_tissues:
 
 # ============================= AbSplice-RNA related ================================
 
-AbSplice_RNA: True
+AbSplice_RNA: False
 
 DROP:
     geneAnnotation: 'v29'
