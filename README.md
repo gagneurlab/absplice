@@ -43,7 +43,7 @@ pip install -e .
 
 ## Output
 
-The [output](https://github.com/gagneurlab/absplice/blob/master/example/data/results/hg19/_example_hg19.vcf.gz_AbSplice_DNA.csv) of AbSplice is tabular data. It contains the following columns (`variant`, `gene_id`, `tissue` being the unique row identifier):
+The [output](https://github.com/gagneurlab/absplice/blob/master/example/data/results/hg19/_example_hg19.vcf.gz_AbSplice_DNA.csv) of AbSplice is tabular data with `variant`, `gene_id`, `tissue` being the unique row identifier. It contains the following columns:
 
 
 |     ID     | Column | Description |
