@@ -48,7 +48,7 @@ The [output](https://github.com/gagneurlab/absplice/blob/master/example/data/res
 
 |     ID     | Column | Description |
 |  --------  | ----- | ----------- |
-|  `variant` | Variant | ID string of the variant. |
+|  `variant` | Variant | Variant as chrom:pos:ref>alt. |
 |  `gene_id` | GeneID | Ensembl GeneID of the gene which the variant belongs to. |
 |  `tissue`  | Tissue | Name of the tissue that was used from SpliceMap. |
 | `AbSplice_DNA` | AbSplice-DNA | The AbSplice score is a probability estimate of how likely aberrant splicing of some sort takes place in a given tissue and reports the splice site with the strongest effect. The model was trained using scores from MMSplice and SpliceAI models as well as annotation features from tissue-specific SpliceMaps. To ease downstream applications we suggest three cutoffs (high: 0.2, medium: 0.05, low: 0.01), which approximately have the same recalls as the high, medium and low cutoffs of SpliceAI. |
@@ -81,7 +81,7 @@ python -m snakemake -j 1 --use-conda
 ### AbSplice-DNA:
 To run the workflow on your own data do the following:
 
-- Store all vcf files for analysis in [`data/resources/vcf_files/`](https://github.com/gagneurlab/absplice/tree/master/example/data/resources/analysis_files/vcf_files).
+- Store all (or provide a symlink to) vcf files for analysis in [`data/resources/vcf_files/`](https://github.com/gagneurlab/absplice/tree/master/example/data/resources/analysis_files/vcf_files).
 
 - Specify the genome version that you are going to use (hg19 or hg38) in the field `genome` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/workflow/config.yaml#L4) file.
 
