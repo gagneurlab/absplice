@@ -17,7 +17,7 @@ AbSplice-RNA: if RNA-seq from clinically accessible tissues (e.g. blood or skin)
 ## Installation
 ### With container
 
-Instead of Docker you can also use Podman (you just need to replace `docker` with `podman` in all the commands) or Singularity.
+Instead of Docker you can also use Podman (you just need to replace `docker` with `podman` in all the commands).
 
 Download the image [archive](https://zenodo.org/record/8095625) (file size is 5GB):
 ```
@@ -31,7 +31,7 @@ Run the image with command line interface:
 ```
 docker run -it --name absplice_container localhost/absplice:latest /bin/bash
 ```
-Now you are working inside the container. Conda environment is already installed here, you just need to activate it:
+Now you are working inside the container. The conda environment is already installed here, you just need to activate it:
 ```
 conda activate absplice_dock
 ```
