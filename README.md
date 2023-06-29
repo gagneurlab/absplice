@@ -27,7 +27,7 @@ Load the image from archive:
 ```
 docker load -i absplice.oci
 ```
-Run the image with bash command line interface:
+Run the image with command line interface:
 ```
 docker run -it --name absplice_container localhost/absplice:latest /bin/bash
 ```
