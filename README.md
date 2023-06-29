@@ -15,6 +15,33 @@ AbSplice-RNA: if RNA-seq from clinically accessible tissues (e.g. blood or skin)
 
 
 ## Installation
+### With container
+
+Instead of Docker you can also use Podman (you just need to replace `docker` with `podman` in all the commands).
+
+Download the image [archive](https://zenodo.org/record/8095625) (file size is 5GB):
+```
+wget https://zenodo.org/record/8095625/files/absplice.oci
+```
+Load the image from archive:
+```
+docker load -i absplice.oci
+```
+Run the image with command line interface:
+```
+docker run -it --name absplice_container localhost/absplice:latest /bin/bash
+```
+Now you are working inside the container. The conda environment is already installed here, you just need to activate it:
+```
+conda activate absplice_dock
+```
+Clone the AbSplice repository to the container:
+```
+git clone https://github.com/gagneurlab/absplice.git
+cd absplice
+```
+### With creating a conda environment
+
 Clone git repo:
 ```
 git clone https://github.com/gagneurlab/absplice.git
@@ -81,11 +108,12 @@ python -m snakemake -j 1 --use-conda
 ### AbSplice-DNA:
 To run the workflow on your own data do the following:
 
-- Store all (or provide a symlink to) vcf files for analysis in [`data/resources/vcf_files/`](https://github.com/gagneurlab/absplice/tree/master/example/data/resources/analysis_files/vcf_files).
+- Store all (or provide a symlink to) vcf files for analysis in [`data/resources/analysis_files/vcf_files/`](https://github.com/gagneurlab/absplice/tree/master/example/data/resources/analysis_files/vcf_files).
 
 - Specify the genome version that you are going to use (hg19 or hg38) in the field `genome` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/workflow/config.yaml#L4) file.
 
 - In the field `splicemap_tissues` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/workflow/config.yaml#L21) file you can uncomment the tissues that AbSplice will use to generate predictions.
+
 
 Optionally:
 
@@ -93,6 +121,26 @@ Optionally:
 The first time you use it, the precomputed database will be downloaded (it will take significant time – about 1 hour and use approximately 180GB of storage). 
 To enable fast lookup for SpliceAI simply change the field `use_rocksdb` in the [config](https://github.com/gagneurlab/absplice/blob/master/example/workflow/config.yaml#L19) file to `True`.
 
+ ***For users who work with the container:***
+
+To run AbSplice on your own vcf-files, you need to copy them from your disk to the container. If you are inside the container, run:
+```
+exit
+```
+To copy a vcf-file from your disk to the container run:
+```
+docker cp path/on/your/disk absplice_container:app/absplice/example/workflow/data/resources/analysis_files/vcf_files/
+```
+To execute the container run:
+```
+docker start absplice_container
+docker exec -it absplice_container /bin/bash
+```
+To edit the config file inside the container use pre-installed editor `nano` as follows (or optionally install any other editor):
+```
+nano config.yaml
+```
+To close the editor press Ctrl+X, choose whether to save the changes: Y or N, and press Enter.
 ### AbSplice-RNA:
 AbSplice-RNA combines DNA and RNA information. 
 For each individual, DNA-based predictions of variants will be combined with RNA-based predictions/ measurements for junctions in the vicinity of the variants. The input are vcf files (either single or multisample) from DNA and the results from running FRASER on RNA-seq samples using [DROP](https://github.com/gagneurlab/drop).
