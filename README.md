@@ -123,14 +123,18 @@ To enable fast lookup for SpliceAI simply change the field `use_rocksdb` in the 
 
  ***For users who work with the container:***
 
-If you are not inside the container:
+To run AbSplice on your own vcf-files, you need to copy them from your disk to the container. If you are inside the container, run:
+```
+exit
+```
+To copy a vcf-file from your disk to the container run:
+```
+docker cp path/on/your/disk absplice_container:app/absplice/example/workflow/data/resources/analysis_files/vcf_files/
+```
+To execute the container run:
 ```
 docker start absplice_container
 docker exec -it absplice_container /bin/bash
-```
-To run AbSplice on your own vcf-files, you need to copy them from your disk to the container:
-```
-docker cp path/on/your/disk absplice_container:app/absplice/example/workflow/data/resources/analysis_files/vcf_files/
 ```
 To edit the config file inside the container use pre-installed editor `nano` as follows (or optionally install any other editor):
 ```
