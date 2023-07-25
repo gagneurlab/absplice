@@ -64,7 +64,7 @@ if config['use_rocksdb'] == True:
             vcf = config['vcf'],
             fasta = config_download['fasta'][genome]['file'],
             spliceai_rocksdb = expand(config_download['spliceai_rocksdb'][genome],
-                                    chromosome=config['chromosomes'])
+                                    chromosome=config_download['chromosomes'])
         params:
             db_path = dict_path,
             lookup_only = False,
