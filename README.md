@@ -129,7 +129,7 @@ exit
 ```
 To copy a vcf-file from your disk to the container run:
 ```
-docker cp path/on/your/disk absplice_container:app/absplice/example/workflow/data/resources/analysis_files/vcf_files/
+docker cp path/on/your/disk absplice_container:app/absplice/example/data/resources/analysis_files/vcf_files/
 ```
 To execute the container run:
 ```
