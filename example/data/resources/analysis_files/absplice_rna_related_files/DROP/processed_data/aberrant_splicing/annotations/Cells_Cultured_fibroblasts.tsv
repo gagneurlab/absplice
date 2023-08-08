@@ -1,0 +1,11 @@
+	sampleID	STRAND	PAIRED_END	bamFile	DNA_ID	SEX	ORIGIN	LAB	INDIVIDUAL	phase1TG	DROP_GROUP	COUNT_MODE	COUNT_OVERLAPS	RNA_BAM_FILE	RNA_exists	DNA_VCF_FILE	VCF_exists	GENE_COUNTS_FILE	GENE_ANNOTATION	HPO_TERMS
+0	S1_RNA				S1						Cells_Cultured_fibroblasts			path_to_bam_file_of_S1_RNA		path_to_vcf_file_of_S1				
+0	S2_RNA				S2						Cells_Cultured_fibroblasts			path_to_bam_file_of_S2_RNA		path_to_vcf_file_of_S2				
+0	S3_RNA				S3						Cells_Cultured_fibroblasts			path_to_bam_file_of_S3_RNA		path_to_vcf_file_of_S3				
+0	S4_RNA				S4						Cells_Cultured_fibroblasts			path_to_bam_file_of_S4_RNA		path_to_vcf_file_of_S4				
+0	S5_RNA				S5						Cells_Cultured_fibroblasts			path_to_bam_file_of_S5_RNA		path_to_vcf_file_of_S5				
+0	S6_RNA				S6						Cells_Cultured_fibroblasts			path_to_bam_file_of_S6_RNA		path_to_vcf_file_of_S6				
+0	S7_RNA				S7						Cells_Cultured_fibroblasts			path_to_bam_file_of_S7_RNA		path_to_vcf_file_of_S7				
+0	S8_RNA				S8						Cells_Cultured_fibroblasts			path_to_bam_file_of_S8_RNA		path_to_vcf_file_of_S8				
+0	S9_RNA				S9						Cells_Cultured_fibroblasts			path_to_bam_file_of_S9_RNA		path_to_vcf_file_of_S9				
+0	S10_RNA				S10						Cells_Cultured_fibroblasts			path_to_bam_file_of_S10_RNA		path_to_vcf_file_of_S10				

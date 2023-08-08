@@ -1,0 +1,43 @@
+import os
+import yaml
+from os import listdir
+from os.path import isfile, join
+import pathlib
+
+genome = config['genome']
+
+def analysis(wildcards):
+    return 'raw-' + wildcards['tissue_cat']
+
+
+rule count_table:
+    resources:
+        mem_mb = lambda wildcards, attempt: attempt * 32000
+    params:
+        fraser_working_dir = config['DROP']['working_dir'] + config['DROP']['count_table'],
+        analysis = analysis
+    conda:
+        "../../../../envs/environment_FRASER.yaml"
+    output:
+        count_table = config_cat['cat_count_table']['raw']
+    script: 
+        "./count_table.R"
+
+
+rule update_count_table:
+    input:
+        DROP_annotation = config['DROP']['working_dir'] + config['DROP']['sample_annotation'],
+        raw_count_table = config_cat['cat_count_table']['raw'],
+        fasta_file = config_download['fasta'][genome]['file'],
+    output:
+        updated_count_table = config_cat['cat_count_table']['updated'],
+    script:
+        "./update_count_table.py"
+
+
+rule all_count_table:
+    input:
+        expand(rules.count_table.output,
+            tissue_cat=config['DROP']['DROP_group']),
+        expand(rules.update_count_table.output,
+            tissue_cat=config['DROP']['DROP_group']),

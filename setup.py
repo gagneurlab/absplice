@@ -48,6 +48,9 @@ setup(
     keywords='absplice',
     name='absplice',
     packages=find_packages(include=['absplice']),
+    package_data={
+        'absplice': ['absplice/precomputed/*']
+    },
     setup_requires=setup_requirements,
     extras_require=extras_requirements,
     test_suite='tests',

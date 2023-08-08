@@ -3,7 +3,7 @@ import pandas as pd
 import tempfile
 from absplice import SplicingOutlierResult, \
     SpliceOutlierDataloader, SpliceOutlier, CatInference, \
-    GENE_MAP, GENE_TPM
+        GENE_MAP, GENE_TPM
 
 vcf_file = 'tests/data/test.vcf.gz'
 multi_vcf_file = 'tests/data/multi_test.vcf.gz'
@@ -36,28 +36,23 @@ spliceai_vcf_path2 = 'tests/data/test_spliceai.vcf'
 
 cadd_splice_path = 'tests/data/cadd_splice_test.tsv.gz'
 
-
 # absplice_precomputed_path = 'tests/data/all_SNVs_precomputed.csv'
 
 @pytest.fixture
 def df_var_samples():
     return pd.read_csv(var_samples_path)
 
-
 @pytest.fixture
 def df_mmsplice():
     return pd.read_csv(mmsplice_path)
-
 
 @pytest.fixture
 def df_spliceai():
     return pd.read_csv(spliceai_path)
 
-
 @pytest.fixture
 def df_mmsplice_cat():
     return pd.read_csv(mmsplice_cat_path)
-
 
 @pytest.fixture
 def outlier_dl():
@@ -66,7 +61,6 @@ def outlier_dl():
         splicemap5=[ref_table5_kn_testis, ref_table5_kn_lung],
         splicemap3=[ref_table3_kn_testis, ref_table3_kn_lung])
 
-
 @pytest.fixture
 def outlier_dl_multi():
     return SpliceOutlierDataloader(
@@ -74,7 +68,6 @@ def outlier_dl_multi():
         splicemap5=[ref_table5_kn_testis, ref_table5_kn_lung],
         splicemap3=[ref_table3_kn_testis, ref_table3_kn_lung]
     )
-
 
 @pytest.fixture
 def cat_dl():
@@ -89,16 +82,13 @@ def cat_dl():
                      name='blood'),
     ]
 
-
 @pytest.fixture
 def outlier_model():
     return SpliceOutlier()
 
-
 @pytest.fixture
 def outlier_results(outlier_model, outlier_dl):
     return outlier_model.predict_on_dataloader(outlier_dl)
-
 
 @pytest.fixture
 def outlier_results_multi(outlier_model, outlier_dl_multi, df_var_samples):
@@ -106,16 +96,13 @@ def outlier_results_multi(outlier_model, outlier_dl_multi, df_var_samples):
     results.add_samples(df_var_samples)
     return results
 
-
 @pytest.fixture
 def gene_map():
     return pd.read_csv(GENE_MAP, sep='\t')
 
-
 @pytest.fixture
 def gene_tpm():
     return pd.read_csv(GENE_TPM)
-
 
 # @pytest.fixture
 # def outlier_results_complete(outlier_model, outlier_dl_multi, df_spliceai, gene_map, df_var_samples):
@@ -127,47 +114,26 @@ def gene_tpm():
 @pytest.fixture
 def mmsplice_splicemap_cols():
     return sorted([
-        'variant', 'tissue', 'junction', 'event_type',
-        'splice_site', 'ref_psi', 'median_n',
-        'gene_id', 'gene_name',
-        'delta_logit_psi', 'delta_psi',
-    ])
-
-
+            'variant', 'tissue', 'junction', 'event_type',
+            'splice_site', 'ref_psi', 'median_n', 
+            'gene_id', 'gene_name',
+            'delta_logit_psi', 'delta_psi',
+        ])
+     
 variants = [
     "17:41276032:T:['A']",
     "17:41203228:T:['A']"  # on nevative strand
 ]
 
-
 def parse_vcf_id(vcf_id):
     return vcf_id.replace("'", '').replace('[', '').replace(']', '').split(':')
 
-
 @pytest.fixture
 def vcf_path():
-    chr_annotation = 'chr'
-    # chr_annotation = ''
-
-    with tempfile.NamedTemporaryFile('w') as temp_vcf:
-        temp_vcf.write('##fileformat=VCFv4.0\n')
-        temp_vcf.write(f'##contig=<ID={chr_annotation}13,length=115169878>\n')
-        temp_vcf.write(f'##contig=<ID={chr_annotation}17,length=81195210>\n')
-        temp_vcf.write('#CHROM\tPOS\tID\tREF\tALT\tQUAL\tFILTER\tINFO\n')
-
-        for v in variants:
-            v = chr_annotation + v
-            temp_vcf.write('%s\t%s\t1\t%s\t%s\t.\t.\t.\n'
-                           % tuple(parse_vcf_id(v)))
-
-        temp_vcf.flush()
-        yield temp_vcf.name
-
-
-@pytest.fixture
-def vcf_path_no_chr_prefix():
+    
+    # chr_annotation = 'chr'
     chr_annotation = ''
-
+    
     with tempfile.NamedTemporaryFile('w') as temp_vcf:
         temp_vcf.write('##fileformat=VCFv4.0\n')
         temp_vcf.write(f'##contig=<ID={chr_annotation}13,length=115169878>\n')
