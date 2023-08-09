@@ -1,12 +1,47 @@
 AbSplice: aberrant splicing prediction across human tissues
 --------------------------------
-This package predicts aberrant splicing across human tissues with AbSplice. 
-AbSplice predictions are based on enhanced tissue-specific splice site annotations ([SpliceMaps](https://github.com/gagneurlab/splicemap)).
-If purely sequence based information is available, different DNA-based splicing predictions are combined into an integrative model "AbSplice-DNA".
-Integration of RNA-seq data from an accessible tissue (e.g. blood or skin) of an individual to predict aberrant splicing in any other tissue from the same individual is supported in "AbSplice-RNA".
-Genome-wide AbSplice-DNA scores for all possible SNVs are available [here](https://doi.org/10.5281/zenodo.6408331) for download.
+AbSplice is a method that predicts aberrant splicing across human tissues, as described in [Wagner, Çelik et al., Nature Genetics 2023](https://www.nature.com/articles/s41588-023-01373-3).
+
+Precomputed AbSplice-DNA scores for all possible single-nucleotide variants genome-wide are available [here](https://doi.org/10.5281/zenodo.6408331) for download.
+
+
+AbSplice predictions are computed from VCF files and are based on enhanced tissue-specific splice site annotations ([SpliceMaps](https://github.com/gagneurlab/splicemap)). The scores represent the probability that a given variant causes aberrant splicing in a given tissue.
+
+AbSplice-DNA: if only DNA is available, different DNA-based splicing predictions, as well as information from tissue-specific SpliceMaps, are combined into the integrative model AbSplice-DNA (see [example](https://github.com/gagneurlab/absplice/tree/master/example) use case).
+
+AbSplice-RNA: if RNA-seq from clinically accessible tissues (e.g. blood or skin) is available, these direct splicing measurements can be used to predict aberrant splicing in another tissue from the same individual with the model AbSplice-RNA.
+
+![AbSplice](https://media.springernature.com/full/springer-static/image/art%3A10.1038%2Fs41588-023-01373-3/MediaObjects/41588_2023_1373_Fig1_HTML.png?as=webp)
+
 
 ## Installation
+### With container
+
+Instead of Docker you can also use Podman (you just need to replace `docker` with `podman` in all the commands).
+
+Download the image [archive](https://zenodo.org/record/8095625) (file size is 5GB):
+```
+wget https://zenodo.org/record/8095625/files/absplice.oci
+```
+Load the image from archive:
+```
+docker load -i absplice.oci
+```
+Run the image with command line interface:
+```
+docker run -it --name absplice_container localhost/absplice:latest /bin/bash
+```
+Now you are working inside the container. The conda environment is already installed here, you just need to activate it:
+```
+conda activate absplice_dock
+```
+Clone the AbSplice repository to the container:
+```
+git clone https://github.com/gagneurlab/absplice.git
+cd absplice
+```
+### With creating a conda environment
+
 Clone git repo:
 ```
 git clone https://github.com/gagneurlab/absplice.git
@@ -18,10 +53,6 @@ cd absplice
 ```
 
 Install conda environment:
-```
-# To prevent pacakge conflicts use:
-conda config --set channel_priority false
-```
 ```
 # Recommended if you have mamba installed
 mamba env create -f environment.yaml
@@ -39,12 +70,12 @@ pip install -e .
 
 ## Output
 
-The output of AbSplice is tabular data which contains the following columns:
+The [output](https://github.com/gagneurlab/absplice/blob/master/example/data/results/hg19/_example_hg19.vcf.gz_AbSplice_DNA.csv) of AbSplice is tabular data with `variant`, `gene_id`, `tissue` being the unique row identifier. It contains the following columns:
 
 
 |     ID     | Column | Description |
 |  --------  | ----- | ----------- |
-|  `variant` | Variant | ID string of the variant. |
+|  `variant` | Variant | Variant as chrom:pos:ref>alt. |
 |  `gene_id` | GeneID | Ensembl GeneID of the gene which the variant belongs to. |
 |  `tissue`  | Tissue | Name of the tissue that was used from SpliceMap. |
 | `AbSplice_DNA` | AbSplice-DNA | The AbSplice score is a probability estimate of how likely aberrant splicing of some sort takes place in a given tissue and reports the splice site with the strongest effect. The model was trained using scores from MMSplice and SpliceAI models as well as annotation features from tissue-specific SpliceMaps. To ease downstream applications we suggest three cutoffs (high: 0.2, medium: 0.05, low: 0.01), which approximately have the same recalls as the high, medium and low cutoffs of SpliceAI. |
@@ -66,22 +97,62 @@ The output of AbSplice is tabular data which contains the following columns:
 | `donor_gain_position` | SpliceAI Delta postion (donor gain) | See description of `acceptor_gain_position`. |
 | `donor_loss_position` | SpliceAI Delta position (donor loss) | See description of `acceptor_gain_position`. |
 
-## Example usecase
-The [example](https://github.com/gagneurlab/absplice/tree/master/example) folder contains a snakemake workflow to generate AbSplice predictions, given a vcf file and a fasta file (will be downloaded if not provided).
+## Example use case
+The [example](https://github.com/gagneurlab/absplice/tree/master/example) folder contains a snakemake workflow to generate AbSplice predictions, given a vcf file and a fasta file (either for hg19 or hg38, will be downloaded automatically). \
 The snakemake workflow will download precomputed SpliceMaps from Zenodo and run AbSplice based on these annotations.
 To generate predictions run:
 ```
-cd example
+cd example/workflow
 python -m snakemake -j 1 --use-conda
 ```
-To run this example on your own data do the following:
+### AbSplice-DNA:
+To run the workflow on your own data do the following:
 
-- Specify the genome version that you are going to use (hg19 is compatible with gtex_v7 and hg38 is compatible with gtex_v8) in the field `genome` of the [config](https://github.com/gagneurlab/absplice/tree/master/example/config.yaml) file.
+- Store all (or provide a symlink to) vcf files for analysis in [`data/resources/analysis_files/vcf_files/`](https://github.com/gagneurlab/absplice/tree/master/example/data/resources/analysis_files/vcf_files).
 
-- Store all vcf files for analysis to [`data/resources/vcf_files/`](https://github.com/gagneurlab/absplice/tree/master/example/data/resources/vcf_files/).
+- Specify the genome version that you are going to use (hg19 or hg38) in the field `genome` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/workflow/config.yaml#L4) file.
+
+- In the field `splicemap_tissues` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/workflow/config.yaml#L21) file you can uncomment the tissues that AbSplice will use to generate predictions.
+
 
 Optionally:
 
-- In the field `splicemap_tissues` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/config.yaml#L35) file you can uncomment the tissues that AbSplice will use to generate predictions (by default only fibroblasts).
+- If you want to run the example on large datasets, you can enable a fast lookup interface [spliceai_rocksdb](https://github.com/gagneurlab/spliceai_rocksdb) that uses precomputed SpliceAI scores. 
+The first time you use it, the precomputed database will be downloaded (it will take significant time – about 1 hour and use approximately 180GB of storage). 
+To enable fast lookup for SpliceAI simply change the field `use_rocksdb` in the [config](https://github.com/gagneurlab/absplice/blob/master/example/workflow/config.yaml#L19) file to `True`.
 
-- If you want to run the example on large datasets, you can enable a fast lookup interface spliceai_rocksdb that uses precomputed scores. This precomputed database will be downloaded from Nextcloud (it will take significant time – about 3-4 hours). To enable fast lookup simply change the field `use_rocksdb` in [config](https://github.com/gagneurlab/absplice/blob/master/example/config.yaml#L9) file to `True`.
+ ***For users who work with the container:***
+
+To run AbSplice on your own vcf-files, you need to copy them from your disk to the container. If you are inside the container, run:
+```
+exit
+```
+To copy a vcf-file from your disk to the container run:
+```
+docker cp path/on/your/disk absplice_container:app/absplice/example/workflow/data/resources/analysis_files/vcf_files/
+```
+To execute the container run:
+```
+docker start absplice_container
+docker exec -it absplice_container /bin/bash
+```
+To edit the config file inside the container use pre-installed editor `nano` as follows (or optionally install any other editor):
+```
+nano config.yaml
+```
+To close the editor press Ctrl+X, choose whether to save the changes: Y or N, and press Enter.
+### AbSplice-RNA:
+AbSplice-RNA combines DNA and RNA information. 
+For each individual, DNA-based predictions of variants will be combined with RNA-based predictions/ measurements for junctions in the vicinity of the variants. The input are vcf files (either single or multisample) from DNA and the results from running FRASER on RNA-seq samples using [DROP](https://github.com/gagneurlab/drop).
+
+
+The DNA IDs in the vcf file have to match the DNA IDs in the `DNA_ID` column of the sample annotation file from DROP.
+
+[Example output for AbSplice-RNA](https://github.com/gagneurlab/absplice/blob/master/example/data/results/hg19/_example_hg19.vcf.gz_tissue_cat=Cells_Cultured_fibroblasts_AbSplice_all_info.csv). 
+
+To run AbSplice-RNA on your own data you need to:
+- Set the field `AbSplice_RNA` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/workflow/config.yaml#L75) file to `True`.
+- Run the aberrant splicing module of [DROP](https://github.com/gagneurlab/drop) and copy the root directory of DROP into [this folder](https://github.com/gagneurlab/absplice/tree/master/example/data//resources/analysis_files/absplice_rna_related_files/). 
+- Specifiy the names of the DROP groups in the field `DROP_group` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/workflow/config.yaml#L80) file.
+- Speficy the gene annotation that was used to run DROP in the field `geneAnnotation` of the [config](https://github.com/gagneurlab/absplice/blob/master/example/workflow/config.yaml#L78) file.
+

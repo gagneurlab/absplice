@@ -1,0 +1,4 @@
+sampleID	seqnames	start	end	width	strand	hgncSymbol	addHgncSymbols	type	pValue	padjust	zScore	psiValue	deltaPsi	meanCounts	meanTotalCounts	counts	totalCounts	numSamplesPerGene	numEventsPerGene	numSamplesPerJunc	PAIRED_END	DNA_ID	SEX	ORIGIN	LAB	INDIVIDUAL	phase1TG	DROP_GROUP	RNA_BAM_FILE	RNA_exists	DNA_VCF_FILE	VCF_exists	GENE_COUNTS_FILE	GENE_ANNOTATION	HPO_TERMS	isExternal	junctions
+S1_RNA	chr2	55764722	55771099	6379	+	CFAP36		psi5		0.002			0.5				50					S1															
+S2_RNA	chr3	101298849	101304283	5435	+	PCNP		psi5		0.002			0.5				50					S1															
+S2_RNA	chr19	38653012	38655118	2106	+	SIPA1L3		psi5		0.002			0.5				50					S1															

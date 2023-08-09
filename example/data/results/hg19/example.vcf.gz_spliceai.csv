@@ -1,4 +1,0 @@
-variant,gene_name,delta_score,acceptor_gain,acceptor_loss,donor_gain,donor_loss,acceptor_gain_position,acceptor_loss_positiin,donor_gain_position,donor_loss_position
-chr1:225510364:A>G,DNAH14,0.99,0.52,0.99,0.0,0.0,-26,2,47,4
-chr2:86352917:G>A,PTCD3,0.99,0.0,0.99,0.0,0.0,34,1,-42,38
-chr2:209138460:A>G,PIKFYVE,0.38,0.0,0.0,0.0,0.38,-3,-21,28,-3

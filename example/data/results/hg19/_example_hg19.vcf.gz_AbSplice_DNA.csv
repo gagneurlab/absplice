@@ -1,0 +1,5 @@
+variant,gene_id,tissue,delta_logit_psi,delta_psi,delta_score,splice_site_is_expressed,AbSplice_DNA,junction,event_type,splice_site,ref_psi,median_n,acceptor_gain,acceptor_loss,donor_gain,donor_loss,acceptor_gain_position,acceptor_loss_position,donor_gain_position,donor_loss_position
+chr19:38653012:G>C,ENSG00000105738,Brain_Cortex,-3.580921038756512,-0.2561589410046049,1.0,1,0.31424130825452484,chr19:38653011-38655118:+,psi3,chr19:38655118:+,1.0,13.0,0.0,0.0,0.06,1.0,-10,-1,-30,-1
+chr2:231108528:T>A,ENSG00000079263,Brain_Cortex,0.0,0.0,1.0,0,0.006010393418201111,,,,,,0.0,0.0,0.0,1.0,35,-46,45,-2
+chr2:55771100:T>G,ENSG00000163001,Brain_Cortex,1.186152386196457,0.0220163817005335,0.22,1,0.06459581268981478,chr2:55762899-55771099:+,psi5,chr2:55762899:+,0.0029583034907981,297.0,0.22,0.15,0.0,0.0,0,-26,0,-25
+chr3:101304281:A>C,ENSG00000081154,Brain_Cortex,1.4579446500490174,0.0843006879042204,0.38,1,0.2337359257051539,chr3:101298848-101304283:+,psi5,chr3:101298848:+,0.0288294723951423,177.0,0.38,0.0,0.0,0.0,3,0,14,3

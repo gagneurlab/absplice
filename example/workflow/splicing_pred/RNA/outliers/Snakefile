@@ -1,0 +1,102 @@
+import os
+import yaml
+from os import listdir
+from os.path import isfile, join
+import pathlib
+
+genome = config['genome']
+
+
+def outlier_path_gene_level(wildcards):
+    return config['DROP']['working_dir'] + \
+            config['DROP']['outliers'].format(geneAnnotation=config['DROP']['geneAnnotation']) + \
+            wildcards['tissue_cat'] + '/results.tsv'
+
+def outlier_path_junction_level(wildcards):
+    return config['DROP']['working_dir'] + \
+            config['DROP']['outliers'].format(geneAnnotation=config['DROP']['geneAnnotation']) + \
+            wildcards['tissue_cat'] + '/results_per_junction.tsv'
+
+
+rule outliers_gene_level:
+    input:
+        gene_level = outlier_path_gene_level,
+        DROP_annotation = config['DROP']['working_dir'] + config['DROP']['sample_annotation'],
+        gene_map = config_cat['gene_map'],
+        coding_genes = config_download['gtf'][genome]['coding_genes'],
+    params:
+        padjustGene_cutoff = config['cat_outlier_filtering']['padjustGene_cutoff'],
+    output:
+        result = config_cat['cat_outliers']['qual_filtered']['gene_level'],
+    script:
+        "./outliers_gene_level.py"
+
+
+rule outliers_junction_level:
+    input:
+        junction_level = outlier_path_junction_level,
+        count_table_updated = config_cat['cat_count_table']['updated'],
+        DROP_annotation = config['DROP']['working_dir'] + config['DROP']['sample_annotation'],
+        gene_map = config_cat['gene_map'],
+        coding_genes = config_download['gtf'][genome]['coding_genes'],
+    params:
+        padjustJunction_cutoff = config['cat_outlier_filtering']['padjust_junction_cutoff'],
+        totalCounts_cutoff = config['cat_outlier_filtering']['totalCounts_cutoff'],
+        delta_psi_cutoff = config['cat_outlier_filtering']['delta_psi_cutoff'],
+    output:
+        result = config_cat['cat_outliers']['qual_filtered']['junction_level'],
+    script:
+        "./outliers_junction_level.py"
+
+
+rule outliers_combine_gene_junction_level:
+    input:
+        junction = config_cat['cat_outliers']['qual_filtered']['junction_level'],
+        gene = config_cat['cat_outliers']['qual_filtered']['gene_level'],
+    output:
+        gene_junction = config_cat['cat_outliers']['combine_gene_junction']['gene_junction_signif'],
+    script:
+        "./combine_gene_junction.py"
+
+
+rule outliers_with_variant_in_proximity:
+    input:
+        outliers_signif = config_cat['cat_outliers']['combine_gene_junction']['gene_junction_signif'],
+        variants = config_cat['variant_sample_map'],
+    output:
+        outlier_with_variant = config_cat['cat_outliers']['combine_gene_junction']['outlier_with_variant'],
+    script:
+        "./outliers_with_variant_in_proximity.py"
+
+
+rule outliers_minus_log10_pval:
+    input:
+        outlier_with_variant = config_cat['cat_outliers']['combine_gene_junction']['outlier_with_variant'],
+    output:
+        outlier_cat_pval = config_cat['cat_outliers']['combine_gene_junction']['minus_log10_pval'],
+    script:
+        './outliers_minus_log10_pval.py'
+
+
+rule copy_outlier_results:
+    input:
+        cat_outliers = config_cat['cat_outliers']['combine_gene_junction']['minus_log10_pval'],
+    output:
+        cat_outliers = config_pred['splicing_pred']['cat_outliers']
+    shell:
+        'cp {input.cat_outliers} {output.cat_outliers}'
+
+
+rule all_cat_outliers:
+    input:
+        expand(rules.outliers_minus_log10_pval.output,
+            vcf_id=vcf_ids, tissue_cat=config['DROP']['DROP_group']),
+        expand(rules.copy_outlier_results.output,
+            genome = config['genome'], tissue_cat=config['DROP']['DROP_group'],
+            vcf_id=vcf_ids),
+
+
+
+
+
+        
