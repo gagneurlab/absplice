@@ -122,7 +122,7 @@ def mmsplice_splicemap_cols():
      
 variants = [
     "17:41276032:T:['A']",
-    "17:41203228:T:['A']" #on nevative strand
+    "17:41203228:T:['A']"  # on nevative strand
 ]
 
 def parse_vcf_id(vcf_id):

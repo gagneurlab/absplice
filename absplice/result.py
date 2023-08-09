@@ -1,11 +1,8 @@
-import resource
 from pkg_resources import resource_filename
 from tqdm import tqdm
 import pandas as pd
 import numpy as np
 import pickle
-from pathlib import Path
-import pathlib
 from absplice.utils import get_abs_max_rows, normalize_gene_annotation, \
     read_csv, read_spliceai, read_cadd_splice, read_absplice
 from absplice.cat_dataloader import CatInference
@@ -15,11 +12,32 @@ GENE_MAP = resource_filename(
 GENE_TPM = resource_filename(
     'absplice', 'precomputed/GENE_TPM.csv.gz')
 ABSPLICE_DNA = resource_filename(
-    'absplice', 'precomputed/AbSplice_DNA.pkl')
+    'absplice', 'precomputed/AbSplice_DNA.onnx')
+ABSPLICE_DNA_FEATURES = [
+    'delta_logit_psi',
+    'delta_psi',
+    'delta_score',
+    'splice_site_is_expressed',
+]
 ABSPLICE_DNA_with_CADD_Splice = resource_filename(
     'absplice', 'precomputed/ABSPLICE_DNA_with_CADD_Splice.pkl')
+ABSPLICE_DNA_with_CADD_Splice_FEATURES = [
+    'PHRED',
+    'delta_logit_psi',
+    'delta_psi',
+    'delta_score',
+    'splice_site_is_expressed',
+]
 ABSPLICE_RNA = resource_filename(
-    'absplice', 'precomputed/AbSplice_RNA.pkl')
+    'absplice', 'precomputed/AbSplice_RNA.onnx')
+ABSPLICE_RNA_FEATURES = [
+    'delta_logit_psi',
+    'delta_psi',
+    'delta_psi_cat',
+    'delta_score',
+    'pValueGene_g_minus_log10',
+    'splice_site_is_expressed',
+]
 
 dtype_columns = {
     'variant': pd.StringDtype(),
@@ -44,10 +62,9 @@ dtype_columns = {
     'weak_site_donor': pd.BooleanDtype(),
     'weak_site_acceptor': pd.BooleanDtype(),
     'delta_score': 'float64',
-    'gene_name': pd.StringDtype(),
     'gene_name_spliceai': pd.StringDtype(),
     'gene_tpm': 'float64',
-    'tissue_cat':  pd.StringDtype(),
+    'tissue_cat': pd.StringDtype(),
     'k_cat': 'Int64',
     'n_cat': 'Int64',
     'median_n_cat': 'float64',
@@ -58,26 +75,64 @@ dtype_columns = {
     'PHRED': 'float64',
     'AbSplice_DNA': 'float64',
     'AbSplice_RNA': 'float64',
+    'pValueGene_g_minus_log10': 'float64',
 }
+
+
+def _load_features_from_model_file(path):
+    if path.endswith(".onnx"):
+        import onnx
+        onnx_model = onnx.load(path)
+        features = [i.name for i in onnx_model.graph.input]
+        return features
+    elif path.endswith(".pkl"):
+        model = pickle.load(open(path, 'rb'))
+        features = sorted([x for x in model.feature_names if ' x ' not in x])
+        return features
+    else:
+        raise ValueError(f"unknown file extension of file '{path}'")
+
+
+def _init_onnx_cpu_session():
+    import onnxruntime
+    session = onnxruntime.InferenceSession(
+        'AbSplice.onnx',
+    )
+
+
+def _predict_onnx(model_path, data):
+    import onnxruntime
+    session = onnxruntime.InferenceSession(model_path)
+
+    features = session.get_inputs()
+    inputs = {
+        f.name: np.asarray(data[f.name].values) for f in features
+    }
+
+    # np.array_equal(ortvalue.numpy(), X)  # 'True'
+
+    results = session.run(None, inputs)[0]
+    return results
 
 
 class SplicingOutlierResult:
 
-    def __init__(self,
-                 df_mmsplice=None,
-                 df_spliceai=None,
-                 df_cadd_splice=None,
-                 df_mmsplice_cat=None,
-                 df_outliers_cat=None,
-                 gene_map=None,
-                 gene_tpm=None,
-                 use_gtex_gene_tpm=False,
-                 df_var_samples=None,
-                 df_absplice_dna_input=None,
-                 df_absplice_rna_input=None,
-                 df_absplice_dna=None,
-                 df_absplice_rna=None,
-                 ):
+    def __init__(
+            self,
+            df_mmsplice=None,
+            df_spliceai=None,
+            df_cadd_splice=None,
+            df_mmsplice_cat=None,
+            df_outliers_cat=None,
+            gene_map=None,
+            gene_tpm=None,
+            use_gtex_gene_tpm=False,
+            df_var_samples=None,
+            df_absplice_dna_input=None,
+            df_absplice_rna_input=None,
+            df_absplice_dna=None,
+            df_absplice_rna=None,
+    ):
         self.df_var_samples = self.validate_df_var_samples(df_var_samples)
         self.df_mmsplice = self.validate_df_mmsplice(df_mmsplice)
         self.df_mmsplice_cat = self.validate_df_mmsplice_cat(df_mmsplice_cat)
@@ -150,7 +205,7 @@ class SplicingOutlierResult:
                 ~df_mmsplice_cat['delta_psi_cat'].isna()
             ]
         return df_mmsplice_cat
-    
+
     def validate_df_outliers_cat(self, df_outliers_cat):
         if df_outliers_cat is not None:
             df_outliers_cat = self._validate_df(
@@ -176,10 +231,10 @@ class SplicingOutlierResult:
             if self.df_var_samples is not None:
                 df_spliceai = self._add_samples(df_spliceai)
         return df_spliceai
-    
+
     def validate_df_cadd_splice(self, df_cadd_splice):
         if df_cadd_splice is not None:
-            df_cadd_splice = read_cadd_splice(df_cadd_splice, skiprows=1)                
+            df_cadd_splice = read_cadd_splice(df_cadd_splice, skiprows=1)
             df_cadd_splice = self._validate_df(
                 df_cadd_splice,
                 columns=['variant', 'gene_id', 'PHRED'])
@@ -240,10 +295,10 @@ class SplicingOutlierResult:
                 ])
             df_absplice_dna_input = self._validate_dtype(df_absplice_dna_input)
             groupby = ['variant', 'gene_id', 'tissue']
-            
+
             if self.df_var_samples is not None and 'sample' not in df_absplice_dna_input:
                 df_absplice_dna_input = self._add_samples(df_absplice_dna_input)
-            
+
             if 'sample' in df_absplice_dna_input:
                 groupby.append('sample')
             df_absplice_dna_input = df_absplice_dna_input.set_index(groupby)
@@ -254,9 +309,9 @@ class SplicingOutlierResult:
             df_absplice_rna_input = self._validate_df(
                 df_absplice_rna_input,
                 columns=[
-                    'variant', 'gene_id', 'tissue', 'sample', 
+                    'variant', 'gene_id', 'tissue', 'sample',
                     # 'gene_tpm', 'event_type', 'splice_site', 'k', 'n',
-                    'junction', 
+                    'junction',
                     'delta_score', 'delta_logit_psi', 'delta_psi', 'ref_psi', 'median_n',
                     'tissue_cat', 'k_cat', 'n_cat', 'median_n_cat', 'psi_cat', 'ref_psi_cat',
                     'delta_logit_psi_cat', 'delta_psi_cat', 'pValueGene_g_minus_log10'
@@ -291,7 +346,7 @@ class SplicingOutlierResult:
             return 'chr' in self.df_mmsplice.junction[0]
         else:
             return None
-        
+
     def _contains_samples(self):
         contains_samples = False
         if self.df_mmsplice is not None:
@@ -301,7 +356,7 @@ class SplicingOutlierResult:
             if 'sample' in self.df_spliceai.columns:
                 contains_samples = True
         return contains_samples
-        
+
     def _add_tissue_info_to_spliceai(self):
         """
         checks if self.df_spliceai has 'tissue' column.
@@ -320,7 +375,7 @@ class SplicingOutlierResult:
             self._df_spliceai_tissue = df_spliceai.copy()
             self._df_spliceai_tissue['tissue'] = 'Not provided'
         return self._df_spliceai_tissue
-    
+
     def _add_tissue_info_to_cadd_splice(self):
         df_cadd_splice = self.df_cadd_splice
         if self.df_mmsplice is not None:
@@ -383,7 +438,7 @@ class SplicingOutlierResult:
 
             common_idx = sorted(set(df_common.index).intersection(common_cat_idx))
             df_common = df_common.loc[common_idx] \
-                                 .set_index('sample', append=True)
+                .set_index('sample', append=True)
 
             rows = df_common.index
             if progress:
@@ -402,7 +457,7 @@ class SplicingOutlierResult:
         self.df_mmsplice_cat = self.df_mmsplice_cat[
             (~self.df_mmsplice_cat['tissue_cat'].isna())
             & (~self.df_mmsplice_cat['delta_psi_cat'].isna())
-        ]
+            ]
 
     def _get_maximum_effect(self, df, groupby, score):
         df = df.reset_index()
@@ -492,7 +547,7 @@ class SplicingOutlierResult:
             self._variant_mmsplice_cat = self._get_maximum_effect(
                 self.df_mmsplice_cat, groupby, score='delta_psi_cat')
         return self._variant_mmsplice_cat
-    
+
     @property
     def variant_outliers_cat(self):
         groupby = ['variant', 'gene_id', 'sample']
@@ -517,11 +572,11 @@ class SplicingOutlierResult:
             groupby = ['variant', 'gene_id', 'tissue']
             if self.contains_samples:
                 groupby.append('sample')
-                
+
             # MMSplice (SpliceMap)
             cols_mmsplice = [
                 'junction', 'event_type',
-                'splice_site', 'ref_psi', 'median_n', 
+                'splice_site', 'ref_psi', 'median_n',
                 'gene_name',
                 'delta_logit_psi', 'delta_psi',
             ]
@@ -552,7 +607,7 @@ class SplicingOutlierResult:
                     df_cadd_splice, groupby, score='PHRED')
             else:
                 df_cadd_splice = pd.DataFrame(columns=[*cols_cadd_splice, *groupby]).set_index(groupby)
-            
+
             # Join MMSplice & SpliceAI
             self._absplice_dna_input = df_mmsplice[cols_mmsplice].join(
                 df_spliceai[cols_spliceai], how='outer', rsuffix='_spliceai')
@@ -562,44 +617,48 @@ class SplicingOutlierResult:
 
             if self.gene_tpm is not None:
                 self._absplice_dna_input = self._absplice_dna_input.reset_index()
-                self._absplice_dna_input = self._absplice_dna_input.set_index(['gene_id', 'tissue'])\
-                    .join(self.gene_tpm.set_index(['gene_id', 'tissue'])[['gene_tpm']])\
-                    .reset_index().set_index(groupby)
-                    
+                self._absplice_dna_input = (
+                    self._absplice_dna_input
+                    .set_index(['gene_id', 'tissue'])
+                    .join(self.gene_tpm.set_index(['gene_id', 'tissue'])[['gene_tpm']])
+                    .reset_index()
+                    .set_index(groupby)
+                )
+
         return self._absplice_dna_input
 
     @property
-    def absplice_rna_input(self): #TODO: check if tissue_cat should be included in groubpy
+    def absplice_rna_input(self):  # TODO: check if tissue_cat should be included in groubpy
         if self._absplice_rna_input is None:
             groupby = ['variant', 'gene_id', 'tissue', 'sample']
             if not pd.Series(groupby).isin(self.absplice_dna_input.index.names).all():
                 self._absplice_dna_input = self.absplice_dna_input.set_index(groupby)
-                
+
             df_mmsplice_cat = self._get_maximum_effect(
                 self.df_mmsplice_cat, groupby, score='delta_psi_cat')
             cols_mmsplice_cat = [
                 'junction', 'delta_psi', 'ref_psi', 'median_n',
                 *[col for col in df_mmsplice_cat.columns if 'cat' in col]]
-            
+
             df_outliers_cat = self._get_maximum_effect(
                 self.df_outliers_cat, ['variant', 'gene_id', 'sample'], score='pValueGene_g_minus_log10')
             cols_outliers_cat = ['pValueGene_g_minus_log10']
-            
+
             self._absplice_rna_input = self.absplice_dna_input.join(
                 df_mmsplice_cat[cols_mmsplice_cat], how='outer', rsuffix='_from_cat_infer').reset_index()
-            
+
             self._absplice_rna_input = self._absplice_rna_input.set_index(['variant', 'gene_id', 'sample']).join(
                 df_outliers_cat[cols_outliers_cat], how='outer', rsuffix='_outlier_cat').reset_index()
-            
+
             self._absplice_rna_input = self._absplice_rna_input.set_index(groupby)
         return self._absplice_rna_input
-    
+
     def add_extra_info(self):
-        mmsplice_splicemap_cols  = [
-            'junction', 
-            'event_type', 
+        mmsplice_splicemap_cols = [
+            'junction',
+            'event_type',
             'splice_site',
-            'ref_psi', 
+            'ref_psi',
             'median_n'
         ]
         spliceai_cols = [
@@ -608,21 +667,21 @@ class SplicingOutlierResult:
             'donor_gain',
             'donor_loss',
             'acceptor_gain_position',
-            'acceptor_loss_position', 
-            'donor_gain_position', 
+            'acceptor_loss_position',
+            'donor_gain_position',
             'donor_loss_position'
         ]
-        
+
         # get aggregated scores of SpliceAI and MMSplice + SpliceMap
         groupby = ['variant', 'gene_id', 'tissue']
         if self.contains_samples:
             groupby.append('sample')
-             
+
         if self._df_mmsplice_agg is None:
             # MMSplice (SpliceMap)
             cols_mmsplice = [
                 'junction', 'event_type',
-                'splice_site', 'ref_psi', 'median_n', 
+                'splice_site', 'ref_psi', 'median_n',
                 'gene_name',
                 'delta_logit_psi', 'delta_psi',
             ]
@@ -633,7 +692,7 @@ class SplicingOutlierResult:
                 df_mmsplice = pd.DataFrame(columns=[*cols_mmsplice, *groupby]).set_index(groupby)
 
             self._df_mmsplice_agg = df_mmsplice
-                
+
         if self._df_spliceai_agg is None:
             # SpliceAI
             cols_spliceai = ['delta_score', 'gene_name']
@@ -645,10 +704,10 @@ class SplicingOutlierResult:
                 df_spliceai = pd.DataFrame(columns=[*cols_spliceai, *groupby]).set_index(groupby)
 
             self._df_spliceai_agg = df_spliceai
-        
-        
+
         if 'acceptor_loss_positiin' in self._df_spliceai_agg.columns:
-            self._df_spliceai_agg = self._df_spliceai_agg.rename(columns={'acceptor_loss_positiin': 'acceptor_loss_position'})
+            self._df_spliceai_agg = self._df_spliceai_agg.rename(
+                columns={'acceptor_loss_positiin': 'acceptor_loss_position'})
 
         self._absplice_dna = self._absplice_dna.join(
             self._df_mmsplice_agg[mmsplice_splicemap_cols]).join(
@@ -656,28 +715,46 @@ class SplicingOutlierResult:
 
         return self._absplice_dna
 
-    def _predict_absplice(self, df, absplice_score, pickle_file, features, abs_features, median_n_cutoff, tpm_cutoff=None):
-        model = pickle.load(open(pickle_file, 'rb'))
+    def _predict_absplice(self, df, absplice_score, pickle_file, features, abs_features, median_n_cutoff,
+                          tpm_cutoff=None):
         df['splice_site_is_expressed'] = (
-            df['median_n'] > median_n_cutoff).astype(int)
+                df['median_n'] > median_n_cutoff).astype(int)
         if tpm_cutoff:
-            df['gene_is_expressed'] = (df['gene_tpm'] > tpm_cutoff).astype(int) #TODO: remove
+            df['gene_is_expressed'] = (df['gene_tpm'] > tpm_cutoff).astype(int)  # TODO: remove
         df = df[features].fillna(0)
         if abs_features:
             df = np.abs(df)
-        df[absplice_score] = model.predict_proba(df)[:, 1]
+
+        # now run prediction
+        if pickle_file.endswith(".pkl"):
+            model = pickle.load(open(pickle_file, 'rb'))
+            df[absplice_score] = model.predict_proba(df)[:, 1]
+        elif pickle_file.endswith(".onnx"):
+            onnx_pred = _predict_onnx(pickle_file, df)
+            df[absplice_score] = np.asarray(onnx_pred, dtype="float32")[:, 1]
+        else:
+            raise ValueError(f"Unknown model type: '{pickle_file}'")
+
         return df
 
-    def predict_absplice_dna(self, pickle_file=None, features=None, abs_features=False, median_n_cutoff=10, tpm_cutoff=None, cadd_splice=False, extra_info=True):
+    def predict_absplice_dna(
+            self,
+            pickle_file=None,
+            features=None,
+            abs_features=False,
+            median_n_cutoff=10,
+            tpm_cutoff=None,
+            cadd_splice=False,
+            extra_info=True
+    ):
         if pickle_file is None and cadd_splice == True:
             pickle_file = ABSPLICE_DNA_with_CADD_Splice
         if pickle_file is None:
             pickle_file = ABSPLICE_DNA
-            
+
         # Load model and extract features
         if features is None:
-            model = pickle.load(open(pickle_file, 'rb'))
-            features = sorted([x for x in model.feature_names if ' x ' not in x])
+            features = sorted(_load_features_from_model_file(pickle_file))
 
         self._absplice_dna = self._predict_absplice(
             df=self.absplice_dna_input,
@@ -690,17 +767,17 @@ class SplicingOutlierResult:
 
         if extra_info:
             self._absplice_dna = self.add_extra_info()
-            
+
         return self._absplice_dna
 
-    def predict_absplice_rna(self, pickle_file=None, features=None, abs_features=False, median_n_cutoff=10, tpm_cutoff=None):
+    def predict_absplice_rna(self, pickle_file=None, features=None, abs_features=False, median_n_cutoff=10,
+                             tpm_cutoff=None):
         if pickle_file is None:
             pickle_file = ABSPLICE_RNA
-        
+
         # Load model and extract features
         if features is None:
-            model = pickle.load(open(pickle_file, 'rb'))
-            features = sorted([x for x in model.feature_names if ' x ' not in x])
+            features = sorted(_load_features_from_model_file(pickle_file))
 
         self._absplice_rna = self._predict_absplice(
             df=self.absplice_rna_input,

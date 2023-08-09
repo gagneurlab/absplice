@@ -13,10 +13,11 @@ dependencies:
   - click
   - pip
   - pyarrow
+  - onnx
+  - onnxruntime
   - pandas
   - numpy==1.23
   # needed for splicemap
-  - seaborn
   - scikit-learn
   - bioconda::pyfaidx
   - bioconda::pyranges>=0.0.71
@@ -28,6 +29,5 @@ dependencies:
   - deepdiff
   - pip:
     - mmsplice
-    - interpret == 0.2.7
     - interpret-core == 0.2.7
     - git+https://github.com/gagneurlab/splicemap.git
