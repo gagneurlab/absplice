@@ -1,11 +1,8 @@
-import resource
 from pkg_resources import resource_filename
 from tqdm import tqdm
 import pandas as pd
 import numpy as np
 import pickle
-from pathlib import Path
-import pathlib
 from absplice.utils import get_abs_max_rows, normalize_gene_annotation, \
     read_csv, read_spliceai, read_cadd_splice, read_absplice
 from absplice.cat_dataloader import CatInference
