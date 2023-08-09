@@ -735,6 +735,8 @@ class SplicingOutlierResult:
         elif pickle_file.endswith(".onnx"):
             onnx_pred = _predict_onnx(pickle_file, df)
             df[absplice_score] = np.asarray(onnx_pred, dtype="float32")[:, 1]
+        else:
+            raise ValueError(f"Unknown model type: '{pickle_file}'")
 
         return df
 

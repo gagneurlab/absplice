@@ -337,6 +337,7 @@ def test_splicing_outlier_result_predict_absplice_dna():
     sor.predict_absplice_dna()
     assert 'AbSplice_DNA' in sor._absplice_dna.columns
 
+
 def test_splicing_outlier_result_predict_absplice_dna_matches_pkl():
     sor = SplicingOutlierResult(
         df_mmsplice=mmsplice_path,
@@ -358,6 +359,24 @@ def test_splicing_outlier_result_predict_absplice_dna_CADD():
     assert 'PHRED' in sor._absplice_dna.columns
 
 
+def test_splicing_outlier_result_predict_absplice_dna_CADD_matches_pkl():
+    sor = SplicingOutlierResult(
+        df_mmsplice=mmsplice_path,
+        df_spliceai=spliceai_path,
+        df_cadd_splice=cadd_splice_path
+    )
+    original_result = sor.predict_absplice_dna(
+        pickle_file="absplice/precomputed/ABSPLICE_DNA_with_CADD_Splice.pkl",
+        cadd_splice=True
+    )
+    onnx_result = sor.predict_absplice_dna(
+        pickle_file="absplice/precomputed/ABSPLICE_DNA_with_CADD_Splice.onnx",
+        cadd_splice=True
+    )
+    assert np.allclose(original_result['AbSplice_DNA'].values, onnx_result['AbSplice_DNA'].values)
+    assert np.allclose(original_result['PHRED'].values, onnx_result['PHRED'].values)
+
+
 def test_splicing_outlier_result_predict_absplice_rna():
     sor = SplicingOutlierResult(
         df_mmsplice=mmsplice_path,
@@ -368,3 +387,16 @@ def test_splicing_outlier_result_predict_absplice_rna():
     )
     sor.predict_absplice_rna()
     assert 'AbSplice_RNA' in sor._absplice_rna.columns
+
+
+def test_splicing_outlier_result_predict_absplice_rna_matches_pkl():
+    sor = SplicingOutlierResult(
+        df_mmsplice=mmsplice_path,
+        df_spliceai=spliceai_path,
+        df_mmsplice_cat=mmsplice_cat_path,
+        df_outliers_cat=outliers_cat_path,
+        df_var_samples=var_samples_path
+    )
+    original_result = sor.predict_absplice_rna(pickle_file="absplice/precomputed/AbSplice_RNA.pkl")
+    onnx_result = sor.predict_absplice_rna(pickle_file="absplice/precomputed/AbSplice_RNA.onnx")
+    assert np.allclose(original_result['AbSplice_RNA'].values, onnx_result['AbSplice_RNA'].values)
