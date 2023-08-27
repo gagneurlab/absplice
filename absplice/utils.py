@@ -9,15 +9,6 @@ from collections import namedtuple
 from typing import List
 
 
-# def get_abs_max_rows(df, groupby, max_col, dropna=True):
-#     if len(max_col) == 1:
-#         return df.reset_index().sort_values(by=max_col, key=abs, ascending=False).drop_duplicates(subset=groupby).set_index(groupby)
-#     else:
-#         return df.reset_index() \
-#             .sort_values(by=max_col, key=abs, ascending=[False, False]) \
-#             .drop_duplicates(subset=groupby) \
-#             .set_index(groupby)
-
 def get_abs_max_rows(df, groupby, max_col, dropna=True):
 
     if type(max_col) == str:
