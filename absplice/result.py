@@ -428,7 +428,7 @@ class SplicingOutlierResult:
             groupby.append('sample')
         if self._junction is None:
             self._junction = self._get_maximum_effect(
-                self.df_mmsplice, groupby, score='delta_psi')
+                self.df_mmsplice, groupby, score=['delta_psi', 'median_n'])
             self._junction = self._junction.reset_index('event_type')
         return self._junction
 
@@ -439,7 +439,7 @@ class SplicingOutlierResult:
             groupby.append('sample')
         if self._splice_site is None:
             self._splice_site = self._get_maximum_effect(
-                self.df_mmsplice, groupby, score='delta_psi')
+                self.df_mmsplice, groupby, score=['delta_psi', 'median_n'])
             self._splice_site = self._splice_site.reset_index('event_type')
         return self._splice_site
 
@@ -450,7 +450,7 @@ class SplicingOutlierResult:
             groupby.append('sample')
         if self._gene_mmsplice is None:
             self._gene_mmsplice = self._get_maximum_effect(
-                self.df_mmsplice, groupby, score='delta_psi')
+                self.df_mmsplice, groupby, score=['delta_psi', 'median_n'])
         return self._gene_mmsplice
 
     @property
@@ -460,7 +460,7 @@ class SplicingOutlierResult:
         groupby = ['gene_id', 'tissue', 'sample']
         if self._gene_mmsplice_cat is None:
             self._gene_mmsplice_cat = self._get_maximum_effect(
-                self.df_mmsplice_cat, groupby, score='delta_psi_cat')
+                self.df_mmsplice_cat, groupby, score=['delta_psi_cat', 'median_n'])
         return self._gene_mmsplice_cat
 
     @property
@@ -480,7 +480,7 @@ class SplicingOutlierResult:
             groupby.append('sample')
         if self._variant_mmsplice is None:
             self._variant_mmsplice = self._get_maximum_effect(
-                self.df_mmsplice, groupby, score='delta_psi')
+                self.df_mmsplice, groupby, score=['delta_psi', 'median_n'])
         return self._variant_mmsplice
 
     @property
@@ -490,7 +490,7 @@ class SplicingOutlierResult:
         groupby = ['variant', 'gene_id', 'tissue', 'sample']
         if self._variant_mmsplice_cat is None:
             self._variant_mmsplice_cat = self._get_maximum_effect(
-                self.df_mmsplice_cat, groupby, score='delta_psi_cat')
+                self.df_mmsplice_cat, groupby, score=['delta_psi_cat', 'median_n'])
         return self._variant_mmsplice_cat
     
     @property
@@ -527,7 +527,7 @@ class SplicingOutlierResult:
             ]
             if self.df_mmsplice is not None:
                 df_mmsplice = self._get_maximum_effect(
-                    self.df_mmsplice, groupby, score='delta_psi')
+                    self.df_mmsplice, groupby, score=['delta_psi', 'median_n'])
             else:
                 df_mmsplice = pd.DataFrame(columns=[*cols_mmsplice, *groupby]).set_index(groupby)
 
@@ -576,7 +576,7 @@ class SplicingOutlierResult:
                 self._absplice_dna_input = self.absplice_dna_input.set_index(groupby)
                 
             df_mmsplice_cat = self._get_maximum_effect(
-                self.df_mmsplice_cat, groupby, score='delta_psi_cat')
+                self.df_mmsplice_cat, groupby, score=['delta_psi_cat', 'median_n'])
             cols_mmsplice_cat = [
                 'junction', 'delta_psi', 'ref_psi', 'median_n',
                 *[col for col in df_mmsplice_cat.columns if 'cat' in col]]
@@ -628,7 +628,7 @@ class SplicingOutlierResult:
             ]
             if self.df_mmsplice is not None:
                 df_mmsplice = self._get_maximum_effect(
-                    self.df_mmsplice, groupby, score='delta_psi')
+                    self.df_mmsplice, groupby, score=['delta_psi', 'median_n'])
             else:
                 df_mmsplice = pd.DataFrame(columns=[*cols_mmsplice, *groupby]).set_index(groupby)
 
