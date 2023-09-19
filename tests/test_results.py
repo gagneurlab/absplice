@@ -352,4 +352,109 @@ def test_splicing_outlier_result_predict_absplice_rna():
     sor.predict_absplice_rna()
     assert 'AbSplice_RNA' in sor._absplice_rna.columns
 
+
+def test_result_absplice_dna_sorting():
+    df_mmsplice = pd.DataFrame({
+        'variant': ['v1', 'v1'],
+        'gene_id': ['g1', 'g1'],
+        'gene_name': ['gene1', 'gene1'],
+        'event_type': ['psi3', 'psi3'],
+        'splice_site': ['chr:1:-', 'chr:1:-'],
+        'tissue': ['t1', 't1'],
+        'junction': ['j1', 'j2'],
+        'delta_psi': [0.1, 0.101],
+        'delta_logit_psi': [0.1, 0.1],
+        'ref_psi': [0.4, 0.4],
+        'median_n': [100, 2],
+    })
+
+    df_spliceai = pd.DataFrame({
+        'variant': ['v1'],
+        'gene_name': ['gene1'],
+        'delta_score': [0.12],
+        'acceptor_gain': [0.1],
+        'acceptor_loss': [0.12],
+        'donor_gain': [0.1],
+        'donor_loss': [0.1],
+        'acceptor_gain_position': [2],
+        'acceptor_loss_position': [2],
+        'donor_gain_position': [2],
+        'donor_loss_position': [2]
+    })
+
+    splicing_result = SplicingOutlierResult(
+            df_mmsplice=df_mmsplice, 
+            df_spliceai=df_spliceai,
+            gene_map = pd.DataFrame({'gene_id': ['g1'], 'gene_name': ['gene1']})
+        )
     
+    splicing_result.predict_absplice_dna()
+    assert splicing_result._absplice_dna.shape == (1,18)
+    assert splicing_result._absplice_dna['junction'].values == ['j1']
+
+    df_mmsplice['sample'] = ['s1', 's1']
+    df_spliceai['sample'] = ['s1']
+
+    splicing_result = SplicingOutlierResult(
+        df_mmsplice=df_mmsplice, 
+        df_spliceai=df_spliceai,
+        gene_map = pd.DataFrame({'gene_id': ['g1'], 'gene_name': ['gene1']})
+    )
+    
+    splicing_result.predict_absplice_dna()
+    assert splicing_result._absplice_dna.shape == (1,18)
+    assert len(splicing_result._absplice_dna.index[0]) == 4
+    assert splicing_result._absplice_dna['junction'].values == ['j1']
+
+def test_absplice_rna_input_join():
+    d1 = pd.DataFrame({'variant': ['v1', 'v1'], 'score': [0.2, 0]})
+    d2 = pd.DataFrame({'variant': ['v1', 'v1'], 'score': [0.3, 0.2], 'tissue_cat': ['tc1', 'tc2']})
+
+
+    df = d1.set_index('variant').join(d2.set_index('variant'), how='outer', rsuffix='_cat')
+
+    assert df.shape == (4,3)
+    assert True not in df['tissue_cat'].isna().values
+
+def test_absplice_rna_output_cat_difference():
+    df_rna_input_test = pd.DataFrame({
+        'variant': ['v1', 'v1', 'v1'],
+        'gene_id': ['g1', 'g1', 'g1'],
+        'tissue': ['t1', 't1', 't1'],
+        'sample': ['s1', 's1', 's1'],
+        'junction': ['j1', 'j1', 'j2'],
+        'event_type': ['psi3', 'psi3', 'psi5'],
+        'splice_site': ['chr:1:-', 'chr:1:-', 'chr:1:-'],
+        'delta_score': [0.5, 0.5, 0.2],
+        'acceptor_gain': [0.5, 0.5, 0.1],
+        'acceptor_loss': [0.1, 0.1, 0.2],
+        'donor_gain': [0,0,0],
+        'donor_loss': [0,0,0],
+        'acceptor_gain_position': [2,2,3],
+        'acceptor_loss_position': [2,2,3],
+        'donor_gain_position': [2,2,3],
+        'donor_loss_position': [2,2,3],
+        'delta_logit_psi': [0.7, 0.7, 0.4],
+        'delta_psi': [0.4, 0.4, 0.1], 
+        'ref_psi': [0.2, 0.2, 0.2], 
+        'median_n': [30, 30, 5],
+        'tissue_cat': ['tc1', 'tc2', 'tc1'], 
+        'k_cat': [10, 10, 10],
+        'n_cat': [10, 10, 10], 
+        'median_n_cat': [60, 100, 12], 
+        'psi_cat': [0.7, 0.2, 0.7], 
+        'ref_psi_cat': [0.1, 0.2, 0.4],
+        'delta_logit_psi_cat': [0.9, 0, 0.6], 
+        'delta_psi_cat': [0.6, 0, 0.3], 
+        'pValueGene_g_minus_log10': [0,0,0]
+    })
+
+    splicing_result = SplicingOutlierResult(
+        df_absplice_rna_input=df_rna_input_test,
+        gene_map = pd.DataFrame({'gene_id': ['g1'], 'gene_name': ['gene1']})
+    )
+
+    splicing_result.predict_absplice_rna()
+
+    assert splicing_result._absplice_rna.shape == (1,19)
+    assert splicing_result._absplice_rna['delta_psi_cat'].values[0] == 0.6

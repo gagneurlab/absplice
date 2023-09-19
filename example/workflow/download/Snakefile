@@ -91,6 +91,8 @@ if config['AbSplice_RNA'] == True:
             gtf_file = config_download['gtf'][genome]['file'],
         output:
             coding_genes = config_download['gtf'][genome]['coding_genes']
+        resources:
+            mem_mb = lambda wildcards, attempt: attempt * 16000,
         script:
             "./coding_genes.py"
     list_outputs.append(config_download['gtf'][genome]['coding_genes'])
