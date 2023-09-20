@@ -579,6 +579,9 @@ class SplicingOutlierResult:
             #     df_spliceai = pd.DataFrame(columns=[*cols_spliceai, *groupby]).set_index(groupby)
 
             if self.df_spliceai is not None:
+                if 'acceptor_loss_positiin' in self.df_spliceai.columns:
+                    self.df_spliceai = self.df_spliceai.rename(columns={'acceptor_loss_positiin': 'acceptor_loss_position'})
+
                 df_spliceai = self._add_tissue_info_to_spliceai()
                 df_spliceai = df_spliceai.set_index(groupby)
             else:
