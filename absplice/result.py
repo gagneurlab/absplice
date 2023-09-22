@@ -643,16 +643,8 @@ class SplicingOutlierResult:
             self._absplice_rna_input = self._absplice_rna_input.set_index(groupby)
         return self._absplice_rna_input
     
-    def subset_output(self, features, absplice_score, extra_info=True):
-        mmsplice_splicemap_cols_rna  = [
-            # 'junction', 
-            'event_type', 
-            'splice_site',
-            'ref_psi', 
-            'median_n',
-            # 'tissue'
-        ]
-        mmsplice_splicemap_cols_dna  = [
+    def subset_output_dna(self, features, absplice_score, extra_info=True):
+        mmsplice_splicemap_cols  = [
             'junction', 
             'event_type', 
             'splice_site',
@@ -672,16 +664,37 @@ class SplicingOutlierResult:
         ]
         
         if extra_info==False:
-            if self._absplice_rna is None:
-                return self._absplice_dna[[*features, absplice_score]]
-            else:
-                return self._absplice_rna[[*features, absplice_score]]
+            return self._absplice_dna[[*features, absplice_score]]
 
         else:
-            if self._absplice_rna is None:
-                return self._absplice_dna[[*features, absplice_score, *mmsplice_splicemap_cols_dna, *spliceai_cols]]
-            else:
-                return self._absplice_rna[[*features, absplice_score, *mmsplice_splicemap_cols_rna, *spliceai_cols]]
+            return self._absplice_dna[[*features, absplice_score, *mmsplice_splicemap_cols, *spliceai_cols]]
+            
+    def subset_output_rna(self, features, absplice_score, extra_info=True):
+        mmsplice_splicemap_cols  = [
+            # 'junction', 
+            'event_type', 
+            'splice_site',
+            'ref_psi', 
+            'median_n',
+            # 'tissue'
+        ]
+
+        spliceai_cols = [
+            'acceptor_gain',
+            'acceptor_loss',
+            'donor_gain',
+            'donor_loss',
+            'acceptor_gain_position',
+            'acceptor_loss_position', 
+            'donor_gain_position', 
+            'donor_loss_position'
+        ]
+        
+        if extra_info==False:
+            return self._absplice_rna[[*features, absplice_score]]
+
+        else:
+            return self._absplice_rna[[*features, absplice_score, *mmsplice_splicemap_cols, *spliceai_cols]]
 
         # # get aggregated scores of SpliceAI and MMSplice + SpliceMap
         # groupby = ['variant', 'gene_id', 'tissue']
@@ -768,7 +781,7 @@ class SplicingOutlierResult:
         self._absplice_dna = self._get_maximum_effect(
             self._absplice_dna, groupby=groupby, score='AbSplice_DNA')
 
-        self._absplice_dna = self.subset_output(features, 'AbSplice_DNA', extra_info)
+        self._absplice_dna = self.subset_output_dna(features, 'AbSplice_DNA', extra_info)
             
         return self._absplice_dna
 
@@ -797,7 +810,7 @@ class SplicingOutlierResult:
         self._absplice_rna = self._get_maximum_effect(
             self._absplice_rna, groupby=groupby, score='AbSplice_RNA')
         
-        self._absplice_rna = self.subset_output(features, 'AbSplice_RNA', extra_info)
+        self._absplice_rna = self.subset_output_rna(features, 'AbSplice_RNA', extra_info)
 
         return self._absplice_rna
 

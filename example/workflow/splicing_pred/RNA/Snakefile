@@ -66,6 +66,8 @@ rule absplice_rna:
         df_mmsplice_cat = config_pred['splicing_pred']['delta_psi_inferred_from_cat'],
         df_outliers_cat = config_pred['splicing_pred']['cat_outliers'],
         var_samples_df = config_cat['variant_sample_map'],
+    params:
+        extra_info = config['extra_info_rna']
     output:
         absplice_rna = config_pred['splicing_pred']['absplice_rna']
     script:

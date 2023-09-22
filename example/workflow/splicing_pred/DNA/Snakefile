@@ -111,6 +111,8 @@ rule absplice_dna:
     input:
         mmsplice_splicemap = config_pred['splicing_pred']['mmsplice_splicemap'],
         spliceai = config_pred['splicing_pred']['spliceai'],
+    params:
+        extra_info = config['extra_info_dna']
     output:
         absplice_dna = config_pred['splicing_pred']['absplice_dna']
     script:
