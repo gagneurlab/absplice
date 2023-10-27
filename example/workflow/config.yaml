@@ -3,6 +3,10 @@
 # specify genome version hg19 or hg38 
 genome: hg19
 
+# choose if the additional information from SpliceAI and SpliceMaps columns are required in the AbSplice-DNA output
+
+extra_info_dna: True
+
 # store all the vcf file that you want to analyze to directory ../data/resources/vcf_files/
 vcf: ../data/resources/analysis_files/vcf_files/{vcf_id}
 
@@ -73,6 +77,10 @@ splicemap_tissues:
 # ============================= AbSplice-RNA related ================================
 
 AbSplice_RNA: False
+
+# choose if the additional information from SpliceAI and SpliceMaps columns are required in the AbSplice-RNA output
+
+extra_info_rna: True
 
 DROP:
     geneAnnotation: 'v29'

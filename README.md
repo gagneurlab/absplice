@@ -69,8 +69,9 @@ pip install -e .
 ```
 
 ## Output
+Note: if you run AbSplice on large datasets, you might experience memory issues with the full output. We suggest setting the [config](https://github.com/gagneurlab/absplice/blob/0f0de504f46de949152f0be99fdbc3b302d538cf/example/workflow/config.yaml#L8C1-L8C21) fields `extra_info_dna` and `extra_info_rna` to `False` in such cases and if you do not need additional information from SpliceAI and SpliceMaps (`True` by default). This will crop the output, leaving only the columns with AbSplice features and unique row identifiers.
 
-The [output](https://github.com/gagneurlab/absplice/blob/master/example/data/results/hg19/_example_hg19.vcf.gz_AbSplice_DNA.csv) of AbSplice is tabular data with `variant`, `gene_id`, `tissue` being the unique row identifier. It contains the following columns:
+The full [output](https://github.com/gagneurlab/absplice/blob/master/example/data/results/hg19/_example_hg19.vcf.gz_AbSplice_DNA.csv) of AbSplice is tabular data with `variant`, `gene_id`, `tissue` being the unique row identifier. It contains the following columns:
 
 
 |     ID     | Column | Description |
@@ -129,7 +130,7 @@ exit
 ```
 To copy a vcf-file from your disk to the container run:
 ```
-docker cp path/on/your/disk absplice_container:app/absplice/example/workflow/data/resources/analysis_files/vcf_files/
+docker cp path/on/your/disk absplice_container:/app/absplice/example/data/resources/analysis_files/vcf_files/
 ```
 To execute the container run:
 ```
