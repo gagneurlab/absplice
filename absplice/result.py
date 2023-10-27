@@ -547,7 +547,7 @@ class SplicingOutlierResult:
             ]
             # if self.df_mmsplice is not None:
             #     df_mmsplice = self._get_maximum_effect(
-            #         self.df_mmsplice, groupby, score=['delta_psi', 'median_n'])
+            #         self.df_mmsplice, groupby, score='delta_psi')
             # else:
             #     df_mmsplice = pd.DataFrame(columns=[*cols_mmsplice, *groupby]).set_index(groupby)
 
@@ -621,7 +621,7 @@ class SplicingOutlierResult:
             df_absplice_dna_input = self.absplice_dna_input.reset_index().set_index(groupby)
                 
             # df_mmsplice_cat = self._get_maximum_effect(
-            #     self.df_mmsplice_cat, groupby, score=['delta_psi_cat', 'median_n'])
+            #     self.df_mmsplice_cat, groupby, score='delta_psi_cat')
             cols_mmsplice_cat = [
                 'delta_psi', 'ref_psi', 'median_n',
                 *[col for col in self.df_mmsplice_cat.columns if 'cat' in col]]
@@ -711,7 +711,7 @@ class SplicingOutlierResult:
         #     # ]
         #     if self.df_mmsplice is not None:
         #         df_mmsplice = self._get_maximum_effect(
-        #             self.df_mmsplice, groupby, score=['delta_psi', 'median_n'])
+        #             self.df_mmsplice, groupby, score='delta_psi')
         #     else:
         #         df_mmsplice = pd.DataFrame(columns=[*cols_mmsplice, *groupby]).set_index(groupby)
 
