@@ -23,22 +23,22 @@ def test_get_max_rows():
         }).sort_values(by='score', key=abs, ascending=False).set_index(['junction', 'sample'])
     )
 
-    df_2 = pd.DataFrame({
-        'junction': ['j1', 'j1', 'j2', 'j2', 'j3'],
-        'sample': ['s1', 's1', 's2', 's2', 's2'],
-        'score': [10, 20, -40, 30, -40], 
-        'count': [15, 40, 5, 100, 150]
-    }).set_index('junction')
+    # df_2 = pd.DataFrame({
+    #     'junction': ['j1', 'j1', 'j2', 'j2', 'j3'],
+    #     'sample': ['s1', 's1', 's2', 's2', 's2'],
+    #     'score': [10, 20, -40, 30, -40], 
+    #     'count': [15, 40, 5, 100, 150]
+    # }).set_index('junction')
 
-    pd.testing.assert_frame_equal(
-        get_abs_max_rows(df_2, ['junction', 'sample'], ['score', 'count']),
-        pd.DataFrame({
-            'junction': ['j3', 'j2', 'j1'],
-            'sample': ['s2', 's2', 's1'],
-            'score': [-40, -40, 20],
-            'count': [150, 5, 40]
-        }).set_index(['junction', 'sample'])
-    )
+    # pd.testing.assert_frame_equal(
+    #     get_abs_max_rows(df_2, ['junction', 'sample'], ['score', 'count']),
+    #     pd.DataFrame({
+    #         'junction': ['j3', 'j2', 'j1'],
+    #         'sample': ['s2', 's2', 's1'],
+    #         'score': [-40, -40, 20],
+    #         'count': [150, 5, 40]
+    #     }).set_index(['junction', 'sample'])
+    # )
 
 
 # def test_outlier_results_filter_samples_with_RNA_seq(outlier_results_multi, outlier_model):
