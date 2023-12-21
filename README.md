@@ -13,6 +13,8 @@ AbSplice-RNA: if RNA-seq from clinically accessible tissues (e.g. blood or skin)
 
 ![AbSplice](https://media.springernature.com/full/springer-static/image/art%3A10.1038%2Fs41588-023-01373-3/MediaObjects/41588_2023_1373_Fig1_HTML.png?as=webp)
 
+## License
+The source code to create and use SpliceMaps is under [MIT license](https://github.com/gagneurlab/absplice/tree/master/license/MIT.txt). Pre-computed SpliceMaps are under [MIT license](https://github.com/gagneurlab/absplice/tree/master/license/MIT.txt). The source code of AbSplice is under [MIT license](https://github.com/gagneurlab/absplice/tree/master/license/MIT.txt). The pre-trained AbSplice models as well as the pre-computed AbSplice scores are under the [CC BY NC 4.0 license](https://github.com/gagneurlab/absplice/tree/master/license/CC_BY_NC_4.0.txt) for academic and non-commercial use. This is because the implementation of running AbSplice predictions makes use of trained SpliceAI models which are currently under the CC BY NC 4.0 by Illumina (as of 21st December 2023).
 
 ## Installation
 ### With container
