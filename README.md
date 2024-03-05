@@ -2,7 +2,7 @@ AbSplice: aberrant splicing prediction across human tissues
 --------------------------------
 AbSplice is a method that predicts aberrant splicing across human tissues, as described in [Wagner, Çelik et al., Nature Genetics 2023](https://www.nature.com/articles/s41588-023-01373-3).
 
-Precomputed AbSplice-DNA scores for all possible single-nucleotide variants genome-wide are available [here](https://doi.org/10.5281/zenodo.6408331) for download.
+Precomputed AbSplice-DNA scores for all possible single-nucleotide variants genome-wide are available [here](https://doi.org/10.5281/zenodo.6408331) (hg38) and [here](https://zenodo.org/doi/10.5281/zenodo.10776852) (hg19) for download.
 
 
 AbSplice predictions are computed from VCF files and are based on enhanced tissue-specific splice site annotations ([SpliceMaps](https://github.com/gagneurlab/splicemap)). The scores represent the probability that a given variant causes aberrant splicing in a given tissue.
