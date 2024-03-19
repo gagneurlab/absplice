@@ -15,10 +15,9 @@ except ImportError:
 
 
 class SpliceMapMixin:
-
     def __init__(self, splicemap5=None, splicemap3=None, progress=True):
         self.progress = progress
-        
+
         if splicemap5 is None and splicemap3 is None:
             raise ValueError(
                 '`ref_tables5` and `ref_tables3` cannot be both empty')
@@ -82,14 +81,20 @@ class SpliceMapMixin:
                 ' or `SpliceMap` object')
 
 
-class SpliceOutlierDataloader(SpliceMapMixin, SampleIterator):
+# class SpliceOutlierDataloader(SpliceMapMixin, SampleIterator):
+class SpliceOutlierDataloader(SampleIterator):
 
-    def __init__(self, fasta_file, vcf_file, splicemap5=None, splicemap3=None):
-        SpliceMapMixin.__init__(self, splicemap5, splicemap3)
+    def __init__(self, fasta_file, vcf_file, splicemap_mixin=None):
 
         import mmsplice
         self.fasta_file = fasta_file
         self.vcf_file = vcf_file
+        self.combined_splicemap5 = splicemap_mixin.combined_splicemap5
+        self.combined_splicemap3 = splicemap_mixin.combined_splicemap3
+        self.splicemaps5 = splicemap_mixin.splicemaps5
+        self.splicemaps3 = splicemap_mixin.splicemaps3
+        self.metadata_splicemap5 = splicemap_mixin.metadata_splicemap5
+        self.metadata_splicemap3 = splicemap_mixin.metadata_splicemap3
         self._generator = iter([])
 
         if self.combined_splicemap5 is not None:
