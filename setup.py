@@ -49,11 +49,11 @@ setup(
     name='absplice',
     packages=find_packages(include=['absplice']),
     package_data={
-        'absplice': ['absplice/precomputed/ABSPLICE_DNA_with_CADD_Splice.pkl',
-                     'absplice/precomputed/AbSplice_DNA.pkl',
-                     'absplice/precomputed/AbSplice_RNA.pkl',
-                     'absplice/precomputed/GENE_MAP.tsv.gz',
-                     'absplice/precomputed/GENE_TPM.csv.gz',
+        'absplice': ['precomputed/ABSPLICE_DNA_with_CADD_Splice.pkl',
+                     'precomputed/AbSplice_DNA.pkl',
+                     'precomputed/AbSplice_RNA.pkl',
+                     'precomputed/GENE_MAP.tsv.gz',
+                     'precomputed/GENE_TPM.csv.gz',
                     ]
     },
     setup_requires=setup_requirements,
