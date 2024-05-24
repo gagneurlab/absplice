@@ -3,6 +3,7 @@ channels:
   - conda-forge
 dependencies:
   - python>=3.6
+  - numpy==1.23.4
   - python-rocksdb>=0.7
   - rocksdb
   - tensorflow-gpu>=2.4
